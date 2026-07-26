@@ -3,8 +3,9 @@ import { ArrowRight, ShoppingBag } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="max-w-7xl ml-auto pl-6 md:pl-12 grid md:grid-cols-2 gap-10 items-center">
-      <div className="py-12 md:py-20 pr-6">
+    <section className="max-w-7xl ml-auto pl-6 md:pl-12 grid grid-cols-1 md:grid-cols-12 gap-6 items-center overflow-hidden">
+      
+      <div className="md:col-span-5 py-12 md:py-20 pr-6 z-10">
         <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight">
           <span className="text-emerald-700">Dari Bumi Dan Laut,</span> <br />
           <span className="text-[#0A2A6B]">Langsung Ketangan Konsumen.</span>
@@ -23,19 +24,23 @@ export default function Hero() {
           </button>
         </div>
       </div>
-      <div className="relative w-full h-full min-h-[350px] md:min-h-[500px] flex items-end justify-end">
-        {/* Gambar Blur di belakang */}
-        <img
-          src="/images/blur.png"
-          alt="Blur Effect"
-          className="absolute right-0 bottom-0 w-[120%] h-[120%] object-contain opacity-70 animate-pulse duration-[3000ms] translate-x-20"
-        />
-        {/* Gambar Latar (Petani & Nelayan) di depan, ditarik ke paling bawah (bottom-0) dan menempel ke kanan layar */}
+
+      <div className="md:col-span-7 relative w-full h-full min-h-[380px] md:min-h-[520px] flex items-end justify-end">
+        
         <img
           src="/images/latar.png"
           alt="Petani Nelayan"
-          className="relative z-10 w-full h-full object-contain md:object-right-bottom translate-x-6 md:translate-x-12 translate-y-4 md:translate-y-8 scale-105"
+          className="relative z-10 w-full h-full object-cover object-right-bottom"
         />
+
+        <img
+          src="/images/blur.png"
+          alt="Blur Effect"
+          className="absolute inset-0 z-20 w-full h-full object-cover pointer-events-none opacity-90"
+        />
+
+        <div className="absolute inset-0 z-30 pointer-events-none bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-white via-white/40 to-transparent" />
+        
       </div>
     </section>
   );
