@@ -65,9 +65,13 @@ export default function MarketplacePage() {
 
           {/* Group 36 & Filter Controls */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-            {/* Search Bar (Group 57 style) */}
+            {/* Search Bar */}
             <div className="relative w-full md:w-[371px] h-[42px] bg-white border border-[#006638] rounded-[50px] flex items-center px-4">
-              <span className="text-[#005941] mr-2">🔍</span>
+              <img 
+                src="/images/search.png" 
+                alt="search" 
+                className="w-5 h-5 mr-2 object-contain shrink-0" 
+              />
               <input
                 type="text"
                 placeholder="Cari Produk..."
@@ -128,7 +132,7 @@ export default function MarketplacePage() {
             </div>
           </div>
 
-          {/* Grid Card Produk (Frame 308px × 433px style) */}
+          {/* Grid Card Produk */}
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
             {filteredProducts.map((p, idx) => (
               <div
@@ -150,28 +154,23 @@ export default function MarketplacePage() {
 
                   {/* Body Content */}
                   <div className="p-4 relative">
-                    {/* Judul Produk */}
                     <h4 className="font-bold text-[20px] leading-[24px] text-[#273B4A] line-clamp-1">{p.name}</h4>
                     
-                    {/* Lokasi */}
                     <p className="text-[15px] leading-[18px] text-[rgba(0,0,0,0.43)] font-medium mt-1">
                       {p.location}
                     </p>
 
                     <div className="flex items-center justify-between mt-[23px]">
-                      {/* Harga */}
                       <span className="font-bold text-[16px] leading-[20px] text-[#00A75C]">
                         {p.price} <span className="font-normal text-slate-400">{p.unit}</span>
                       </span>
 
-                      {/* Rating Star */}
                       <div className="flex items-center gap-1">
                         <Star className="w-[20px] h-[20px] fill-amber-400 text-amber-400" />
                         <span className="text-[15px] text-[rgba(0,0,0,0.43)] font-medium">{p.rating}</span>
                       </div>
                     </div>
 
-                    {/* Koperasi */}
                     <div className="flex items-center gap-2 mt-[17px]">
                       <div className="w-[28px] h-[26px] bg-[url('/images/tag.png')] bg-contain bg-no-repeat shrink-0 opacity-70" />
                       <span className="text-[15px] text-[rgba(0,0,0,0.43)] font-medium">{p.koperasi}</span>
