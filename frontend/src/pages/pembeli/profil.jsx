@@ -3,72 +3,89 @@ import PetaniSidebar from "../../components/petani/PetaniSidebar";
 
 export default function ProfilPembeliPage() {
   const profile = {
-    name: "Siti Aminah",
-    nid: "3201098765432109",
-    phone: "081234567890",
-    address: "Jl. Raya Padjadjaran No. 123, Baranangsiang, Kota Bogor, Jawa Barat",
-    birthDate: "12-04-1988",
-    account: "133-00-998877-6",
+    name: "PT Sejahtera",
+    phone: "08098765432",
+    address: "poltek",
+    account: "73829292938399",
     role: "Pembeli",
     image: "/images/ikan1.png",
   };
 
   return (
-    <div className="min-h-screen bg-[#EFFBF4] font-sans text-slate-900">
-      <div className="flex max-w-[1360px] mx-auto py-8 gap-6 px-4">
-        {/* Menggunakan sidebar yang sama agar konsisten */}
+    <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
+      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
+        {/* Sidebar */}
         <PetaniSidebar />
 
-        <div className="flex-1">
-          <div className="border border-emerald-200 rounded-[32px] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
-              <div>
-                <h3 className="text-xl font-semibold text-emerald-700">Profil</h3>
-                <div className="text-sm text-slate-500">Informasi akun pembeli Anda</div>
+        {/* Outer Container Wrapper */}
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+          
+          {/* Top Header */}
+          <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-8">
+            <h2 className="text-[24px] font-semibold text-[#005941]">Profil</h2>
+            <img 
+              src={profile.image} 
+              alt="avatar" 
+              className="w-12 h-12 rounded-full border border-slate-100 object-cover" 
+            />
+          </div>
+
+          {/* Inner Profile Card Container */}
+          <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-8 relative">
+            
+            {/* Edit Icon Button (Top Right Inside Card) */}
+            <button className="absolute top-6 right-6 text-[#005941] hover:opacity-80 transition">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+              {/* Profile Image */}
+              <div className="flex-shrink-0">
+                <img
+                  src={profile.image}
+                  alt={profile.name}
+                  className="w-44 h-44 rounded-full object-cover border-2 border-emerald-100"
+                />
               </div>
-              <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
-                <img src="/images/write.png" alt="Edit" className="h-4 w-4" />
-              </button>
-            </div>
 
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-1 items-center gap-6">
-                <img src={profile.image} alt={profile.name} className="h-40 w-40 rounded-full object-cover" />
+              {/* Profile Info Details */}
+              <div className="flex-1 w-full relative pt-2">
+                <h2 className="text-[28px] font-bold text-[#005941] mb-6">
+                  {profile.name}
+                </h2>
 
-                <div className="space-y-3 flex-1">
-                  <h2 className="text-3xl font-bold text-emerald-700">{profile.name}</h2>
-                  <div className="grid gap-3 text-sm text-slate-600 w-full">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-                      <span className="font-semibold text-slate-900 min-w-[120px]">Nik :</span>
-                      <span>{profile.nid}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-                      <span className="font-semibold text-slate-900 min-w-[120px]">No Hp :</span>
-                      <span>{profile.phone}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-                      <span className="font-semibold text-slate-900 min-w-[120px]">Alamat :</span>
-                      <span>{profile.address}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-                      <span className="font-semibold text-slate-900 min-w-[120px]">Tanggal Lahir :</span>
-                      <span>{profile.birthDate}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-                      <span className="font-semibold text-slate-900 min-w-[120px]">Rekening :</span>
-                      <span>{profile.account}</span>
-                    </div>
+                <div className="space-y-3 text-[16px] text-[#273B4A]">
+                  <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
+                    <span className="font-semibold sm:col-span-4">No Hp :</span>
+                    <span className="sm:col-span-8 font-medium">{profile.phone}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
+                    <span className="font-semibold sm:col-span-4">Alamat :</span>
+                    <span className="sm:col-span-8 font-medium">{profile.address}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
+                    <span className="font-semibold sm:col-span-4">Rekening :</span>
+                    <span className="sm:col-span-8 font-medium">{profile.account}</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end xl:justify-center">
-                <button className="rounded-full bg-emerald-700 px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800">
-                  Keluar
-                </button>
+                {/* Logout Button (Bottom Right) */}
+                <div className="flex justify-end mt-8">
+                  <button className="flex items-center gap-2 bg-[#005941] hover:bg-[#004230] text-white px-6 py-2.5 rounded-[12px] font-semibold text-[15px] transition shadow-sm">
+                    <span>Keluar</span>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  </button>
+                </div>
+
               </div>
             </div>
+
           </div>
+
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PetaniSidebar from "../../components/petani/PetaniSidebar";
-import PetaniStatusBadge from "../../components/petani/PetaniStatusBadge";
+import { ChevronRight, ChevronLeft, X, Phone, MessageSquare, Mail } from "lucide-react";
 
 const penawaranData = [
   {
@@ -12,7 +12,6 @@ const penawaranData = [
     offerPrice: "Rp 12.000 / kg",
     date: "01-01-26",
     status: "Menunggu",
-    statusVariant: "yellow",
     buyer: "PT Sejahtera",
     location: "Bogor, Jawa Barat",
     message:
@@ -31,7 +30,6 @@ const penawaranData = [
     offerPrice: "Rp 12.000 / kg",
     date: "01-01-26",
     status: "Diterima",
-    statusVariant: "emerald",
     buyer: "PT Sejahtera",
     location: "Bogor, Jawa Barat",
     message: "Terima kasih, penawaran diterima. Mohon siapkan pesanan.",
@@ -49,7 +47,6 @@ const penawaranData = [
     offerPrice: "Rp 12.000 / kg",
     date: "01-01-26",
     status: "Ditolak",
-    statusVariant: "red",
     buyer: "PT Sejahtera",
     location: "Bogor, Jawa Barat",
     message: "Mohon maaf, penawaran tidak sesuai dengan harga kami.",
@@ -67,10 +64,41 @@ const tabItems = [
   { key: "ditolak", label: "Ditolak" },
 ];
 
+function getStatusBadge(status) {
+  switch (status) {
+    case "Menunggu":
+      return (
+        <span className="inline-flex items-center justify-center px-3 py-1 rounded-[12px] bg-amber-100 border border-amber-300 text-[14px] font-semibold text-amber-700">
+          Menunggu
+        </span>
+      );
+    case "Diterima":
+      return (
+        <span className="inline-flex items-center justify-center px-3 py-1 rounded-[12px] bg-[rgba(105,255,120,0.19)] border border-[#008A1E] text-[14px] font-semibold text-[#006638]">
+          Diterima
+        </span>
+      );
+    case "Ditolak":
+      return (
+        <span className="inline-flex items-center justify-center px-3 py-1 rounded-[12px] bg-red-100 border border-red-300 text-[14px] font-semibold text-red-700">
+          Ditolak
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center justify-center px-3 py-1 rounded-[12px] bg-slate-100 border border-slate-300 text-[14px] font-semibold text-slate-700">
+          {status}
+        </span>
+      );
+  }
+}
+
 export default function PenawaranPage() {
   const [activeTab, setActiveTab] = useState("semua");
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [counterPrice, setCounterPrice] = useState("");
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 4;
 
   const filteredOffers = penawaranData.filter((item) => {
     if (activeTab === "semua") return true;
@@ -80,176 +108,274 @@ export default function PenawaranPage() {
     return true;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredOffers.length / itemsPerPage));
+  const startIndex = (page - 1) * itemsPerPage;
+  const currentOffers = filteredOffers.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleTabChange = (tabKey) => {
+    setActiveTab(tabKey);
+    setPage(1);
+  };
+
   return (
-    <div className="min-h-screen bg-[#F3F8F6] font-sans text-slate-900">
-      <div className="flex max-w-[1360px] mx-auto py-8 gap-6 px-4">
+    <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
+      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
         <PetaniSidebar />
 
-        <div className="flex-1">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6">
-            <div className="flex items-start justify-between mb-4">
+        {/* Outer Container Wrapper */}
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative flex flex-col justify-between">
+          <div>
+            {/* Top Header Bar */}
+            <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
               <div>
-                <h3 className="text-lg font-semibold">Penawaran</h3>
-                <div className="text-sm text-slate-500">Kelola penawaran yang masuk dari pembeli</div>
+                <h2 className="text-[24px] font-semibold text-[#005941]">Penawaran</h2>
+                <p className="text-[14px] text-slate-500">Kelola penawaran yang masuk dari pembeli</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <img
+                  src="/images/ikan1.png"
+                  alt="avatar"
+                  className="w-14 h-14 rounded-full border border-slate-100 object-cover"
+                />
               </div>
             </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 flex flex-wrap gap-2 mb-6">
-          {tabItems.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                activeTab === tab.key
-                  ? "bg-white text-emerald-700 shadow-sm"
-                  : "text-slate-600 hover:bg-white"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-slate-500 text-left border-b">
-                <th className="py-3">Produk</th>
-                <th className="py-3">Harga Acuan</th>
-                <th className="py-3">Harga Tawaran</th>
-                <th className="py-3">Status</th>
-                <th className="py-3">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filteredOffers.map((offer, index) => (
-                <tr key={offer.id} className="align-top">
-                  <td className="py-4">
-                    <div className="flex items-center gap-3">
-                      <img src={`/images/${offer.img}`} alt={offer.product} className="w-20 h-14 object-cover rounded" />
-                      <div>
-                        <div className="font-semibold text-slate-900">{offer.product}</div>
-                        <div className="text-sm text-slate-500">{offer.quantity}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 font-semibold text-slate-900">{offer.basePrice}</td>
-                  <td className="py-4 font-semibold text-slate-900">{offer.offerPrice}</td>
-                  <td className="py-4">
-                    <div className="inline-flex items-center gap-2">
-                      <PetaniStatusBadge variant={offer.statusVariant}>{offer.status}</PetaniStatusBadge>
-                    </div>
-                    <div className="mt-2 text-xs text-slate-400">{offer.date}</div>
-                  </td>
-                  <td className="py-4">
-                    <button
-                      onClick={() => setSelectedOffer(offer)}
-                      className="rounded-full bg-emerald-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800"
-                    >
-                      Detail
-                    </button>
-                  </td>
-                </tr>
+            {/* Filter Tabs */}
+            <div className="mb-6 flex flex-wrap gap-2">
+              {tabItems.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => handleTabChange(tab.key)}
+                  className={`rounded-[10px] px-5 py-2 text-[15px] font-semibold transition ${
+                    activeTab === tab.key
+                      ? "bg-[#006638] text-white"
+                      : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/10"
+                  }`}
+                >
+                  {tab.label}
+                </button>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Inner Table Card Container */}
+            <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-6">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="text-[16px] font-bold text-[#273B4A] border-b-2 border-black/[0.13]">
+                      <th className="pb-4 px-2">Produk</th>
+                      <th className="pb-4 px-2">Harga Acuan</th>
+                      <th className="pb-4 px-2">Harga Tawaran</th>
+                      <th className="pb-4 px-2">Status</th>
+                      <th className="pb-4 px-2 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentOffers.map((offer) => (
+                      <tr key={offer.id} className="border-b border-black/[0.13] last:border-b-0">
+                        <td className="py-4 px-2">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={`/images/${offer.img}`}
+                              alt={offer.product}
+                              className="w-[83px] h-[55px] object-cover rounded-[5px]"
+                            />
+                            <div>
+                              <div className="text-[16px] font-semibold text-[#273B4A]">{offer.product}</div>
+                              <div className="text-[14px] text-slate-500">{offer.quantity}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{offer.basePrice}</td>
+                        <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{offer.offerPrice}</td>
+                        <td className="py-4 px-2">
+                          <div className="flex flex-col items-start gap-1">
+                            {getStatusBadge(offer.status)}
+                            <span className="text-[12px] text-slate-400 font-medium ml-1">{offer.date}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2 text-center">
+                          <button
+                            onClick={() => setSelectedOffer(offer)}
+                            className="rounded-full bg-[#006638] px-6 py-2 text-[14px] font-semibold text-white shadow-sm hover:bg-[#00522d] transition"
+                          >
+                            Detail
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {currentOffers.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="text-center py-8 text-slate-500 font-medium">
+                          Tidak ada penawaran ditemukan.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Pagination Info & Controls */}
+          <div className="flex items-center justify-between mt-6 px-2">
+            <span className="text-[16px] font-semibold text-black/[0.51]">
+              Menampilkan {filteredOffers.length > 0 ? startIndex + 1 : 0}-
+              {Math.min(startIndex + currentOffers.length, filteredOffers.length)} dari {filteredOffers.length} penawaran
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
+              >
+                <ChevronLeft className="w-5 h-5 text-black/[0.43]" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setPage(index + 1)}
+                  className={`w-[40px] h-[40px] rounded-[5px] text-[20px] font-semibold flex items-center justify-center transition ${
+                    page === index + 1
+                      ? "bg-[#006638] text-white"
+                      : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/5"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={page === totalPages}
+                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
+              >
+                <ChevronRight className="w-5 h-5 text-black/[0.43]" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Modal Detail Penawaran */}
       {selectedOffer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-[520px] overflow-hidden rounded-[28px] bg-white shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between border-b border-slate-200 p-3">
-              
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-[560px] overflow-hidden rounded-[20px] bg-white shadow-2xl border border-slate-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <h3 className="text-[18px] font-bold text-[#005941]">Detail Penawaran</h3>
               <button
                 onClick={() => setSelectedOffer(null)}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
-                aria-label="Tutup"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 p-3">
-              <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
+            {/* Modal Content */}
+            <div className="space-y-4 p-6 text-[14px]">
+              <div className="grid gap-3 sm:grid-cols-[1.2fr_0.8fr]">
+                <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3">
                   <div className="flex items-center gap-3">
-                    <img src={`/images/${selectedOffer.img}`} alt={selectedOffer.product} className="w-18 h-18 object-cover rounded-3xl" />
+                    <img
+                      src={`/images/${selectedOffer.img}`}
+                      alt={selectedOffer.product}
+                      className="w-16 h-16 object-cover rounded-[8px]"
+                    />
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">{selectedOffer.product}</div>
-                      <div className="text-xs text-slate-500">{selectedOffer.quantity}</div>
+                      <div className="font-semibold text-[#273B4A]">{selectedOffer.product}</div>
+                      <div className="text-slate-500">{selectedOffer.quantity}</div>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid gap-2">
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-xs text-slate-500">Harga Acuan</div>
-                    <div className="mt-1 text-sm font-semibold text-slate-900">{selectedOffer.basePrice}</div>
+                  <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-2.5">
+                    <div className="text-[12px] text-slate-500">Harga Acuan</div>
+                    <div className="font-semibold text-[#273B4A]">{selectedOffer.basePrice}</div>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-xs text-slate-500">Harga Tawaran</div>
-                    <div className="mt-1 text-sm font-semibold text-slate-900">{selectedOffer.offerPrice}</div>
+                  <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-2.5">
+                    <div className="text-[12px] text-slate-500">Harga Tawaran</div>
+                    <div className="font-semibold text-[#006638]">{selectedOffer.offerPrice}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid gap-3 lg:grid-cols-2">
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">👤</div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">{selectedOffer.buyer}</div>
-                      <div className="text-xs text-slate-500">{selectedOffer.location}</div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#006638]/10 text-[#006638] font-bold">
+                        👤
+                      </div>
+                      <div>
+                        <div className="font-semibold text-[#273B4A]">{selectedOffer.buyer}</div>
+                        <div className="text-[12px] text-slate-500">{selectedOffer.location}</div>
+                      </div>
                     </div>
                   </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px] text-slate-500">
-                    <button className="rounded-2xl border border-slate-200 bg-white py-2 hover:bg-slate-100">📞</button>
-                    <button className="rounded-2xl border border-slate-200 bg-white py-2 hover:bg-slate-100">💬</button>
-                    <button className="rounded-2xl border border-slate-200 bg-white py-2 hover:bg-slate-100">✉️</button>
+                  <div className="mt-3 flex gap-2">
+                    <button className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100">
+                      <Phone className="w-4 h-4" />
+                    </button>
+                    <button className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100">
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
+                    <button className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100">
+                      <Mail className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-sm font-semibold text-slate-900">Pesan Pembeli</div>
-                  <p className="mt-2 text-sm leading-5 text-slate-600">{selectedOffer.message}</p>
+                <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3">
+                  <div className="font-semibold text-[#273B4A]">Pesan Pembeli</div>
+                  <p className="mt-1 text-[13px] leading-snug text-slate-600">{selectedOffer.message}</p>
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                <div className="text-sm font-semibold text-slate-900">Riwayat Penawaran</div>
-                <div className="mt-3 space-y-2">
+              <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3">
+                <div className="font-semibold text-[#273B4A]">Riwayat Penawaran</div>
+                <div className="mt-2 space-y-2">
                   {selectedOffer.history.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between rounded-3xl bg-white px-3 py-2 shadow-sm">
+                    <div key={index} className="flex items-center justify-between rounded-[8px] bg-white px-3 py-2 border border-slate-200 text-[13px]">
                       <div>
-                        <div className="text-sm font-semibold text-slate-900">{item.label}</div>
-                        <div className="text-xs text-slate-500">{item.time}</div>
+                        <div className="font-semibold text-[#273B4A]">{item.label}</div>
+                        <div className="text-[11px] text-slate-400">{item.time}</div>
                       </div>
-                      <div className="text-sm font-semibold text-slate-900">{item.value}</div>
+                      <div className="font-semibold text-[#006638]">{item.value}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="grid gap-2 lg:grid-cols-[1fr_0.9fr]">
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <button className="rounded-2xl bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Terima</button>
-                  <button className="rounded-2xl border border-red-600 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">Tolak</button>
-                  <button className="rounded-2xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Counter Offer</button>
+              {/* Action Buttons */}
+              <div className="grid gap-3 pt-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <button className="rounded-[10px] bg-[#006638] py-2 font-semibold text-white hover:bg-[#00522d] transition">
+                    Terima
+                  </button>
+                  <button className="rounded-[10px] border border-red-600 py-2 font-semibold text-red-600 hover:bg-red-50 transition">
+                    Tolak
+                  </button>
+                  <button className="rounded-[10px] border border-[#006638] py-2 font-semibold text-[#006638] hover:bg-[#006638]/5 transition">
+                    Counter Offer
+                  </button>
                 </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-semibold text-slate-900">Buat Counter Offer</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={counterPrice}
-                      onChange={(e) => setCounterPrice(e.target.value)}
-                      placeholder="Masukkan Harga"
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-2 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    />
-                    <span className="inline-flex items-center rounded-2xl border border-slate-200 bg-slate-100 px-2 text-sm text-slate-500">/kg</span>
-                  </div>
-                  <button className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-950">Kirim</button>
+
+                <div className="flex gap-2 items-center pt-2 border-t border-slate-100">
+                  <input
+                    type="text"
+                    value={counterPrice}
+                    onChange={(e) => setCounterPrice(e.target.value)}
+                    placeholder="Masukkan Harga Counter"
+                    className="flex-1 rounded-[10px] border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-[#006638]"
+                  />
+                  <span className="text-slate-500 font-medium">/kg</span>
+                  <button className="rounded-[10px] bg-[#273B4A] px-5 py-2 font-semibold text-white hover:bg-[#1f2f3b] transition">
+                    Kirim
+                  </button>
                 </div>
               </div>
             </div>
@@ -257,7 +383,5 @@ export default function PenawaranPage() {
         </div>
       )}
     </div>
-  </div>
-</div>
   );
 }
