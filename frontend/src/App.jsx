@@ -13,6 +13,13 @@ import PesananPage from "./pages/petani/pesanan";
 import PenawaranPage from "./pages/petani/penawaran";
 import ProfilPage from "./pages/petani/profil";
 
+// Pembeli 
+import MarketplacePage from "./pages/pembeli/marketplace";
+import KeranjangPage from "./pages/pembeli/keranjang";
+import PesananPembeliPage from "./pages/pembeli/pesanan";
+import ProfilPembeliPage from "./pages/pembeli/profil";
+import CheckoutPage from "./pages/pembeli/checkout";
+
 function HomePage() {
   return (
     <div className="min-h-screen bg-[#F8F7F4] font-sans text-slate-800">
@@ -49,7 +56,15 @@ function App() {
       <Route path="/petani/penawaran" element={<PenawaranPage />} />
       <Route path="/petani/profil" element={<ProfilPage />} />
 
-      {/* back ke Home */}
+      {/* Rute Pembeli */}
+      <Route path="/pembeli" element={<Navigate to="/pembeli/marketplace" replace />} />
+      <Route path="/pembeli/marketplace" element={<MarketplacePage />} />
+      <Route path="/pembeli/keranjang" element={<KeranjangPage />} />
+      <Route path="/pembeli/checkout" element={<CheckoutPage />} />
+      <Route path="/pembeli/pesanan" element={<PesananPembeliPage />} />
+      <Route path="/pembeli/profil" element={<ProfilPembeliPage />} />
+
+      {/* Fallback ke Home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
