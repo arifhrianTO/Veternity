@@ -6,7 +6,7 @@ export default function KoperasiSidebar() {
     { to: "/koperasi/dashboard", label: "Dashboard", icon: "dashboards.png" },
     { to: "/koperasi/PetaniBinaan", label: "Petani Binaan", icon: "user.png" },
     { to: "/koperasi/nelayan-binaan", label: "Nelayan Binaan", icon: "user.png" },
-    { to: "/koperasi/kelola-produk", label: "Kelola Produk", icon: "shoppping-bag.png" },
+    { to: "/koperasi/KelolaProduk", label: "Kelola Produk", icon: "shoppping-bag.png" },
     { to: "/koperasi/penawaran", label: "Penawaran", icon: "tag.png" },
     { to: "/koperasi/pengiriman", label: "Pengiriman", icon: "clipboard.png" },
     { to: "/koperasi/profil", label: "Profil", icon: "user.png" },
