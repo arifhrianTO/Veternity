@@ -1,7 +1,9 @@
 import React from "react";
 import { ArrowRight, ShoppingBag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Hero() {
+  const navigate = useNavigate();
   return (
     <section className="max-w-7xl ml-auto pl-6 md:pl-12 grid grid-cols-1 md:grid-cols-12 gap-6 items-center overflow-hidden">
       
@@ -16,7 +18,10 @@ export default function Hero() {
           dengan satu platform yang mudah digunakan.
         </p>
         <div className="mt-7 flex flex-wrap gap-4">
-          <button className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-l from-[#ABE147] via-[#017B46] to-[#024D70] text-white font-semibold hover:opacity-90 transition-opacity">
+          <button
+            onClick={() => navigate("/register")}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-l from-[#ABE147] via-[#017B46] to-[#024D70] text-white font-semibold hover:opacity-90 transition-opacity"
+          >
             Mulai Sekarang <ArrowRight className="w-4 h-4" />
           </button>
           <button className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-slate-200 font-semibold text-slate-700 hover:border-emerald-600 hover:text-emerald-700 transition-colors">

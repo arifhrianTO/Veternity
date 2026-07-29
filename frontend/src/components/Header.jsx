@@ -1,5 +1,6 @@
 import React from "react";
 import { Leaf } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export function Logo({ className = "w-8 h-8" }) {
   return (
@@ -10,8 +11,16 @@ export function Logo({ className = "w-8 h-8" }) {
 }
 
 export default function Header() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const scrollToSection = (e, id) => {
     e.preventDefault();
+    // Jika sedang tidak di halaman utama, navigasi ke landing page dulu
+    if (location.pathname !== "/") {
+      navigate("/");
+      return;
+    }
     if (id === "beranda") {
       window.scrollTo({
         top: 0,
@@ -68,10 +77,16 @@ export default function Header() {
           </a>
         </nav>
         <div className="flex items-center gap-3">
-          <button className="hidden sm:inline-flex px-5 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:border-emerald-600 hover:text-emerald-700 transition-colors">
+          <button
+            onClick={() => navigate("/login")}
+            className="hidden sm:inline-flex px-5 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:border-emerald-600 hover:text-emerald-700 transition-colors"
+          >
             Masuk
           </button>
-          <button className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#ABE147] via-[#017B46] to-[#024D70] text-sm font-semibold text-white hover:opacity-90 transition-opacity">
+          <button
+            onClick={() => navigate("/register")}
+            className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#ABE147] via-[#017B46] to-[#024D70] text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+          >
             Daftar
           </button>
         </div>

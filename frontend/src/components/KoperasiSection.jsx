@@ -6,7 +6,7 @@ export default function KoperasiSection() {
   const [activeFilter, setActiveFilter] = useState("Semua");
 
   return (
-    <section id="koperasi" className="max-w-7xl mx-auto px-6 pt-16 pb-20">
+    <section id="koperasi" className="max-w-7xl mx-auto px-20 pt-16 pb-20">
       <h1 className="text-3xl font-extrabold text-center mb-8 bg-gradient-to-r from-[#006638] to-[#69CA00] bg-clip-text text-transparent">
         Koperasi
       </h1>
