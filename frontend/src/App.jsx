@@ -1,5 +1,8 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import StatsBar from "./components/StatsBar";
@@ -15,13 +18,19 @@ import PesananPage from "./pages/petani/pesanan";
 import PenawaranPage from "./pages/petani/penawaran";
 import ProfilPage from "./pages/petani/profil";
 
-// Pembeli 
-import MarketplacePage from "./pages/pembeli/marketplace";
-import KeranjangPage from "./pages/pembeli/keranjang";
-import PesananPembeliPage from "./pages/pembeli/pesanan";
-import ProfilPembeliPage from "./pages/pembeli/profil";
-import CheckoutPage from "./pages/pembeli/checkout";
+// Petani
+import DashboardPage from "./pages/petani/Dashboard";
+import ProdukPage from "./pages/petani/Produk";
+import PesananPage from "./pages/petani/Pesanan";
+import PenawaranPage from "./pages/petani/Penawaran";
+import ProfilPage from "./pages/petani/Profil";
 
+// Pembeli 
+import MarketplacePage from "./pages/pembeli/Marketplace";
+import KeranjangPage from "./pages/pembeli/Keranjang";
+import PesananPembeliPage from "./pages/pembeli/Pesanan";
+import ProfilPembeliPage from "./pages/pembeli/Profil";
+import CheckoutPage from "./pages/pembeli/Checkout";
 // Admin
 import AdminDashboardPage from "./pages/admin/dashboard";
 import PenggunaPage from "./pages/admin/pengguna"; 
@@ -63,7 +72,9 @@ function App() {
   return (
     <Routes>
       {/* Home / Landing Page */}
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       {/* Rute Petani */}
       <Route path="/petani" element={<Navigate to="/petani/dashboard" replace />} />

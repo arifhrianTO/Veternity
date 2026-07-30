@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, Sprout, Anchor, ShoppingCart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import vectorShape from "../assets/Vector.png";
 import logo from "../assets/logo.png";
 import ellipse181 from "../assets/Ellipse_181.png";
@@ -21,24 +22,42 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
     if (password !== confirmPassword) {
-      alert("Password dan konfirmasi password tidak cocok!");
+      setErrorMsg("Password dan konfirmasi password tidak cocok!");
       return;
     }
-    console.log({
-      role,
-      fullName,
-      phone,
-      birthDate,
-      gender,
-      address,
-      email,
-      password,
-    });
+    
+    setLoading(true);
+    try {
+      const response = await axios.post("http://localhost:8000/api/register", {
+        role: role,
+        nama_lengkap: fullName,
+        email: email,
+        no_hp: phone,
+        tanggal_lahir: birthDate,
+        kelamin: gender,
+        alamat: address,
+        password: password,
+      });
+      
+      alert("Registrasi berhasil! Silahkan masuk.");
+      navigate("/login");
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        setErrorMsg(error.response.data.message + (error.response.data.errors ? " - " + JSON.stringify(error.response.data.errors) : ""));
+      } else {
+        setErrorMsg("Terjadi kesalahan saat registrasi.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -268,7 +287,6 @@ export default function RegisterPage() {
                     <input
                       id="fullName"
                       type="text"
-                      required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Masukkan nama lengkap anda"
@@ -284,7 +302,6 @@ export default function RegisterPage() {
                     <input
                       id="phone"
                       type="tel"
-                      required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="Masukkan nomor hp anda"
@@ -300,7 +317,6 @@ export default function RegisterPage() {
                     <input
                       id="birthDate"
                       type="date"
-                      required
                       value={birthDate}
                       onChange={(e) => setBirthDate(e.target.value)}
                       className="w-full rounded-full border border-[#BFD9CC] bg-[#EAF6F1] px-4 py-2 text-xs text-[#0B3D2E] placeholder:text-[#7FA893] outline-none focus:border-[#1F6B3C] focus:ring-2 focus:ring-[#1F6B3C]/20"
@@ -345,7 +361,6 @@ export default function RegisterPage() {
                     </label>
                     <textarea
                       id="address"
-                      required
                       rows={2}
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
@@ -395,7 +410,6 @@ export default function RegisterPage() {
                     <input
                       id="email"
                       type="email"
-                      required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Masukkan email anda"
@@ -412,7 +426,6 @@ export default function RegisterPage() {
                       <input
                         id="password"
                         type={showPassword ? "text" : "password"}
-                        required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Masukkan password anda"
@@ -438,7 +451,6 @@ export default function RegisterPage() {
                       <input
                         id="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
-                        required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Masukkan ulang password anda"
@@ -456,6 +468,12 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {errorMsg && (
+                  <div className="mt-3 text-red-500 text-xs text-center font-semibold bg-red-50 p-2 rounded">
+                    {errorMsg}
+                  </div>
+                )}
+
                 <div className="mt-5 flex gap-4">
                   <button
                     type="button"
@@ -466,12 +484,13 @@ export default function RegisterPage() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-full py-2.5 text-base font-bold text-white shadow-md hover:opacity-90 transition flex items-center justify-center gap-2"
+                    disabled={loading || !email || !password || !confirmPassword}
+                    className={`flex-1 rounded-full py-2.5 text-base font-bold text-white shadow-md transition flex items-center justify-center gap-2 ${loading || !email || !password || !confirmPassword ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
                     style={{
                       background: "linear-gradient(90deg, #B1E747 0%, #3F7E48 50%, #024D70 100%)",
                     }}
                   >
-                    Daftar
+                    {loading ? 'Memproses...' : 'Daftar'}
                   </button>
                 </div>
               </div>

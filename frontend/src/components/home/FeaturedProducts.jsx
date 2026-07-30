@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowRight, Star, Store } from "lucide-react";
-import { products } from "../mockData";
+import { products } from "../../data/mockData";
 
 export default function FeaturedProducts() {
   return (

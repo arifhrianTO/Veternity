@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Search, ChevronDown, Store, Users, ArrowRight } from "lucide-react";
-import { koperasiList, filters } from "../mockData";
+import { koperasiList, filters } from "../../data/mockData";
 
 export default function KoperasiSection() {
   const [activeFilter, setActiveFilter] = useState("Semua");

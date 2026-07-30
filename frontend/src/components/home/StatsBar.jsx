@@ -1,5 +1,5 @@
 import React from "react";
-import { stats } from "../mockData";
+import { stats } from "../../data/mockData";
 
 export default function StatsBar() {
   return (
