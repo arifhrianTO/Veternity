@@ -1,52 +1,30 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import StatsBar from "./components/StatsBar";
-import Categories from "./components/Categories";
-import FeaturedProducts from "./components/FeaturedProducts";
-import KoperasiSection from "./components/KoperasiSection";
-import Footer from "./components/Footer";
-import DashboardPage from "./pages/petani/dashboard";
-import ProdukPage from "./pages/petani/produk";
-import PesananPage from "./pages/petani/pesanan";
-import PenawaranPage from "./pages/petani/penawaran";
-import ProfilPage from "./pages/petani/profil";
+import Home from "./pages/Home";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+
+// Petani
+import DashboardPage from "./pages/petani/Dashboard";
+import ProdukPage from "./pages/petani/Produk";
+import PesananPage from "./pages/petani/Pesanan";
+import PenawaranPage from "./pages/petani/Penawaran";
+import ProfilPage from "./pages/petani/Profil";
 
 // Pembeli 
-import MarketplacePage from "./pages/pembeli/marketplace";
-import KeranjangPage from "./pages/pembeli/keranjang";
-import PesananPembeliPage from "./pages/pembeli/pesanan";
-import ProfilPembeliPage from "./pages/pembeli/profil";
-import CheckoutPage from "./pages/pembeli/checkout";
-
-function HomePage() {
-  return (
-    <div className="min-h-screen bg-[#F8F7F4] font-sans text-slate-800">
-      <Header />
-      <Hero />
-      <StatsBar />
-      {/* Bungkus bagian Produk dengan background putih penuh */}
-      <div className="bg-white w-full border-y border-slate-100 py-16">
-        <section id="produk" className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-extrabold text-center mb-10 bg-gradient-to-r from-[#00378A] to-[#0453C9] bg-clip-text text-transparent">
-            Produk
-          </h2>
-          <Categories />
-          <FeaturedProducts />
-        </section>
-      </div>
-      <KoperasiSection />
-      <Footer />
-    </div>
-  );
-}
+import MarketplacePage from "./pages/pembeli/Marketplace";
+import KeranjangPage from "./pages/pembeli/Keranjang";
+import PesananPembeliPage from "./pages/pembeli/Pesanan";
+import ProfilPembeliPage from "./pages/pembeli/Profil";
+import CheckoutPage from "./pages/pembeli/Checkout";
 
 function App() {
   return (
     <Routes>
       {/* Home / Landing Page */}
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       {/* Rute Petani */}
       <Route path="/petani" element={<Navigate to="/petani/dashboard" replace />} />

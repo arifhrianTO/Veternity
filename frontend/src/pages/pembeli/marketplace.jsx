@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PetaniSidebar from "../../components/petani/PetaniSidebar";
 import ProductDetailModal from "../../components/pembeli/ProductDetailModal";
-import { products } from "../../mockData";
+import { products } from "../../data/mockData";
 import { Star } from "lucide-react";
 
 export default function MarketplacePage() {

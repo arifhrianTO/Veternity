@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import vectorShape from "../assets/Vector.png";
 import logo from "../assets/logo.png";
 import ellipse181 from "../assets/Ellipse_181.png";
@@ -11,11 +12,45 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({ emailOrPhone, password });
+    setErrorMsg("");
+    setLoading(true);
+
+    try {
+      const response = await axios.post("http://localhost:8000/api/login", {
+        identifier: emailOrPhone,
+        password: password,
+      });
+
+      const { data, access_token } = response.data;
+      
+      // Simpan token & info user ke localStorage
+      localStorage.setItem("token", access_token);
+      localStorage.setItem("user", JSON.stringify(data));
+
+      // Redirect berdasarkan role
+      if (data.role === 'petani' || data.role === 'petani_binaan') {
+        navigate("/petani/dashboard");
+      } else if (data.role === 'pembeli') {
+        navigate("/pembeli/marketplace");
+      } else {
+        navigate("/"); // fallback
+      }
+
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        setErrorMsg(error.response.data.message);
+      } else {
+        setErrorMsg("Terjadi kesalahan saat login.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -159,17 +194,24 @@ export default function LoginPage() {
                 Lupa password?
               </button>
             </div>
+            
+            {errorMsg && (
+              <div className="mt-4 text-red-500 text-sm text-center font-semibold bg-red-50 p-2 rounded">
+                {errorMsg}
+              </div>
+            )}
           </div>
 
           <button
             type="submit"
-            className="mt-8 w-full rounded-full py-4 text-lg font-bold text-white shadow-md transition hover:opacity-90"
+            disabled={loading || !emailOrPhone || !password}
+            className={`mt-8 w-full rounded-full py-4 text-lg font-bold text-white shadow-md transition ${loading || !emailOrPhone || !password ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
             style={{
               background:
                 "linear-gradient(90deg, #024D70 0%, #3F7E48 50%, #B1E747 100%)",
             }}
           >
-            Masuk
+            {loading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
       </div>

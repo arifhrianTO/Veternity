@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
-import { categories } from "../mockData";
+import { categories } from "../../data/mockData";
 
 export default function Categories() {
   return (
