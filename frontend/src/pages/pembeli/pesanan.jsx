@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import PetaniSidebar from "../../components/petani/PetaniSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import OrderDetailModal from "../../components/pembeli/OrderDetailModal";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 
@@ -243,27 +243,27 @@ export default function PesananPembeliPage() {
 
   return (
     <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
-        <PetaniSidebar />
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
+        <Sidebar />
 
         {/* Main content - consistent wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
 
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
+          <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
             <h2 className="text-[24px] font-semibold text-[#005941]">Pesanan Saya</h2>
-            <img src="/images/ikan1.png" alt="avatar" className="w-14 h-14 rounded-full border border-slate-100" />
+            <img src="/images/ikan1.png" alt="avatar" className="w-10 h-10 rounded-full border border-slate-100" />
           </div>
 
           {/* Tab bar - Rectangle 4189 */}
-          <div className="bg-white shadow-[0_0_5px_rgba(0,0,0,0.25)] rounded-[10px] p-3 flex gap-2 mb-6 w-fit">
+          <div className="bg-white shadow-[0_0_5px_rgba(0,0,0,0.25)] rounded-[10px] p-2 flex gap-1 mb-6 w-fit">
             {tabItems.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
                 <button
                   key={tab.key}
                   onClick={() => handleTabChange(tab.key)}
-                  className={`relative px-6 py-2 text-[20px] font-semibold transition ${
+                  className={`relative px-5 py-2 text-[15px] font-bold transition ${
                     isActive ? "text-[#005941]" : "text-black/[0.43] hover:text-black/60"
                   }`}
                 >
@@ -281,11 +281,11 @@ export default function PesananPembeliPage() {
 
             {/* Column headers */}
             <div className="flex items-center px-4 mb-4">
-              <span className="w-[120px] text-[16px] font-bold text-[#273B4A]">No Pesanan</span>
-              <span className="flex-[2] text-[16px] font-bold text-[#273B4A] pl-8">Produk</span>
-              <span className="flex-1 text-[16px] font-bold text-[#273B4A] text-center">Total</span>
-              <span className="flex-1 text-[16px] font-bold text-[#273B4A] text-center">Tanggal</span>
-              <span className="w-[130px] text-[16px] font-bold text-[#273B4A] text-center">Status</span>
+              <span className="w-[120px] text-[13px] font-bold text-slate-500 uppercase tracking-wider">No Pesanan</span>
+              <span className="flex-[2] text-[13px] font-bold text-slate-500 uppercase tracking-wider pl-8">Produk</span>
+              <span className="flex-1 text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">Total</span>
+              <span className="flex-1 text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">Tanggal</span>
+              <span className="w-[130px] text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</span>
               <span className="w-[40px]" />
             </div>
 
@@ -307,7 +307,7 @@ export default function PesananPembeliPage() {
                     <div key={`${order.id}-${idx}`}>
                       <div className="flex items-center px-4 py-5">
                         {/* No Pesanan */}
-                        <span className="w-[120px] text-[16px] font-semibold text-[#273B4A]">
+                        <span className="w-[120px] text-[15px] font-bold text-[#273B4A]">
                           {order.id}
                         </span>
 
@@ -316,28 +316,28 @@ export default function PesananPembeliPage() {
                           <img
                             src={order.image || "/images/beras1.png"}
                             alt="product"
-                            className="w-[83px] h-[55px] object-cover rounded-[5px] flex-shrink-0"
+                            className="w-[60px] h-[40px] object-cover rounded-md flex-shrink-0 border border-slate-200"
                             onError={(e) => { e.target.src = "/images/beras.png"; }}
                           />
-                          <span className="text-[16px] font-semibold text-[#273B4A]">
+                          <span className="text-[15px] font-medium text-[#273B4A]">
                             {order.productCount || order.products?.length || 1} produk
                           </span>
                         </div>
 
                         {/* Total */}
-                        <span className="flex-1 text-[16px] font-semibold text-[#273B4A] text-center">
+                        <span className="flex-1 text-[15px] font-bold text-[#273B4A] text-center">
                           {order.total}
                         </span>
 
                         {/* Tanggal */}
-                        <span className="flex-1 text-[16px] font-semibold text-[#273B4A] text-center">
+                        <span className="flex-1 text-[15px] font-medium text-[#273B4A] text-center">
                           {order.date}
                         </span>
 
                         {/* Status badge */}
                         <div className="w-[130px] flex justify-center">
                           <span
-                            className={`inline-flex items-center justify-center px-3 py-1 rounded-[3px] border text-[15px] font-semibold text-center leading-[18px] ${badge.bg} ${badge.border} ${badge.text}`}
+                            className={`inline-flex items-center justify-center px-3 py-1 rounded-[3px] border text-[13px] font-semibold text-center leading-[18px] ${badge.bg} ${badge.border} ${badge.text}`}
                           >
                             {order.status}
                           </span>
@@ -346,9 +346,9 @@ export default function PesananPembeliPage() {
                         {/* Detail arrow */}
                         <button
                           onClick={() => setSelectedOrder(order)}
-                          className="w-[40px] flex items-center justify-center hover:bg-slate-50 rounded-lg transition"
+                          className="w-[40px] flex items-center justify-center hover:bg-emerald-50 rounded-lg transition"
                         >
-                          <ChevronRight className="w-6 h-6 text-[#029154]" strokeWidth={3} />
+                          <ChevronRight className="w-5 h-5 text-[#029154]" strokeWidth={2.5} />
                         </button>
                       </div>
 
@@ -362,8 +362,8 @@ export default function PesananPembeliPage() {
           </div>
 
           {/* Bottom: pagination info + page buttons */}
-          <div className="flex items-center justify-between mt-4 px-2">
-            <span className="text-[16px] font-semibold text-black/[0.51]">
+          <div className="flex items-center justify-between mt-6 px-2">
+            <span className="text-[14px] font-semibold text-black/[0.51]">
               Menampilkan {Math.min(startIndex + 1, filteredOrders.length)}-
               {Math.min(startIndex + currentOrders.length, filteredOrders.length)} dari{" "}
               {filteredOrders.length} produk
@@ -384,7 +384,7 @@ export default function PesananPembeliPage() {
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-[40px] h-[40px] rounded-[5px] text-[24px] font-semibold flex items-center justify-center transition ${
+                  className={`w-[32px] h-[32px] rounded-[5px] text-[14px] font-bold flex items-center justify-center transition ${
                     currentPage === i + 1
                       ? "bg-[#006638] text-white"
                       : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/5"

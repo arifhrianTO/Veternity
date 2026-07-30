@@ -7,11 +7,7 @@ import App from './App.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/*" element={<App />} />
-        <Route path="/login" element={<AuthPage />} />
-        <Route path="/register" element={<AuthPage />} />
-      </Routes>
+      <App />
     </BrowserRouter>
   </StrictMode>,
 )

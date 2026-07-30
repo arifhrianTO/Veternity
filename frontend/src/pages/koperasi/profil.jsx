@@ -1,5 +1,5 @@
 import React from "react";
-import KoperasiSidebar from "../../components/koperasi/KoperasiSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 
 export default function KoperasiProfilPage() {
   const profile = {
@@ -15,12 +15,12 @@ export default function KoperasiProfilPage() {
 
   return (
     <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
         {/* Sidebar Koperasi */}
-        <KoperasiSidebar />
+        <Sidebar />
 
         {/* Outer Container Wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Top Header */}
           <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-8">
@@ -28,7 +28,7 @@ export default function KoperasiProfilPage() {
             <img 
               src={profile.image} 
               alt="avatar" 
-              className="w-12 h-12 rounded-full border border-slate-100 object-cover"
+              className="w-10 h-10 rounded-full border border-slate-100 object-cover"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = "/images/user.png";

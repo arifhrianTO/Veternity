@@ -47,8 +47,8 @@ export default function CheckoutPage() {
         shippingMethod === "reguler"
           ? "Pengiriman Reguler"
           : shippingMethod === "express"
-          ? "Pengiriman Express"
-          : "Ambil Sendiri",
+            ? "Pengiriman Express"
+            : "Ambil Sendiri",
       paymentMethod: paymentMethod === "transfer" ? "Transfer Bank" : "QRIS",
     };
 
@@ -63,7 +63,7 @@ export default function CheckoutPage() {
     if (cart) {
       const cartItems = JSON.parse(cart);
       const remaining = cartItems.filter(
-        (ci) => !checkoutItems.some((co) => co.name === ci.name)
+        (ci) => !checkoutItems.some((co) => co.name === ci.name),
       );
       localStorage.setItem("cart", JSON.stringify(remaining));
     }
@@ -103,121 +103,139 @@ export default function CheckoutPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="max-w-[1440px] mx-auto px-6 py-6">
-        {/* Top bar: back arrow + title */}
-        <div className="flex items-center gap-3 mb-8">
+    <div className="h-screen overflow-hidden bg-white font-[Montserrat] text-slate-900">
+      <div className="w-full h-full p-6 flex flex-col">
+        {/* Top bar: back arrow + title - reduced from 40px/24px */}
+        <div className="flex items-center gap-3 mb-4 flex-shrink-0">
           <button
             onClick={() => navigate("/pembeli/keranjang")}
-            className="w-[40px] h-[40px] flex items-center justify-center hover:bg-slate-50 rounded-lg transition"
+            className="w-[32px] h-[32px] flex items-center justify-center hover:bg-slate-50 rounded-lg transition"
           >
-            <ArrowLeft className="w-7 h-7 text-[#006638]" strokeWidth={3} />
+            <ArrowLeft className="w-5 h-5 text-[#006638]" strokeWidth={3} />
           </button>
-          <h1 className="text-[24px] font-semibold text-[#005941]">CheckOut</h1>
+          <h1 className="text-[18px] font-semibold text-[#005941]">CheckOut</h1>
         </div>
 
         {/* Two-column layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* LEFT COLUMN: Address + Shipping + Payment */}
-          <div className="w-full lg:w-[621px] border border-black/[0.2] rounded-[10px] bg-[rgba(0,55,138,0.01)] p-6 flex-shrink-0">
-
+        <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+          {/* LEFT COLUMN: Address + Shipping + Payment - border matches panel 2 */}
+          <div className="w-full lg:w-[520px] border border-black/[0.2] rounded-[10px] bg-[rgba(0,55,138,0.01)] p-4 flex-shrink-0 overflow-y-auto">
             {/* Section 1: Alamat Pengiriman */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-[35px] h-[35px] rounded-full bg-[#006638] flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-[20px] font-semibold">1</span>
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-[26px] h-[26px] rounded-full bg-[#006638] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-[14px] font-semibold">1</span>
               </div>
-              <h3 className="text-[20px] font-semibold text-black">Alamat Pengiriman</h3>
+              <h3 className="text-[15px] font-semibold text-black">
+                Alamat Pengiriman
+              </h3>
             </div>
 
-            <div className="border border-[#006638] rounded-[20px] p-5 mb-8 relative">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-6 h-6 text-[#006638] flex-shrink-0 mt-0.5" />
+            <div className="border border-[#006638] rounded-[12px] p-3 mb-4 relative">
+              <div className="flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 text-[#006638] flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-[16px] font-medium text-black/50 leading-[20px]">
-                    Jl. Ahmad Yani, Tlk. Tering, Kec. Batam Kota, Kota Batam, Kepulauan Riau 29461
+                  <p className="text-[11px] font-medium text-black/50 leading-[14px]">
+                    Jl. Ahmad Yani, Tlk. Tering, Kec. Batam Kota, Kota Batam,
+                    Kepulauan Riau 29461
                   </p>
-                  <p className="text-[16px] font-semibold text-black mt-2">08xxxxxxx</p>
+                  <p className="text-[11px] font-semibold text-black mt-1">
+                    08xxxxxxx
+                  </p>
                 </div>
-                <button className="text-[16px] font-semibold text-[#006638] hover:underline flex-shrink-0">
+                <button className="text-[12px] font-semibold text-[#006638] hover:underline flex-shrink-0">
                   Ubah
                 </button>
               </div>
             </div>
 
             {/* Section 2: Metode Pembelian */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-[35px] h-[35px] rounded-full bg-[#006638] flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-[20px] font-semibold">2</span>
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-[26px] h-[26px] rounded-full bg-[#006638] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-[14px] font-semibold">2</span>
               </div>
-              <h3 className="text-[20px] font-semibold text-black">Metode Pembelian</h3>
+              <h3 className="text-[15px] font-semibold text-black">
+                Metode Pembelian
+              </h3>
             </div>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-2 mb-4">
               {shippingOptions.map((opt) => {
                 const isSelected = shippingMethod === opt.id;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => setShippingMethod(opt.id)}
-                    className={`w-full flex items-center justify-between rounded-[20px] px-5 py-4 border transition text-left ${
+                    className={`w-full flex items-center justify-between rounded-[12px] px-3 py-2 border transition text-left ${
                       isSelected
                         ? "border-[#006638] bg-[rgba(2,145,84,0.03)]"
                         : "border-black/[0.25] bg-white hover:border-black/40"
                     }`}
                   >
-                    <div className="flex items-center gap-4">
-                      {/* Radio circle */}
+                    <div className="flex items-center gap-3">
+                      {/* Radio circle - reduced from 30px to 20px */}
                       <div
-                        className={`w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0 ${
+                        className={`w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0 ${
                           isSelected ? "bg-[#006638]" : "border border-black"
                         }`}
                       >
                         {isSelected && (
-                          <div className="w-[10px] h-[10px] rounded-full bg-white" />
+                          <div className="w-[7px] h-[7px] rounded-full bg-white" />
                         )}
                       </div>
                       <div>
-                        <p className="text-[16px] font-semibold text-black">{opt.label}</p>
-                        <p className="text-[15px] font-semibold text-black/50">{opt.desc}</p>
+                        <p className="text-[13px] font-semibold text-black">
+                          {opt.label}
+                        </p>
+                        <p className="text-[12px] font-semibold text-black/50">
+                          {opt.desc}
+                        </p>
                       </div>
                     </div>
-                    <span className={`text-[16px] font-semibold ${opt.costColor}`}>{opt.cost}</span>
+                    <span
+                      className={`text-[13px] font-semibold ${opt.costColor}`}
+                    >
+                      {opt.cost}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
             {/* Section 3: Pilih Pembayaran */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-[35px] h-[35px] rounded-full bg-[#006638] flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-[20px] font-semibold">3</span>
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-[26px] h-[26px] rounded-full bg-[#006638] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-[14px] font-semibold">3</span>
               </div>
-              <h3 className="text-[20px] font-semibold text-black">Pilih Pembayaran</h3>
+              <h3 className="text-[15px] font-semibold text-black">
+                Pilih Pembayaran
+              </h3>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-2">
               {paymentOptions.map((opt) => {
                 const isSelected = paymentMethod === opt.id;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => setPaymentMethod(opt.id)}
-                    className={`w-full flex items-center gap-4 rounded-[20px] px-5 py-4 border transition text-left ${
+                    className={`w-full flex items-center gap-3 rounded-[12px] px-3 py-2 border transition text-left ${
                       isSelected
                         ? "border-[#006638] bg-[rgba(2,145,84,0.03)]"
                         : "border-black/[0.25] bg-white hover:border-black/40"
                     }`}
                   >
                     <div
-                      className={`w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0 ${
+                      className={`w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0 ${
                         isSelected ? "bg-[#006638]" : "border border-black"
                       }`}
                     >
                       {isSelected && (
-                        <div className="w-[10px] h-[10px] rounded-full bg-white" />
+                        <div className="w-[7px] h-[7px] rounded-full bg-white" />
                       )}
                     </div>
-                    <p className="text-[20px] font-semibold text-black">{opt.label}</p>
+                    <p className="text-[14px] font-semibold text-black">
+                      {opt.label}
+                    </p>
                   </button>
                 );
               })}
@@ -225,58 +243,78 @@ export default function CheckoutPage() {
           </div>
 
           {/* RIGHT COLUMN: Ringkasan Pembelian */}
-          <div className="flex-1 border border-black/[0.2] rounded-[10px] bg-[rgba(39,59,74,0.01)] p-6 flex flex-col">
-            <h3 className="text-[20px] font-semibold text-black mb-6">Ringkasan Pembelian</h3>
+          <div className="flex-1 border border-black/[0.2] rounded-[10px] bg-[rgba(39,59,74,0.01)] p-4 flex flex-col overflow-y-auto">
+            <h3 className="text-[15px] font-semibold text-black mb-3">
+              Ringkasan Pembelian
+            </h3>
 
-            {/* Product list */}
-            <div className="space-y-5 mb-6">
+            {/* Product list - image reduced from 98x65 to 72x48 */}
+            <div className="space-y-3 mb-3">
               {checkoutItems.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-4">
+                <div key={idx} className="flex items-center gap-3">
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-[98px] h-[65px] object-cover rounded-[5px] flex-shrink-0"
-                    onError={(e) => { e.target.src = "/images/beras.png"; }}
+                    className="w-[60px] h-[40px] object-cover rounded-[5px] flex-shrink-0"
+                    onError={(e) => {
+                      e.target.src = "/images/beras.png";
+                    }}
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-[16px] font-semibold text-[#273B4A] truncate">{item.name}</h4>
-                    <p className="text-[16px] font-semibold text-black/[0.43] mt-0.5">
+                    <h4 className="text-[13px] font-semibold text-[#273B4A] truncate">
+                      {item.name}
+                    </h4>
+                    <p className="text-[12px] font-semibold text-black/[0.43] mt-0.5">
                       {item.quantity || 1} kg
                     </p>
                   </div>
-                  <span className="text-[15px] font-bold text-black/[0.6] flex-shrink-0">
-                    Rp {(parsePrice(item.price) * (item.quantity || 1)).toLocaleString("id-ID")} {item.unit}
+                  <span className="text-[12px] font-bold text-black/[0.6] flex-shrink-0">
+                    Rp{" "}
+                    {(
+                      parsePrice(item.price) * (item.quantity || 1)
+                    ).toLocaleString("id-ID")}{" "}
+                    {item.unit}
                   </span>
                 </div>
               ))}
             </div>
 
             {/* Divider */}
-            <div className="border-t border-black/[0.3] my-4" />
+            <div className="border-t border-black/[0.3] my-2" />
 
             {/* Sub Total */}
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-[20px] font-bold text-black/[0.6]">Sub Total</span>
-              <span className="text-[20px] font-bold text-black">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[14px] font-bold text-black/[0.6]">
+                Sub Total
+              </span>
+              <span className="text-[14px] font-bold text-black">
                 Rp {subTotal.toLocaleString("id-ID")}
               </span>
             </div>
 
             {/* Ongkos Kirim */}
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-[20px] font-bold text-black/[0.6]">Ongkos Kirim</span>
-              <span className={`text-[20px] font-semibold ${shippingCost === 0 ? "text-[#006638]" : "text-black"}`}>
-                {shippingCost === 0 ? "Gratis" : `Rp ${shippingCost.toLocaleString("id-ID")}`}
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[14px] font-bold text-black/[0.6]">
+                Ongkos Kirim
+              </span>
+              <span
+                className={`text-[14px] font-semibold ${shippingCost === 0 ? "text-[#006638]" : "text-black"}`}
+              >
+                {shippingCost === 0
+                  ? "Gratis"
+                  : `Rp ${shippingCost.toLocaleString("id-ID")}`}
               </span>
             </div>
 
             {/* Divider */}
-            <div className="border-t border-black/[0.3] my-4" />
+            <div className="border-t border-black/[0.3] my-2" />
 
             {/* Total Pembayaran */}
-            <div className="flex justify-between items-center mb-8">
-              <span className="text-[24px] font-bold text-black">Total Pembayaran</span>
-              <span className="text-[24px] font-bold text-black">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[16px] font-bold text-black">
+                Total Pembayaran
+              </span>
+              <span className="text-[16px] font-bold text-black">
                 Rp {totalPayment.toLocaleString("id-ID")}
               </span>
             </div>
@@ -287,7 +325,7 @@ export default function CheckoutPage() {
             {/* Pesan button */}
             <button
               onClick={handleOrder}
-              className="w-full h-[91px] bg-[#006638] hover:bg-[#00522c] rounded-[10px] text-white text-[40px] font-bold transition"
+              className="w-full h-[42px] bg-[#006638] hover:bg-[#00522c] rounded-[8px] text-white text-[15px] font-bold transition flex-shrink-0"
             >
               Pesan
             </button>

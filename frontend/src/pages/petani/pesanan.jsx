@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import PetaniSidebar from "../../components/petani/PetaniSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 
 const mockOrders = [
@@ -143,14 +143,14 @@ export default function PesananPage() {
 
   return (
     <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
-        <PetaniSidebar />
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
+        <Sidebar />
 
         {/* Outer Container Wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Top Header */}
-          <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
+          <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
             <div>
               <h2 className="text-[24px] font-semibold text-[#005941]">Pesanan</h2>
               <p className="text-[14px] text-slate-500">Kelola pesanan pelanggan Anda</p>
@@ -159,7 +159,7 @@ export default function PesananPage() {
               <img
                 src="/images/ikan1.png"
                 alt="avatar"
-                className="w-14 h-14 rounded-full border border-slate-100 object-cover"
+                className="w-10 h-10 rounded-full border border-slate-100 object-cover"
               />
             </div>
           </div>
@@ -186,7 +186,7 @@ export default function PesananPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="text-[16px] font-bold text-[#273B4A] border-b-2 border-black/[0.13]">
+                  <tr className="text-[15px] font-bold text-[#273B4A] border-b-2 border-black/[0.13]">
                     <th className="pb-4 px-2">No Pesanan</th>
                     <th className="pb-4 px-2">Pembeli</th>
                     <th className="pb-4 px-2">Produk</th>
@@ -199,21 +199,12 @@ export default function PesananPage() {
                 <tbody>
                   {currentOrders.map((order, index) => (
                     <tr key={`${order.id}-${index}`} className="border-b border-black/[0.13] last:border-b-0">
-                      <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{order.id}</td>
-                      <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{order.buyer}</td>
-                      <td className="py-4 px-2">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src="/images/beras.png"
-                            alt={order.product}
-                            className="w-[83px] h-[55px] object-cover rounded-[5px]"
-                          />
-                          <span className="text-[16px] font-semibold text-[#273B4A]">{order.product}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{order.quantity}</td>
-                      <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{order.total}</td>
-                      <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{order.date}</td>
+                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.id}</td>
+                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.buyer}</td>
+                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.product}</td>
+                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.quantity}</td>
+                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.total}</td>
+                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.date}</td>
                       <td className="py-4 px-2">
                         {getStatusBadge(order.status)}
                       </td>
@@ -244,7 +235,7 @@ export default function PesananPage() {
                 <button
                   key={index}
                   onClick={() => setPage(index + 1)}
-                  className={`w-[40px] h-[40px] rounded-[5px] text-[24px] font-semibold flex items-center justify-center transition ${
+                  className={`w-[36px] h-[36px] rounded-[5px] text-[16px] font-semibold flex items-center justify-center transition ${
                     page === index + 1
                       ? "bg-[#006638] text-white"
                       : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/5"

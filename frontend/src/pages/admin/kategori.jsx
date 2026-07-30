@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import AdminSidebar from "../../components/admin/AdminSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import {
   Search,
   Plus,
@@ -58,18 +58,18 @@ export default function KategoriPage() {
 
   return (
     <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
         
         {/* AdminSidebar Komponen */}
-        <AdminSidebar />
+        <Sidebar />
 
         {/* Area Konten Utama */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Header Panel */}
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#029154]">
             <h1 className="text-[24px] font-semibold text-[#005941]">Kategori</h1>
-            <div className="w-12 h-12 rounded-full overflow-hidden border border-slate-100 flex items-center justify-center bg-[#C1E0FF]">
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100 flex items-center justify-center bg-[#C1E0FF]">
               <img
                 src="/images/admin-avatar.png"
                 alt="Admin Avatar"

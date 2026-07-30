@@ -1,13 +1,11 @@
 import React from "react";
 
-export default function PetaniStatCard({ title, value, subtitle, icon: Icon, iconSrc, accent }) {
+export default function PetaniStatCard({ title, value, subtitle, icon: Icon, accent }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-4 flex items-center gap-4 shadow-sm">
       <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 text-white bg-gradient-to-br ${accent || 'from-slate-900 to-emerald-700'}`}>
-        {iconSrc ? (
-          <img src={iconSrc} alt={title} className="w-7 h-7 object-contain" />
-        ) : Icon ? (
-          <Icon className="w-6 h-6" />
+        {Icon ? (
+          <Icon className="w-7 h-7" />
         ) : (
           <span />
         )}

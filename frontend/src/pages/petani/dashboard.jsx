@@ -1,5 +1,5 @@
 import React from "react";
-import PetaniSidebar from "../../components/petani/PetaniSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import PetaniStatCard from "../../components/petani/PetaniStatCard";
 import PetaniOffers from "../../components/petani/PetaniOffers";
 import PetaniOrders from "../../components/petani/PetaniOrders";
@@ -8,14 +8,14 @@ import { dashboardMetrics, latestOffers, latestOrders } from "../../data/petaniD
 export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
-        <PetaniSidebar />
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
+        <Sidebar />
 
         {/* Outer Container Wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Top Header */}
-          <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
+          <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
             <div>
               <h2 className="text-[24px] font-semibold text-[#005941]">Dashboard Petani</h2>
               <p className="text-[14px] text-slate-500">Ringkasan aktivitas dan performa penjualan Anda</p>
@@ -24,7 +24,7 @@ export default function DashboardPage() {
               <img 
                 src="/images/ikan1.png" 
                 alt="avatar" 
-                className="w-14 h-14 rounded-full border border-slate-100 object-cover" 
+                className="w-10 h-10 rounded-full border border-slate-100 object-cover" 
               />
             </div>
           </div>
@@ -44,7 +44,7 @@ export default function DashboardPage() {
               <img 
                 src="/images/petani-banner.png" 
                 alt="Petani Banner" 
-                className="h-[120%] object-contain object-bottom"
+                className="h-full object-contain object-bottom"
                 onError={(e) => {
                   // Fallback jika file gambar belum ada
                   e.target.style.display = 'none';
