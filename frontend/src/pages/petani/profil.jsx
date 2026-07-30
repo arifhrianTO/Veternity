@@ -1,17 +1,54 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import api from "../../config/axios";
+import { Loader2 } from "lucide-react";
 
 export default function ProfilPage() {
-  const profile = {
-    name: "Budi Santoso",
-    nid: "0987654321234567",
-    phone: "08098765432",
-    address: "poltek",
-    birthDate: "17-08-45",
-    account: "73829292938399",
-    role: "Petani",
-    image: "/images/ikan1.png",
-  };
+  const [profile, setProfile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
+        localStorage.setItem("token", testToken);
+
+        const response = await api.get('/user');
+        const data = response.data;
+        setProfile({
+          name: data.nama_lengkap,
+          nid: data.nik || "Tidak ada NIK",
+          phone: data.no_hp,
+          address: data.alamat,
+          birthDate: data.tanggal_lahir,
+          account: data.rekening || "Tidak ada rekening",
+          role: data.role,
+          image: data.foto_profil ? `http://localhost:8000/storage/${data.foto_profil}` : "/images/user.png",
+        });
+      } catch (error) {
+        console.error("Gagal mengambil profil", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#006638]" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center text-slate-500">
+        Gagal memuat profil.
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
@@ -22,12 +59,12 @@ export default function ProfilPage() {
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Top Header */}
-          <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-8">
+          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-8">
             <h2 className="text-[24px] font-semibold text-[#005941]">Profil</h2>
             <img 
               src={profile.image} 
               alt="avatar" 
-              className="w-10 h-10 rounded-full border border-slate-100 object-cover" 
+              className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]" 
             />
           </div>
 

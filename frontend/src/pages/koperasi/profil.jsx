@@ -23,12 +23,12 @@ export default function KoperasiProfilPage() {
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Top Header */}
-          <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-8">
+          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-8">
             <h2 className="text-[24px] font-semibold text-[#005941]">Profil Koperasi</h2>
             <img 
               src={profile.image} 
               alt="avatar" 
-              className="w-10 h-10 rounded-full border border-slate-100 object-cover"
+              className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = "/images/user.png";

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
-import { ChevronRight, ChevronLeft, X, Phone, MessageSquare, Mail } from "lucide-react";
+import { ChevronRight, ChevronLeft, X, Phone, MessageSquare, Mail, Loader2 } from "lucide-react";
+import api from "../../config/axios";
 
 const penawaranData = [
   {
@@ -94,19 +95,60 @@ function getStatusBadge(status) {
 }
 
 export default function PenawaranPage() {
+  const [offers, setOffers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        setIsLoading(true);
+        const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
+        localStorage.setItem("token", testToken);
+
+        const response = await api.get('/offers');
+        const formattedOffers = response.data.map(offer => ({
+          id: offer.kode_penawaran,
+          product: offer.product ? offer.product.kategori : 'Unknown',
+          img: offer.product && offer.product.gambar ? `http://localhost:8000/storage/${offer.product.gambar}` : '/images/placeholder.png',
+          quantity: `${offer.jumlah_diminta} ${offer.product ? offer.product.satuan : 'Kg'}`,
+          basePrice: offer.product ? `Rp ${Number(offer.product.harga_harapan).toLocaleString('id-ID')} / ${offer.product.satuan}` : '-',
+          offerPrice: `Rp ${Number(offer.harga_tawaran).toLocaleString('id-ID')} / ${offer.product ? offer.product.satuan : 'Kg'}`,
+          date: new Date(offer.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: '2-digit'}),
+          status: offer.status,
+          buyer: offer.pembeli ? offer.pembeli.nama_lengkap : 'Unknown',
+          location: offer.pembeli ? offer.pembeli.alamat : 'Unknown',
+          message: offer.pesan_pembeli || 'Tidak ada pesan.',
+          history: offer.histories ? offer.histories.map(h => ({
+            time: new Date(h.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
+            label: h.aksi,
+            value: h.harga_terkait ? `Rp ${Number(h.harga_terkait).toLocaleString('id-ID')}` : '-'
+          })) : []
+        }));
+        setOffers(formattedOffers);
+      } catch (err) {
+        console.error("Gagal mengambil data penawaran:", err);
+        setError("Gagal memuat data penawaran.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOffers();
+  }, []);
+
   const [activeTab, setActiveTab] = useState("semua");
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [counterPrice, setCounterPrice] = useState("");
   const [page, setPage] = useState(1);
   const itemsPerPage = 4;
 
-  const filteredOffers = penawaranData.filter((item) => {
+  const filteredOffers = Array.isArray(offers) ? offers.filter((item) => {
     if (activeTab === "semua") return true;
     if (activeTab === "menunggu") return item.status === "Menunggu";
     if (activeTab === "diterima") return item.status === "Diterima";
     if (activeTab === "ditolak") return item.status === "Ditolak";
     return true;
-  });
+  }) : [];
 
   const totalPages = Math.max(1, Math.ceil(filteredOffers.length / itemsPerPage));
   const startIndex = (page - 1) * itemsPerPage;
@@ -126,7 +168,7 @@ export default function PenawaranPage() {
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative flex flex-col justify-between">
           <div>
             {/* Top Header Bar */}
-            <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
+            <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
               <div>
                 <h2 className="text-[24px] font-semibold text-[#005941]">Penawaran</h2>
                 <p className="text-[14px] text-slate-500">Kelola penawaran yang masuk dari pembeli</p>
@@ -135,7 +177,7 @@ export default function PenawaranPage() {
                 <img
                   src="/images/ikan1.png"
                   alt="avatar"
-                  className="w-10 h-10 rounded-full border border-slate-100 object-cover"
+                  className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]"
                 />
               </div>
             </div>
@@ -171,36 +213,57 @@ export default function PenawaranPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {currentOffers.map((offer) => (
-                      <tr key={offer.id} className="border-b border-black/[0.13] last:border-b-0">
-                        <td className="py-4 px-2">
-                          <div className="text-[14px] font-semibold text-[#273B4A]">{offer.product}</div>
-                          <div className="text-[13px] text-slate-500">{offer.quantity}</div>
-                        </td>
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{offer.basePrice}</td>
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{offer.offerPrice}</td>
-                        <td className="py-4 px-2">
-                          <div className="flex flex-col items-start gap-1">
-                            {getStatusBadge(offer.status)}
-                            <span className="text-[12px] text-slate-400 font-medium ml-1">{offer.date}</span>
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan="5" className="text-center py-10">
+                          <div className="flex items-center justify-center gap-2 text-[#006638]">
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <span className="font-semibold">Memuat penawaran...</span>
                           </div>
                         </td>
-                        <td className="py-4 px-2 text-center">
-                          <button
-                            onClick={() => setSelectedOffer(offer)}
-                            className="rounded-full bg-[#006638] px-6 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-[#00522d] transition"
-                          >
-                            Detail
-                          </button>
+                      </tr>
+                    ) : error ? (
+                      <tr>
+                        <td colSpan="5" className="text-center py-10 text-red-500 font-semibold bg-red-50">
+                          {error}
                         </td>
                       </tr>
-                    ))}
-                    {currentOffers.length === 0 && (
+                    ) : currentOffers.length === 0 ? (
                       <tr>
                         <td colSpan="5" className="text-center py-8 text-slate-500 font-medium">
                           Tidak ada penawaran ditemukan.
                         </td>
                       </tr>
+                    ) : (
+                      currentOffers.map((offer) => (
+                        <tr key={offer.id} className="border-b border-black/[0.13] last:border-b-0 hover:bg-slate-50/50 transition">
+                          <td className="py-4 px-2">
+                            <div className="flex items-center gap-3">
+                              <img src={offer.img} alt={offer.product} className="w-[50px] h-[50px] object-cover rounded-[5px] border border-slate-200" />
+                              <div>
+                                <div className="text-[14px] font-semibold text-[#273B4A]">{offer.product}</div>
+                                <div className="text-[13px] text-slate-500">{offer.quantity}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{offer.basePrice}</td>
+                          <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{offer.offerPrice}</td>
+                          <td className="py-4 px-2">
+                            <div className="flex flex-col items-start gap-1">
+                              {getStatusBadge(offer.status)}
+                              <span className="text-[12px] text-slate-400 font-medium ml-1">{offer.date}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-2 text-center">
+                            <button
+                              onClick={() => setSelectedOffer(offer)}
+                              className="rounded-full bg-[#006638] px-6 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-[#00522d] transition"
+                            >
+                              Detail
+                            </button>
+                          </td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>

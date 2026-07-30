@@ -44,19 +44,19 @@ export default function AdminDashboardPage() {
         {/* Sidebar Admin */}
         <Sidebar />
 
-        {/* Outer Container Wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
-          
-          {/* Top Header */}
-          <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
-            <div>
-              <h2 className="text-[24px] font-semibold text-[#005941]">Dashboard Admin</h2>
-              <p className="text-[14px] text-slate-500">Kelola pengguna, kategori, dan pemantauan transaksi platform</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100">
-                <img 
-                  src="/images/ikan1.png" 
+          {/* Outer Container Wrapper */}
+          <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
+            
+            {/* Top Header */}
+            <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-6">
+              <div>
+                <h2 className="text-[24px] font-semibold text-[#005941]">Dashboard Admin</h2>
+                <p className="text-[14px] text-slate-500">Kelola pengguna, kategori, dan pemantauan transaksi platform</p>
+              </div>
+              <div className="flex items-center gap-4 translate-y-[4px]">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100 translate-y-[4px]">
+                  <img 
+                    src="/images/ikan1.png" 
                   alt="Admin Avatar" 
                   className="w-full h-full object-cover"
                   onError={(e) => {
