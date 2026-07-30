@@ -17,6 +17,13 @@ import PesananPage from "./pages/petani/pesanan";
 import PenawaranPage from "./pages/petani/penawaran";
 import ProfilPage from "./pages/petani/profil";
 
+// Nelayan
+import DashboardNelayanPage from "./pages/nelayan/dashboard";
+import ProdukNelayanPage from "./pages/nelayan/produk";
+import PesananNelayanPage from "./pages/nelayan/pesanan";
+import PenawaranNelayanPage from "./pages/nelayan/penawaran";
+import ProfilNelayanPage from "./pages/nelayan/profil";
+
 // Pembeli 
 import MarketplacePage from "./pages/pembeli/marketplace";
 import KeranjangPage from "./pages/pembeli/keranjang";
@@ -76,6 +83,14 @@ function App() {
       <Route path="/petani/pesanan" element={<PesananPage />} />
       <Route path="/petani/penawaran" element={<PenawaranPage />} />
       <Route path="/petani/profil" element={<ProfilPage />} />
+
+      {/* Rute Nelayan */}
+      <Route path="/nelayan" element={<Navigate to="/nelayan/dashboard" replace />} />
+      <Route path="/nelayan/dashboard" element={<DashboardNelayanPage />} />
+      <Route path="/nelayan/produk" element={<ProdukNelayanPage />} />
+      <Route path="/nelayan/pesanan" element={<PesananNelayanPage />} />
+      <Route path="/nelayan/penawaran" element={<PenawaranNelayanPage />} />
+      <Route path="/nelayan/profil" element={<ProfilNelayanPage />} />
 
       {/* Rute Pembeli */}
       <Route path="/pembeli" element={<Navigate to="/pembeli/marketplace" replace />} />

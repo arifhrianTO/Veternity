@@ -19,6 +19,7 @@ export default function Sidebar() {
   if (path.startsWith("/admin")) actor = "Admin";
   else if (path.startsWith("/koperasi")) actor = "Koperasi";
   else if (path.startsWith("/pembeli")) actor = "Pembeli";
+  else if (path.startsWith("/nelayan")) actor = "Nelayan";
 
   // Navigation Data
   const navigations = {
@@ -46,6 +47,13 @@ export default function Sidebar() {
       { to: "/petani/penawaran", label: "Penawaran", icon: Tag },
       { to: "/petani/profil", label: "Profil", icon: Users },
     ],
+    Nelayan: [
+      { to: "/nelayan/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/nelayan/produk", label: "Produk Saya", icon: ShoppingBag },
+      { to: "/nelayan/pesanan", label: "Pesanan", icon: ClipboardList },
+      { to: "/nelayan/penawaran", label: "Penawaran", icon: Tag },
+      { to: "/nelayan/profil", label: "Profil", icon: Users },
+    ],
     Pembeli: [
       { to: "/pembeli/marketplace", label: "Katalog Produk", icon: ShoppingBag },
       { to: "/pembeli/keranjang", label: "Keranjang", icon: ClipboardList },
@@ -61,6 +69,7 @@ export default function Sidebar() {
     Admin: { name: "Admin", roleDisplay: "Admin", avatar: "/images/ikan1.png" },
     Koperasi: { name: "Koperasi Sejahtera", roleDisplay: "Koperasi", avatar: "/images/ikan1.png" },
     Petani: { name: "Budi santoso", roleDisplay: "Petani", avatar: "/images/ikan1.png" },
+    Nelayan: { name: "Budi santoso", roleDisplay: "Nelayan", avatar: "/images/ikan1.png" },
     Pembeli: { name: "PT Sejahtera", roleDisplay: "Pembeli", avatar: "/images/ikan1.png" },
   };
 
