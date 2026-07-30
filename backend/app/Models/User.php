@@ -12,7 +12,10 @@ use Illuminate\Notifications\Notifiable;
 
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['role', 'nama_lengkap', 'email', 'no_hp', 'tanggal_lahir', 'kelamin', 'alamat', 'password'])]
+#[Fillable([
+    'role', 'nama_lengkap', 'email', 'no_hp', 'tanggal_lahir', 'kelamin', 'alamat', 'password',
+    'provinsi_id', 'kota_id', 'kode_pos', 'koperasi_id', 'foto_profil'
+])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -30,5 +33,32 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'provinsi_id');
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class, 'kota_id');
+    }
+
+    // Untuk Petani/Nelayan yang memiliki Koperasi Binaan
+    public function koperasi()
+    {
+        return $this->belongsTo(User::class, 'koperasi_id');
+    }
+
+    // Untuk Koperasi yang memiliki Petani/Nelayan Binaan
+    public function binaan()
+    {
+        return $this->hasMany(User::class, 'koperasi_id');
+    }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
     }
 }
