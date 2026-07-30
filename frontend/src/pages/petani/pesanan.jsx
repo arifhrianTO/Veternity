@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import api from "../../config/axios";
 
 const mockOrders = [
   {
@@ -120,17 +121,51 @@ function getStatusBadge(status) {
 }
 
 export default function PesananPage() {
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setIsLoading(true);
+        // Fallback token
+        const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
+        localStorage.setItem("token", testToken);
+
+        const response = await api.get('/orders');
+        // Transform data from backend to match UI structure
+        const formattedOrders = response.data.map(order => ({
+          id: order.kode_pesanan,
+          buyer: order.pembeli ? order.pembeli.nama_lengkap : 'Unknown',
+          product: order.items && order.items.length > 0 ? order.items[0].nama_produk : 'Berbagai Produk',
+          quantity: order.items && order.items.length > 0 ? `${order.items[0].jumlah_beli} Kg` : '-',
+          total: `Rp ${Number(order.total_harga).toLocaleString('id-ID')}`,
+          date: new Date(order.tanggal_pesanan).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: '2-digit'}),
+          status: order.status
+        }));
+        setOrders(formattedOrders);
+      } catch (err) {
+        console.error("Gagal mengambil data pesanan:", err);
+        setError("Gagal memuat pesanan.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
   const [activeTab, setActiveTab] = useState("semua");
   const [page, setPage] = useState(1);
   const itemsPerPage = 4;
 
-  const filteredOrders = mockOrders.filter((order) => {
+  const filteredOrders = Array.isArray(orders) ? orders.filter((order) => {
     if (activeTab === "semua") return true;
     if (activeTab === "dalam-proses") return order.status === "Diproses";
     if (activeTab === "dikirim") return order.status === "Dikirim";
     if (activeTab === "selesai") return order.status === "Selesai";
     return true;
-  });
+  }) : [];
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / itemsPerPage));
   const startIndex = (page - 1) * itemsPerPage;
@@ -150,7 +185,7 @@ export default function PesananPage() {
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Top Header */}
-          <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
+          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
             <div>
               <h2 className="text-[24px] font-semibold text-[#005941]">Pesanan</h2>
               <p className="text-[14px] text-slate-500">Kelola pesanan pelanggan Anda</p>
@@ -159,7 +194,7 @@ export default function PesananPage() {
               <img
                 src="/images/ikan1.png"
                 alt="avatar"
-                className="w-10 h-10 rounded-full border border-slate-100 object-cover"
+                className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]"
               />
             </div>
           </div>
@@ -197,19 +232,42 @@ export default function PesananPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentOrders.map((order, index) => (
-                    <tr key={`${order.id}-${index}`} className="border-b border-black/[0.13] last:border-b-0">
-                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.id}</td>
-                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.buyer}</td>
-                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.product}</td>
-                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.quantity}</td>
-                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.total}</td>
-                      <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.date}</td>
-                      <td className="py-4 px-2">
-                        {getStatusBadge(order.status)}
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-10">
+                        <div className="flex items-center justify-center gap-2 text-[#006638]">
+                           <Loader2 className="w-6 h-6 animate-spin" />
+                           <span className="font-semibold">Memuat pesanan...</span>
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-10 text-red-500 font-semibold bg-red-50">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : currentOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-10 text-slate-500 font-medium">
+                        Belum ada pesanan masuk.
+                      </td>
+                    </tr>
+                  ) : (
+                    currentOrders.map((order, index) => (
+                      <tr key={`${order.id}-${index}`} className="border-b border-black/[0.13] last:border-b-0 hover:bg-slate-50/50 transition">
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.id}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.buyer}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.product}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.quantity}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.total}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.date}</td>
+                        <td className="py-4 px-2">
+                          {getStatusBadge(order.status)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

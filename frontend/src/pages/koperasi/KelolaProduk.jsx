@@ -64,11 +64,11 @@ export default function KoperasiKelolaProduk() {
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 flex flex-col justify-between">
           <div>
             {/* Header Panel */}
-            <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
+            <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
               <h1 className="text-[24px] font-semibold text-[#005941]">
                 Kelola Produk
               </h1>
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200 translate-y-[4px]">
                 <img
                   src="/images/user.png"
                   alt="Avatar"

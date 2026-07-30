@@ -11,18 +11,18 @@ import KoperasiSection from "./components/home/KoperasiSection";
 import Footer from "./components/layout/Footer";
 
 // Petani
-import DashboardPage from "./pages/petani/Dashboard";
-import ProdukPage from "./pages/petani/Produk";
-import PesananPage from "./pages/petani/Pesanan";
-import PenawaranPage from "./pages/petani/Penawaran";
-import ProfilPage from "./pages/petani/Profil";
+import DashboardPage from "./pages/petani/dashboard";
+import ProdukPage from "./pages/petani/produk";
+import PesananPage from "./pages/petani/pesanan";
+import PenawaranPage from "./pages/petani/penawaran";
+import ProfilPage from "./pages/petani/profil";
 
 // Pembeli 
 import MarketplacePage from "./pages/pembeli/marketplace";
-import KeranjangPage from "./pages/pembeli/Keranjang";
-import PesananPembeliPage from "./pages/pembeli/Pesanan";
-import ProfilPembeliPage from "./pages/pembeli/Profil";
-import CheckoutPage from "./pages/pembeli/Checkout";
+import KeranjangPage from "./pages/pembeli/keranjang";
+import PesananPembeliPage from "./pages/pembeli/pesanan";
+import ProfilPembeliPage from "./pages/pembeli/profil";
+import CheckoutPage from "./pages/pembeli/checkout";
 // Admin
 import AdminDashboardPage from "./pages/admin/dashboard";
 import PenggunaPage from "./pages/admin/pengguna"; 

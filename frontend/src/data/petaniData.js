@@ -1,9 +1,9 @@
 import { Wheat, Briefcase, ShoppingBag, Clock } from "lucide-react";
 
 export const dashboardMetrics = [
-  { title: "Hasil Panen", value: "250 KG", subtitle: "Total bulan ini", icon: Wheat, accent: "from-green-600 to-green-500" },
-  { title: "Pendapatan", value: "Rp 4.000.000", subtitle: "Total bulan ini", icon: Briefcase, accent: "from-blue-600 to-blue-500" },
-  { title: "Produk Aktif", value: "5", subtitle: "Produk", icon: ShoppingBag, accent: "from-orange-500 to-orange-400" },
+  { title: "Hasil Panen", value: "250 KG", subtitle: "Total bulan ini", icon: Wheat, accent: "from-[#029154] to-[#00B467]" },
+  { title: "Pendapatan", value: "Rp 4.000.000", subtitle: "Total bulan ini", icon: Briefcase, accent: "from-[#0646C7] to-[#001FEC]" },
+  { title: "Produk Aktif", value: "5", subtitle: "Produk", icon: ShoppingBag, accent: "from-[#FF7700] to-[#FFB619]" },
   { title: "Produk Hampir Kadaluarsa", value: "2", subtitle: "Produk", icon: Clock, accent: "from-red-600 to-red-500" },
 ];
 

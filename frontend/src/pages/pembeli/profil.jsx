@@ -20,7 +20,7 @@ export default function ProfilPembeliPage() {
         {/* Outer Container Wrapper */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[16px] p-6 relative">
           {/* Top Header - reduced from 24px to 18px */}
-          <div className="flex items-center justify-between border-b border-[#029154] pb-4 mb-6">
+          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-6">
             <h2 className="text-[18px] font-semibold text-[#005941]">Profil</h2>
             <img
               src={profile.image}

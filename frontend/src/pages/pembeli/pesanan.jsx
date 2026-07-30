@@ -250,7 +250,7 @@ export default function PesananPembeliPage() {
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
 
           {/* Header */}
-          <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
+          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
             <h2 className="text-[24px] font-semibold text-[#005941]">Pesanan Saya</h2>
             <img src="/images/ikan1.png" alt="avatar" className="w-10 h-10 rounded-full border border-slate-100" />
           </div>
