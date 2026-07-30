@@ -34,6 +34,7 @@ import AdminProfilPage from "./pages/admin/profil";
 // Koperasi
 import KoperasiDashboardPage from "./pages/koperasi/dashboard";
 import PetaniBinaanPage from "./pages/koperasi/PetaniBinaan"; 
+import NelayanBinaanPage from "./pages/koperasi/NelayanBinaan";
 import KelolaProdukPage from "./pages/koperasi/KelolaProduk";
 import KoperasiPenawaranPage from "./pages/koperasi/penawaran";
 import PengirimanPage from "./pages/koperasi/pengiriman";
@@ -97,6 +98,7 @@ function App() {
       <Route path="/koperasi" element={<Navigate to="/koperasi/dashboard" replace />} />
       <Route path="/koperasi/dashboard" element={<KoperasiDashboardPage />} />
       <Route path="/koperasi/PetaniBinaan" element={<PetaniBinaanPage />} />
+      <Route path="/koperasi/nelayan-binaan" element={<NelayanBinaanPage />} />
       <Route path="/koperasi/KelolaProduk" element={<KelolaProdukPage />} />
       <Route path="/koperasi/penawaran" element={<KoperasiPenawaranPage />} />
       <Route path="/koperasi/pengiriman" element={<PengirimanPage />} />
