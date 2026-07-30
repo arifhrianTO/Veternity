@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import PetaniSidebar from "../../components/petani/PetaniSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import { ChevronRight, ChevronLeft, X, Phone, MessageSquare, Mail } from "lucide-react";
 
 const penawaranData = [
@@ -119,14 +119,14 @@ export default function PenawaranPage() {
 
   return (
     <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
-        <PetaniSidebar />
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
+        <Sidebar />
 
         {/* Outer Container Wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative flex flex-col justify-between">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative flex flex-col justify-between">
           <div>
             {/* Top Header Bar */}
-            <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
+            <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
               <div>
                 <h2 className="text-[24px] font-semibold text-[#005941]">Penawaran</h2>
                 <p className="text-[14px] text-slate-500">Kelola penawaran yang masuk dari pembeli</p>
@@ -135,7 +135,7 @@ export default function PenawaranPage() {
                 <img
                   src="/images/ikan1.png"
                   alt="avatar"
-                  className="w-14 h-14 rounded-full border border-slate-100 object-cover"
+                  className="w-10 h-10 rounded-full border border-slate-100 object-cover"
                 />
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function PenawaranPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="text-[16px] font-bold text-[#273B4A] border-b-2 border-black/[0.13]">
+                    <tr className="text-[15px] font-bold text-[#273B4A] border-b-2 border-black/[0.13]">
                       <th className="pb-4 px-2">Produk</th>
                       <th className="pb-4 px-2">Harga Acuan</th>
                       <th className="pb-4 px-2">Harga Tawaran</th>
@@ -174,20 +174,11 @@ export default function PenawaranPage() {
                     {currentOffers.map((offer) => (
                       <tr key={offer.id} className="border-b border-black/[0.13] last:border-b-0">
                         <td className="py-4 px-2">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={`/images/${offer.img}`}
-                              alt={offer.product}
-                              className="w-[83px] h-[55px] object-cover rounded-[5px]"
-                            />
-                            <div>
-                              <div className="text-[16px] font-semibold text-[#273B4A]">{offer.product}</div>
-                              <div className="text-[14px] text-slate-500">{offer.quantity}</div>
-                            </div>
-                          </div>
+                          <div className="text-[14px] font-semibold text-[#273B4A]">{offer.product}</div>
+                          <div className="text-[13px] text-slate-500">{offer.quantity}</div>
                         </td>
-                        <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{offer.basePrice}</td>
-                        <td className="py-4 px-2 text-[16px] font-semibold text-[#273B4A]">{offer.offerPrice}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{offer.basePrice}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{offer.offerPrice}</td>
                         <td className="py-4 px-2">
                           <div className="flex flex-col items-start gap-1">
                             {getStatusBadge(offer.status)}
@@ -197,7 +188,7 @@ export default function PenawaranPage() {
                         <td className="py-4 px-2 text-center">
                           <button
                             onClick={() => setSelectedOffer(offer)}
-                            className="rounded-full bg-[#006638] px-6 py-2 text-[14px] font-semibold text-white shadow-sm hover:bg-[#00522d] transition"
+                            className="rounded-full bg-[#006638] px-6 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-[#00522d] transition"
                           >
                             Detail
                           </button>
@@ -237,7 +228,7 @@ export default function PenawaranPage() {
                 <button
                   key={index}
                   onClick={() => setPage(index + 1)}
-                  className={`w-[40px] h-[40px] rounded-[5px] text-[20px] font-semibold flex items-center justify-center transition ${
+                  className={`w-[36px] h-[36px] rounded-[5px] text-[16px] font-semibold flex items-center justify-center transition ${
                     page === index + 1
                       ? "bg-[#006638] text-white"
                       : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/5"
@@ -262,9 +253,9 @@ export default function PenawaranPage() {
       {/* Modal Detail Penawaran */}
       {selectedOffer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-[560px] overflow-hidden rounded-[20px] bg-white shadow-2xl border border-slate-200">
+          <div className="w-full max-w-[640px] overflow-hidden rounded-[20px] bg-white shadow-2xl border border-slate-200 flex flex-col max-h-[95vh]">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 shrink-0">
               <h3 className="text-[18px] font-bold text-[#005941]">Detail Penawaran</h3>
               <button
                 onClick={() => setSelectedOffer(null)}
@@ -274,111 +265,114 @@ export default function PenawaranPage() {
               </button>
             </div>
 
-            {/* Modal Content */}
-            <div className="space-y-4 p-6 text-[14px]">
-              <div className="grid gap-3 sm:grid-cols-[1.2fr_0.8fr]">
-                <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={`/images/${selectedOffer.img}`}
-                      alt={selectedOffer.product}
-                      className="w-16 h-16 object-cover rounded-[8px]"
-                    />
-                    <div>
-                      <div className="font-semibold text-[#273B4A]">{selectedOffer.product}</div>
-                      <div className="text-slate-500">{selectedOffer.quantity}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-2.5">
-                    <div className="text-[12px] text-slate-500">Harga Acuan</div>
-                    <div className="font-semibold text-[#273B4A]">{selectedOffer.basePrice}</div>
-                  </div>
-                  <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-2.5">
-                    <div className="text-[12px] text-slate-500">Harga Tawaran</div>
-                    <div className="font-semibold text-[#006638]">{selectedOffer.offerPrice}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3 flex flex-col justify-between">
+            {/* Modal Content - Scrollable */}
+            <div className="p-5 text-[14px] overflow-y-auto flex-1 custom-scrollbar space-y-3">
+              
+              {/* Info Produk & Harga - 1 Baris Grid */}
+              <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
+                <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-2.5 flex items-center gap-3">
+                  <img
+                    src={`/images/${selectedOffer.img}`}
+                    alt={selectedOffer.product}
+                    className="w-12 h-12 object-cover rounded-[8px]"
+                  />
                   <div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#006638]/10 text-[#006638] font-bold">
-                        👤
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#273B4A]">{selectedOffer.buyer}</div>
-                        <div className="text-[12px] text-slate-500">{selectedOffer.location}</div>
-                      </div>
+                    <div className="font-semibold text-[#273B4A] text-[15px]">{selectedOffer.product}</div>
+                    <div className="text-slate-500 text-[13px]">{selectedOffer.quantity}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-2 text-center flex flex-col justify-center">
+                    <div className="text-[11px] text-slate-500 mb-0.5">Harga Acuan</div>
+                    <div className="font-semibold text-[#273B4A] text-[13px]">{selectedOffer.basePrice}</div>
+                  </div>
+                  <div className="rounded-[12px] border border-slate-200 bg-[#006638]/5 p-2 text-center flex flex-col justify-center border-[#006638]/20">
+                    <div className="text-[11px] text-[#006638] mb-0.5 font-medium">Harga Tawaran</div>
+                    <div className="font-bold text-[#006638] text-[13px]">{selectedOffer.offerPrice}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Pembeli & Pesan - 1 Baris Grid */}
+              <div className="grid gap-3 sm:grid-cols-[1fr_1.2fr]">
+                <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3 flex flex-col justify-between">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#006638]/10 text-[#006638] font-bold text-lg">
+                      {selectedOffer.buyer.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-[#273B4A] leading-tight">{selectedOffer.buyer}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{selectedOffer.location}</div>
                     </div>
                   </div>
-                  <div className="mt-3 flex gap-2">
-                    <button className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100">
-                      <Phone className="w-4 h-4" />
+                  <div className="flex gap-2">
+                    <button title="Telepon" className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition">
+                      <Phone className="w-3.5 h-3.5" />
                     </button>
-                    <button className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100">
-                      <MessageSquare className="w-4 h-4" />
+                    <button title="Kirim Pesan" className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition">
+                      <MessageSquare className="w-3.5 h-3.5" />
                     </button>
-                    <button className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100">
-                      <Mail className="w-4 h-4" />
+                    <button title="Kirim Email" className="flex-1 py-1.5 flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition">
+                      <Mail className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
                 <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3">
-                  <div className="font-semibold text-[#273B4A]">Pesan Pembeli</div>
-                  <p className="mt-1 text-[13px] leading-snug text-slate-600">{selectedOffer.message}</p>
+                  <div className="font-semibold text-[#273B4A] text-[13px] mb-1">Pesan Pembeli :</div>
+                  <p className="text-[13px] leading-relaxed text-slate-600 italic">"{selectedOffer.message}"</p>
                 </div>
               </div>
 
+              {/* Riwayat */}
               <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold text-[#273B4A]">Riwayat Penawaran</div>
-                <div className="mt-2 space-y-2">
+                <div className="font-semibold text-[#273B4A] text-[13px] mb-2">Riwayat Penawaran</div>
+                <div className="space-y-1.5">
                   {selectedOffer.history.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between rounded-[8px] bg-white px-3 py-2 border border-slate-200 text-[13px]">
-                      <div>
-                        <div className="font-semibold text-[#273B4A]">{item.label}</div>
-                        <div className="text-[11px] text-slate-400">{item.time}</div>
+                    <div key={index} className="flex items-center justify-between rounded-[8px] bg-white px-3 py-1.5 border border-slate-200 text-[12px]">
+                      <div className="flex items-center gap-3">
+                        <div className="text-[11px] text-slate-400 font-medium w-[35px]">{item.time}</div>
+                        <div className="font-medium text-[#273B4A]">{item.label}</div>
                       </div>
-                      <div className="font-semibold text-[#006638]">{item.value}</div>
+                      <div className="font-bold text-[#006638]">{item.value}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="grid gap-3 pt-2">
-                <div className="grid grid-cols-3 gap-2">
-                  <button className="rounded-[10px] bg-[#006638] py-2 font-semibold text-white hover:bg-[#00522d] transition">
-                    Terima
-                  </button>
-                  <button className="rounded-[10px] border border-red-600 py-2 font-semibold text-red-600 hover:bg-red-50 transition">
-                    Tolak
-                  </button>
-                  <button className="rounded-[10px] border border-[#006638] py-2 font-semibold text-[#006638] hover:bg-[#006638]/5 transition">
-                    Counter Offer
-                  </button>
-                </div>
-
-                <div className="flex gap-2 items-center pt-2 border-t border-slate-100">
-                  <input
-                    type="text"
-                    value={counterPrice}
-                    onChange={(e) => setCounterPrice(e.target.value)}
-                    placeholder="Masukkan Harga Counter"
-                    className="flex-1 rounded-[10px] border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-[#006638]"
-                  />
-                  <span className="text-slate-500 font-medium">/kg</span>
-                  <button className="rounded-[10px] bg-[#273B4A] px-5 py-2 font-semibold text-white hover:bg-[#1f2f3b] transition">
-                    Kirim
-                  </button>
-                </div>
-              </div>
             </div>
+
+            {/* Action Buttons - Fixed at Bottom */}
+            <div className="border-t border-slate-200 p-4 shrink-0 bg-slate-50">
+               <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Left: Terima / Tolak */}
+                  <div className="flex gap-2 sm:w-[40%]">
+                    <button className="flex-1 rounded-[10px] bg-[#006638] py-2.5 font-semibold text-white hover:bg-[#00522d] transition text-[13px]">
+                      Terima
+                    </button>
+                    <button className="flex-1 rounded-[10px] border-2 border-red-500 bg-white py-2 font-semibold text-red-500 hover:bg-red-50 transition text-[13px]">
+                      Tolak
+                    </button>
+                  </div>
+                  
+                  {/* Right: Counter Offer */}
+                  <div className="flex gap-2 flex-1 items-center bg-white border border-slate-300 rounded-[10px] overflow-hidden pl-3 focus-within:border-[#006638]">
+                    <span className="text-[13px] font-semibold text-slate-400">Rp</span>
+                    <input
+                      type="text"
+                      value={counterPrice}
+                      onChange={(e) => setCounterPrice(e.target.value)}
+                      placeholder="Harga counter..."
+                      className="flex-1 bg-transparent py-2.5 text-[13px] text-slate-900 outline-none font-semibold"
+                    />
+                    <button className="bg-[#273B4A] h-full px-4 font-semibold text-white hover:bg-[#1f2f3b] transition text-[13px]">
+                      Kirim
+                    </button>
+                  </div>
+               </div>
+            </div>
+
           </div>
         </div>
       )}

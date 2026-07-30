@@ -43,27 +43,84 @@ export default function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Submit Handlers
-  const handleLoginSubmit = (e) => {
+  // API integration state
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login:", { loginEmailOrPhone, loginPassword });
+    setErrorMsg("");
+    setLoading(true);
+
+    try {
+      // Dynamic import of axios to avoid having to add it at the top level if not present
+      const axios = (await import('axios')).default;
+      const response = await axios.post("http://localhost:8000/api/login", {
+        identifier: loginEmailOrPhone,
+        password: loginPassword,
+      });
+
+      const { data, access_token } = response.data;
+      
+      // Simpan token & info user ke localStorage
+      localStorage.setItem("token", access_token);
+      localStorage.setItem("user", JSON.stringify(data));
+
+      // Redirect berdasarkan role
+      if (data.role === 'petani' || data.role === 'petani_binaan') {
+        navigate("/petani/dashboard");
+      } else if (data.role === 'pembeli') {
+        navigate("/pembeli/marketplace");
+      } else {
+        navigate("/"); // fallback
+      }
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        setErrorMsg(error.response.data.message);
+      } else {
+        setErrorMsg("Terjadi kesalahan saat login.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
+
     if (registerPassword !== confirmPassword) {
-      alert("Password dan konfirmasi password tidak cocok!");
+      setErrorMsg("Password dan konfirmasi password tidak cocok!");
       return;
     }
-    console.log("Register:", {
-      role,
-      fullName,
-      phone,
-      birthDate,
-      gender,
-      address,
-      email: registerEmail,
-      password: registerPassword,
-    });
+    
+    setLoading(true);
+    try {
+      const axios = (await import('axios')).default;
+      const response = await axios.post("http://localhost:8000/api/register", {
+        role: role,
+        nama_lengkap: fullName,
+        email: registerEmail,
+        no_hp: phone,
+        tanggal_lahir: birthDate,
+        kelamin: gender,
+        alamat: address,
+        password: registerPassword,
+      });
+      
+      alert("Registrasi berhasil! Silahkan masuk.");
+      // Optional: Reset form or navigate
+      setIsRegister(false);
+      navigate("/login");
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        setErrorMsg(error.response.data.message + (error.response.data.errors ? " - " + JSON.stringify(error.response.data.errors) : ""));
+      } else {
+        setErrorMsg("Terjadi kesalahan saat registrasi.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -577,6 +634,12 @@ export default function AuthPage() {
                   </div>
                 </div>
 
+                {errorMsg && (
+                  <div className="mt-3 text-red-500 text-xs text-center font-semibold bg-red-50 p-2 rounded">
+                    {errorMsg}
+                  </div>
+                )}
+
                 <div className="mt-5 flex gap-4">
                   <button
                     type="button"
@@ -587,12 +650,13 @@ export default function AuthPage() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-full py-2.5 text-base font-bold text-white shadow-md hover:opacity-90 transition flex items-center justify-center gap-2"
+                    disabled={loading || !registerEmail || !registerPassword || !confirmPassword}
+                    className={`flex-1 rounded-full py-2.5 text-base font-bold text-white shadow-md transition flex items-center justify-center gap-2 ${loading || !registerEmail || !registerPassword || !confirmPassword ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
                     style={{
                       background: "linear-gradient(90deg, #B1E747 0%, #3F7E48 50%, #024D70 100%)",
                     }}
                   >
-                    Daftar
+                    {loading ? 'Memproses...' : 'Daftar'}
                   </button>
                 </div>
               </div>
@@ -701,16 +765,23 @@ export default function AuthPage() {
                   Lupa password?
                 </button>
               </div>
+
+              {errorMsg && (
+                <div className="mt-4 text-red-500 text-sm text-center font-semibold bg-red-50 p-2 rounded">
+                  {errorMsg}
+                </div>
+              )}
             </div>
 
             <button
               type="submit"
-              className="mt-8 w-full rounded-full py-4 text-lg font-bold text-white shadow-md transition hover:opacity-90"
+              disabled={loading || !loginEmailOrPhone || !loginPassword}
+              className={`mt-8 w-full rounded-full py-4 text-lg font-bold text-white shadow-md transition ${loading || !loginEmailOrPhone || !loginPassword ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
               style={{
                 background: "linear-gradient(90deg, #024D70 0%, #3F7E48 50%, #B1E747 100%)",
               }}
             >
-              Masuk
+              {loading ? 'Memproses...' : 'Masuk'}
             </button>
 
             {/* Mobile-Only Helper to Switch Mode */}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import KoperasiSidebar from "../../components/koperasi/KoperasiSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import { Search, ChevronDown, Plus, Eye, ArrowLeft, Edit3, Trash2, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function PetaniBinaan() {
@@ -142,17 +142,17 @@ export default function PetaniBinaan() {
   return (
     <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900">
       {/* Samakan py-8 & gap-6 persis seperti Dashboard */}
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
         {/* Sidebar Koperasi */}
-        <KoperasiSidebar />
+        <Sidebar />
 
         {/* Outer Main Container */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Header Panel (Avatar diganti ke /images/user.png) */}
-          <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
+          <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
             <h1 className="text-[24px] font-semibold text-[#005941]">Petani Binaan</h1>
-            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200">
               <img
                 src="/images/user.png"
                 alt="Avatar"
@@ -389,12 +389,7 @@ export default function PetaniBinaan() {
                     <tbody className="divide-y divide-slate-100 text-[15px] font-semibold text-[#273B4A]">
                       {produkList.map((prod) => (
                         <tr key={prod.id}>
-                          <td className="py-4 px-4 flex items-center gap-4">
-                            <img
-                              src={prod.image}
-                              alt={prod.nama}
-                              className="w-[98px] h-[65px] object-cover rounded-[5px]"
-                            />
+                          <td className="py-4 px-4">
                             <span>{prod.nama}</span>
                           </td>
                           <td className="py-4 px-4">{prod.stok}</td>
@@ -442,12 +437,7 @@ export default function PetaniBinaan() {
                         <tr key={rw.id}>
                           <td className="py-4 px-4">{rw.noPesanan}</td>
                           <td className="py-4 px-4">{rw.pembeli}</td>
-                          <td className="py-4 px-4 flex items-center gap-4">
-                            <img
-                              src={rw.image}
-                              alt={rw.produk}
-                              className="w-[98px] h-[65px] object-cover rounded-[5px]"
-                            />
+                          <td className="py-4 px-4">
                             <span>{rw.produk}</span>
                           </td>
                           <td className="py-4 px-4">{rw.jumlah}</td>

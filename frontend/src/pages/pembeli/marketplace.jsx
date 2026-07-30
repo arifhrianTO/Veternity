@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import PetaniSidebar from "../../components/petani/PetaniSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import ProductDetailModal from "../../components/pembeli/ProductDetailModal";
 import { products } from "../../data/mockData";
-import { Star } from "lucide-react";
+import { Star, Search } from "lucide-react";
 
 export default function MarketplacePage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,32 +46,28 @@ export default function MarketplacePage() {
   });
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
-        <PetaniSidebar />
+    <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900">
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
+        <Sidebar />
 
         {/* Rectangle 4166 / Wrapper utama */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Header & Judul */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#029154] pb-6 mb-6">
-            <h2 className="text-2xl font-semibold text-[#005941] font-sans">MarketPlace</h2>
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-[#029154] pb-4 mb-4">
+            <h2 className="text-2xl font-semibold text-[#005941]">Katalog Produk</h2>
             
             {/* Profil avatar kecil kanan atas */}
             <div className="flex items-center gap-4">
-              <img src="/images/ikan1.png" alt="avatar" className="w-14 h-14 rounded-full border border-slate-100" />
+              <img src="/images/ikan1.png" alt="avatar" className="w-10 h-10 rounded-full border border-slate-100" />
             </div>
           </div>
 
           {/* Group 36 & Filter Controls */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div className="flex items-center justify-between gap-4 mb-8">
             {/* Search Bar */}
-            <div className="relative w-full md:w-[371px] h-[42px] bg-white border border-[#006638] rounded-[50px] flex items-center px-4">
-              <img 
-                src="/images/search.png" 
-                alt="search" 
-                className="w-5 h-5 mr-2 object-contain shrink-0" 
-              />
+            <div className="relative flex-1 max-w-[371px] h-[42px] bg-white border border-[#006638] rounded-[50px] flex items-center px-4">
+              <Search className="w-5 h-5 mr-2 text-[#006638] shrink-0" />
               <input
                 type="text"
                 placeholder="Cari Produk..."
@@ -82,7 +78,7 @@ export default function MarketplacePage() {
             </div>
 
             {/* Filter Dropdowns */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-3">
               {/* Filter Terbaru */}
               <select
                 value={selectedSort}
@@ -137,11 +133,11 @@ export default function MarketplacePage() {
             {filteredProducts.map((p, idx) => (
               <div
                 key={idx}
-                className="w-full max-w-[308px] h-[433px] bg-white rounded-[20px] shadow-[0px_0px_5px_rgba(0,0,0,0.25)] flex flex-col justify-between overflow-hidden mx-auto transition-transform hover:scale-[1.01]"
+                className="w-full max-w-[308px] h-fit bg-white rounded-[20px] shadow-[0px_0px_5px_rgba(0,0,0,0.25)] flex flex-col justify-between overflow-hidden mx-auto transition-transform hover:scale-[1.01]"
               >
                 <div>
                   {/* Image container */}
-                  <div className="h-[206px] w-full bg-slate-50 relative overflow-hidden">
+                  <div className="h-[170px] w-full bg-slate-50 relative overflow-hidden border-b border-slate-100">
                     <img
                       src={p.image}
                       alt={p.name}
@@ -154,35 +150,35 @@ export default function MarketplacePage() {
 
                   {/* Body Content */}
                   <div className="p-4 relative">
-                    <h4 className="font-bold text-[20px] leading-[24px] text-[#273B4A] line-clamp-1">{p.name}</h4>
+                    <h4 className="font-bold text-[18px] leading-[22px] text-[#273B4A] line-clamp-1">{p.name}</h4>
                     
-                    <p className="text-[15px] leading-[18px] text-[rgba(0,0,0,0.43)] font-medium mt-1">
+                    <p className="text-[14px] leading-[18px] text-[rgba(0,0,0,0.43)] font-medium mt-1">
                       {p.location}
                     </p>
 
-                    <div className="flex items-center justify-between mt-[23px]">
-                      <span className="font-bold text-[16px] leading-[20px] text-[#00A75C]">
-                        {p.price} <span className="font-normal text-slate-400">{p.unit}</span>
+                    <div className="flex items-center justify-between mt-[18px]">
+                      <span className="font-bold text-[18px] leading-[20px] text-[#00A75C]">
+                        {p.price} <span className="font-medium text-sm text-slate-400">{p.unit}</span>
                       </span>
 
                       <div className="flex items-center gap-1">
-                        <Star className="w-[20px] h-[20px] fill-amber-400 text-amber-400" />
-                        <span className="text-[15px] text-[rgba(0,0,0,0.43)] font-medium">{p.rating}</span>
+                        <Star className="w-[18px] h-[18px] fill-amber-400 text-amber-400" />
+                        <span className="text-[14px] text-[rgba(0,0,0,0.43)] font-medium">{p.rating}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 mt-[17px]">
-                      <div className="w-[28px] h-[26px] bg-[url('/images/tag.png')] bg-contain bg-no-repeat shrink-0 opacity-70" />
-                      <span className="text-[15px] text-[rgba(0,0,0,0.43)] font-medium">{p.koperasi}</span>
+                    <div className="flex items-center gap-2 mt-[14px]">
+                      <img src="/images/iconKoperasi.png" alt="koperasi icon" className="w-[20px] h-[20px] object-contain shrink-0 opacity-80" />
+                      <span className="text-[14px] text-[rgba(0,0,0,0.43)] font-medium">{p.koperasi}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Button Action */}
-                <div className="p-4 pt-0">
+                <div className="p-4 pt-4 mt-auto">
                   <button
                     onClick={() => setSelectedProduct(p)}
-                    className="w-full h-[50px] bg-[#006638] hover:bg-[#00522c] text-white rounded-[10px] text-[20px] font-bold transition flex items-center justify-center"
+                    className="w-full h-[45px] bg-[#006638] hover:bg-[#00522c] text-white rounded-[10px] text-[16px] font-bold transition flex items-center justify-center"
                   >
                     Lihat Detail
                   </button>

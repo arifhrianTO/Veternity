@@ -1,5 +1,5 @@
 import React from "react";
-import AdminSidebar from "../../components/admin/AdminSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import PetaniStatCard from "../../components/petani/PetaniStatCard";
 import TransactionChart from "../../components/admin/TransactionChart";
 import TopCategoriesTable from "../../components/admin/TopCategoriesTable";
@@ -39,22 +39,22 @@ const adminMetrics = [
 export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
         
         {/* Sidebar Admin */}
-        <AdminSidebar />
+        <Sidebar />
 
         {/* Outer Container Wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] relative">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
           {/* Top Header */}
-          <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
+          <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
             <div>
               <h2 className="text-[24px] font-semibold text-[#005941]">Dashboard Admin</h2>
               <p className="text-[14px] text-slate-500">Kelola pengguna, kategori, dan pemantauan transaksi platform</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-100">
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100">
                 <img 
                   src="/images/ikan1.png" 
                   alt="Admin Avatar" 

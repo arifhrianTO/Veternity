@@ -1,10 +1,10 @@
-import { Package, DollarSign, ShoppingBag, Clock } from "lucide-react";
+import { Wheat, Briefcase, ShoppingBag, Clock } from "lucide-react";
 
 export const dashboardMetrics = [
-  { title: "Hasil Panen", value: "250 KG", subtitle: "Total bulan ini", icon: Package, iconSrc: "/images/dashboards.png", accent: "from-slate-900 to-emerald-700" },
-  { title: "Pendapatan", value: "Rp 4.000.000", subtitle: "Total bulan ini", icon: DollarSign, iconSrc: "/images/clipboard.png", accent: "from-emerald-700 to-lime-400" },
-  { title: "Produk Aktif", value: "5", subtitle: "Produk", icon: ShoppingBag, iconSrc: "/images/shoppping-bag.png", accent: "from-orange-500 to-yellow-400" },
-  { title: "Produk Hampir Kadaluarsa", value: "2", subtitle: "Produk", icon: Clock, iconSrc: "/images/tag.png", accent: "from-red-600 to-red-400" },
+  { title: "Hasil Panen", value: "250 KG", subtitle: "Total bulan ini", icon: Wheat, accent: "from-green-600 to-green-500" },
+  { title: "Pendapatan", value: "Rp 4.000.000", subtitle: "Total bulan ini", icon: Briefcase, accent: "from-blue-600 to-blue-500" },
+  { title: "Produk Aktif", value: "5", subtitle: "Produk", icon: ShoppingBag, accent: "from-orange-500 to-orange-400" },
+  { title: "Produk Hampir Kadaluarsa", value: "2", subtitle: "Produk", icon: Clock, accent: "from-red-600 to-red-500" },
 ];
 
 export const latestOffers = [

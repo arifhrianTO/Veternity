@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import KoperasiSidebar from "../../components/koperasi/KoperasiSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 import { Search, Plus, Edit3, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function KoperasiKelolaProduk() {
@@ -55,20 +55,20 @@ export default function KoperasiKelolaProduk() {
 
   return (
     <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
         
         {/* Sidebar Koperasi */}
-        <KoperasiSidebar />
+        <Sidebar />
 
         {/* Outer Main Container */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] flex flex-col justify-between">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 flex flex-col justify-between">
           <div>
             {/* Header Panel */}
-            <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
+            <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
               <h1 className="text-[24px] font-semibold text-[#005941]">
                 Kelola Produk
               </h1>
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200">
                 <img
                   src="/images/user.png"
                   alt="Avatar"
@@ -127,22 +127,9 @@ export default function KoperasiKelolaProduk() {
                   <tbody className="divide-y divide-black/10">
                     {produkList.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-50/50 transition">
-                        {/* Produk */}
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={item.gambar}
-                              alt={item.nama}
-                              className="w-[98px] h-[65px] object-cover rounded-[5px] border border-slate-100"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = "/images/beras.png";
-                              }}
-                            />
-                            <span className="font-semibold text-[#273B4A] text-[15px]">
-                              {item.nama}
-                            </span>
-                          </div>
+                        {/* Nama Produk */}
+                        <td className="py-4 px-4 font-semibold text-[#273B4A]">
+                          {item.nama}
                         </td>
 
                         {/* Pemilik */}

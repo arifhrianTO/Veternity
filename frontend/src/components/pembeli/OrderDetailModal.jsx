@@ -68,27 +68,27 @@ export default function OrderDetailModal({ order, onClose }) {
 
         <div className="p-8">
           {/* Title */}
-          <h2 className="text-[32px] font-bold text-[#273B4A] leading-[39px]">Detail Pesanan</h2>
+          <h2 className="text-[24px] font-bold text-[#273B4A] leading-[29px]">Detail Pesanan</h2>
 
           {/* Divider */}
-          <div className="border-b border-black/[0.3] my-4" />
+          <div className="border-b border-black/[0.15] my-4" />
 
           {/* No Pesanan label + value + status badge */}
-          <p className="text-[24px] font-medium text-black/[0.25]">no pesanan</p>
+          <p className="text-[14px] font-bold text-slate-400 uppercase tracking-wider">no pesanan</p>
           <div className="flex items-center justify-between mt-1">
-            <span className="text-[24px] font-semibold text-[#273B4A]">{order.id}</span>
+            <span className="text-[18px] font-bold text-[#273B4A]">{order.id}</span>
             <span
-              className={`inline-flex items-center justify-center px-4 py-1 rounded-[3px] border text-[20px] font-semibold ${badge.bg} ${badge.border} ${badge.text}`}
+              className={`inline-flex items-center justify-center px-3 py-1 rounded-[3px] border text-[14px] font-bold ${badge.bg} ${badge.border} ${badge.text}`}
             >
               {order.status}
             </span>
           </div>
 
           {/* Divider */}
-          <div className="border-b border-black/[0.3] my-4" />
+          <div className="border-b border-black/[0.15] my-4" />
 
           {/* Tracking Pesanan */}
-          <h3 className="text-[24px] font-bold text-[#273B4A] mb-6">Tracking Pesanan</h3>
+          <h3 className="text-[18px] font-bold text-[#273B4A] mb-6">Tracking Pesanan</h3>
 
           {/* Tracking timeline */}
           <div className="flex items-start justify-between mb-6 px-2">
@@ -106,7 +106,7 @@ export default function OrderDetailModal({ order, onClose }) {
                   {/* Connector line (before circle, not on first) */}
                   {idx > 0 && (
                     <div
-                      className={`absolute top-[25px] right-1/2 h-[7px] ${
+                      className={`absolute top-[20px] right-1/2 h-[5px] ${
                         isDone ? "bg-[#029154]" : "bg-black/[0.15]"
                       }`}
                       style={{ width: "100%", zIndex: 0 }}
@@ -115,24 +115,24 @@ export default function OrderDetailModal({ order, onClose }) {
 
                   {/* Circle */}
                   <div
-                    className={`relative z-10 w-[50px] h-[50px] rounded-full flex items-center justify-center ${
+                    className={`relative z-10 w-[40px] h-[40px] rounded-full flex items-center justify-center ${
                       isDone ? "bg-[#029154]" : "bg-black/[0.15]"
                     }`}
                   >
                     {isShippingStep && isDone ? (
-                      <Truck className="w-6 h-6 text-white" />
+                      <Truck className="w-5 h-5 text-white" />
                     ) : (
-                      <Check className="w-6 h-6 text-white" strokeWidth={3} />
+                      <Check className="w-5 h-5 text-white" strokeWidth={3} />
                     )}
                   </div>
 
                   {/* Label */}
-                  <span className="text-[14px] md:text-[16px] font-bold text-black text-center mt-2 leading-[15px]">
+                  <span className="text-[13px] md:text-[14px] font-bold text-black text-center mt-2 leading-[15px]">
                     {step.label}
                   </span>
 
                   {/* Timestamp */}
-                  <span className="text-[13px] md:text-[16px] font-medium text-black/[0.25] text-center mt-1 leading-[15px]">
+                  <span className="text-[12px] md:text-[13px] font-medium text-black/[0.4] text-center mt-1 leading-[15px]">
                     {timestamp || "-"}
                   </span>
                 </div>
@@ -141,10 +141,10 @@ export default function OrderDetailModal({ order, onClose }) {
           </div>
 
           {/* Divider */}
-          <div className="border-b border-black/[0.3] my-4" />
+          <div className="border-b border-black/[0.15] my-4" />
 
           {/* Rincian Pesanan */}
-          <h3 className="text-[24px] font-bold text-[#273B4A] mb-4">Rincian Pesanan</h3>
+          <h3 className="text-[18px] font-bold text-[#273B4A] mb-4">Rincian Pesanan</h3>
 
           {/* Product rows */}
           <div className="space-y-3">
@@ -155,13 +155,13 @@ export default function OrderDetailModal({ order, onClose }) {
 
               return (
                 <div key={idx} className="flex items-center justify-between">
-                  <span className="text-[20px] md:text-[24px] font-medium text-black/[0.5] flex-1">
+                  <span className="text-[15px] md:text-[16px] font-semibold text-black/[0.7] flex-1">
                     {product.name}
                   </span>
-                  <span className="text-[20px] md:text-[24px] font-medium text-black/[0.5] w-[80px] text-center">
+                  <span className="text-[15px] md:text-[16px] font-medium text-black/[0.5] w-[80px] text-center">
                     {qty} kg
                   </span>
-                  <span className="text-[20px] md:text-[24px] font-medium text-black w-[140px] text-right">
+                  <span className="text-[15px] md:text-[16px] font-bold text-black w-[140px] text-right">
                     Rp {lineTotal.toLocaleString("id-ID")}
                   </span>
                 </div>
@@ -173,10 +173,10 @@ export default function OrderDetailModal({ order, onClose }) {
           {order.status === "Dikirim" && (
             <button
               onClick={handleConfirmReceived}
-              className="w-full h-[74px] bg-[#006638] hover:bg-[#00522c] rounded-[10px] mt-8 flex items-center justify-center gap-3 transition"
+              className="w-full h-[50px] bg-[#006638] hover:bg-[#00522c] rounded-[10px] mt-8 flex items-center justify-center gap-2 transition"
             >
-              <Check className="w-[39px] h-[41px] text-white" strokeWidth={3} />
-              <span className="text-[24px] font-bold text-white">Konfirmasi Diterima</span>
+              <Check className="w-[20px] h-[20px] text-white" strokeWidth={3} />
+              <span className="text-[18px] font-bold text-white">Konfirmasi Diterima</span>
             </button>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import KoperasiSidebar from "../../components/koperasi/KoperasiSidebar";
+import Sidebar from "../../components/layout/Sidebar";
 
 export default function PenawaranPage() {
   const [activeTab, setActiveTab] = useState("Semua");
@@ -158,20 +158,20 @@ export default function PenawaranPage() {
 
   return (
     <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900 relative">
-      <div className="flex max-w-[1440px] mx-auto py-8 gap-6 px-4">
+      <div className="flex w-full min-h-screen p-4 pl-[304px]">
         
         {/* Sidebar Koperasi */}
-        <KoperasiSidebar />
+        <Sidebar />
 
         {/* Main Content Container */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 min-h-[971px] flex flex-col justify-between">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 flex flex-col justify-between">
           <div>
             {/* Header Panel */}
-            <div className="flex items-center justify-between border-b border-[#029154] pb-6 mb-6">
+            <div className="flex items-start justify-between border-b border-[#029154] pb-4 mb-4">
               <h1 className="text-[24px] font-semibold text-[#005941]">
                 Penawaran
               </h1>
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200">
                 <img
                   src="/images/user.png"
                   alt="Avatar"

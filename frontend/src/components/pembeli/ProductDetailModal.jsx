@@ -50,25 +50,25 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
       {/* Dark backdrop */}
       <div className="absolute inset-0 bg-black/[0.43]" />
 
-      {/* Modal - Rectangle 4228: 931×665, white, rounded-20 */}
+      {/* Modal - reduced from 931x665 to a tighter 760px max width */}
       <div
-        className="relative bg-white rounded-[20px] w-[95vw] max-w-[931px] max-h-[90vh] overflow-y-auto"
+        className="relative bg-white rounded-[16px] w-[92vw] max-w-[760px] max-h-[88vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button - Ellipse 112: red circle 40×40, top-right */}
+        {/* Close button - reduced from 40x40 to 32x32 */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-10 w-[40px] h-[40px] bg-[#A20003] hover:bg-[#8a0003] rounded-full flex items-center justify-center transition-colors"
+          className="absolute top-3 right-3 z-10 w-[32px] h-[32px] bg-[#A20003] hover:bg-[#8a0003] rounded-full flex items-center justify-center transition-colors"
         >
-          <X className="w-[20px] h-[20px] text-white" strokeWidth={3.5} />
+          <X className="w-[16px] h-[16px] text-white" strokeWidth={3.5} />
         </button>
 
-        {/* Content container */}
-        <div className="p-8 md:p-10">
+        {/* Content container - reduced padding */}
+        <div className="p-6 md:p-7">
           {/* Top section: image + info */}
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* image 22: product image 462×308, rounded-10 */}
-            <div className="w-full md:w-[462px] h-[250px] md:h-[308px] flex-shrink-0 rounded-[10px] overflow-hidden bg-slate-50">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* image - reduced from 462x308 to 340x220 */}
+            <div className="w-full md:w-[340px] h-[190px] md:h-[220px] flex-shrink-0 rounded-[8px] overflow-hidden bg-slate-50">
               <img
                 src={product.image}
                 alt={product.name}
@@ -79,52 +79,55 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
               />
             </div>
 
-            {/* Group 89: product info panel */}
+            {/* Product info panel */}
             <div className="flex-1 flex flex-col justify-start min-w-0">
-              {/* Product name - 32px bold #273B4A */}
-              <h2
-                className="font-bold text-[24px] md:text-[32px] leading-[39px] text-[#273B4A] font-[Montserrat]"
-              >
+              {/* Product name - reduced from 32px to 22px */}
+              <h2 className="font-bold text-[18px] md:text-[22px] leading-[28px] text-[#273B4A] font-[Montserrat]">
                 {product.name}
               </h2>
 
-              {/* Location - 20px medium rgba(0,0,0,0.43) */}
-              <p className="text-[16px] md:text-[20px] leading-[24px] text-black/[0.43] font-medium mt-1">
+              {/* Location - reduced from 20px to 14px */}
+              <p className="text-[13px] md:text-[14px] leading-[18px] text-black/[0.43] font-medium mt-1">
                 {product.location}
               </p>
 
-              {/* Star rating row */}
-              <div className="flex items-center gap-1 mt-3">
+              {/* Star rating row - reduced from 30px to 18px */}
+              <div className="flex items-center gap-1 mt-2">
                 {stars.map((filled, i) => (
                   <Star
                     key={i}
-                    className={`w-[24px] h-[24px] md:w-[30px] md:h-[30px] ${
+                    className={`w-[16px] h-[16px] md:w-[18px] md:h-[18px] ${
                       filled
                         ? "fill-amber-400 text-amber-400"
                         : "fill-gray-200 text-gray-200"
                     }`}
                   />
                 ))}
-                <span className="text-[16px] md:text-[20px] leading-[24px] text-black/[0.43] font-medium ml-2">
+                <span className="text-[13px] md:text-[14px] leading-[18px] text-black/[0.43] font-medium ml-1.5">
                   {product.rating}
                 </span>
               </div>
 
-              {/* Koperasi row */}
-              <div className="flex items-center gap-2 mt-3">
-                <div className="w-[28px] h-[26px] md:w-[33px] md:h-[31px] bg-[url('/images/tag.png')] bg-contain bg-no-repeat shrink-0 opacity-70" />
-                <span className="text-[14px] md:text-[16px] leading-[20px] text-black/[0.43] font-medium">
+              {/* Koperasi row - reduced icon size */}
+              <div className="flex items-center gap-2 mt-2">
+                <img
+                  src="/images/iconKoperasi.png"
+                  alt="koperasi icon"
+                  className="w-[18px] h-[17px] md:w-[20px] md:h-[19px] object-contain shrink-0 opacity-80"
+                />
+                <span className="text-[12px] md:text-[13px] leading-[16px] text-black/[0.43] font-medium">
                   {product.koperasi}
                 </span>
               </div>
 
-              {/* Price - 32px bold #006638 */}
-              <p className="font-bold text-[24px] md:text-[32px] leading-[39px] text-[#006638] mt-4">
-                {product.price} <span className="text-[20px] font-normal">/ kg</span>
+              {/* Price - reduced from 32px to 22px */}
+              <p className="font-bold text-[18px] md:text-[22px] leading-[28px] text-[#006638] mt-3">
+                {product.price}{" "}
+                <span className="text-[14px] font-normal">/ kg</span>
               </p>
 
-              {/* Stock info - 20px medium, line-height 35px, rgba(0,0,0,0.43) */}
-              <div className="text-[14px] md:text-[18px] leading-[30px] md:leading-[35px] text-black/[0.43] font-medium mt-3 space-y-0">
+              {/* Stock info - reduced from 20px to 13px, tighter line-height */}
+              <div className="text-[12px] md:text-[13px] leading-[19px] md:leading-[21px] text-black/[0.43] font-medium mt-2 space-y-0">
                 <p>Stok tersedia : {product.stock || "50kg"}</p>
                 <p>Tanggal Panen: {product.harvestDate || "01-01-26"}</p>
                 <p>Masa Layak: {product.shelfLife || "7 hari"}</p>
@@ -133,20 +136,20 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
           </div>
 
           {/* Bottom section: quantity + action buttons */}
-          <div className="mt-6 md:mt-8">
-            {/* Quantity selector - Rectangle 4229: 485×81, border, rounded-10 */}
-            <div className="flex items-center justify-center w-full max-w-[485px] h-[65px] md:h-[81px] border border-black/[0.3] rounded-[10px] mx-auto md:mx-0">
+          <div className="mt-5 md:mt-6">
+            {/* Quantity selector - reduced from 485x81 to 320x52 */}
+            <div className="flex items-center justify-center w-full max-w-[320px] h-[44px] md:h-[52px] border border-black/[0.3] rounded-[8px] mx-auto md:mx-0">
               {/* Minus button */}
               <button
                 onClick={decreaseQty}
-                className="flex-1 h-full flex items-center justify-center text-[#273B4A] hover:bg-slate-50 transition rounded-l-[10px] border-r border-black/[0.25]"
+                className="flex-1 h-full flex items-center justify-center text-[#273B4A] hover:bg-slate-50 transition rounded-l-[8px] border-r border-black/[0.25]"
               >
-                <Minus className="w-7 h-7 md:w-9 md:h-9" strokeWidth={3} />
+                <Minus className="w-4 h-4 md:w-5 md:h-5" strokeWidth={3} />
               </button>
 
-              {/* Quantity display - 32px bold #273B4A */}
+              {/* Quantity display - reduced from 32px to 18px */}
               <div className="flex-[2] h-full flex items-center justify-center">
-                <span className="font-bold text-[24px] md:text-[32px] leading-[39px] text-[#273B4A]">
+                <span className="font-bold text-[16px] md:text-[18px] leading-[22px] text-[#273B4A]">
                   {quantity} kg
                 </span>
               </div>
@@ -154,26 +157,26 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
               {/* Plus button */}
               <button
                 onClick={increaseQty}
-                className="flex-1 h-full flex items-center justify-center text-[#273B4A] hover:bg-slate-50 transition rounded-r-[10px] border-l border-black/[0.25]"
+                className="flex-1 h-full flex items-center justify-center text-[#273B4A] hover:bg-slate-50 transition rounded-r-[8px] border-l border-black/[0.25]"
               >
-                <Plus className="w-7 h-7 md:w-9 md:h-9" strokeWidth={3} />
+                <Plus className="w-4 h-4 md:w-5 md:h-5" strokeWidth={3} />
               </button>
             </div>
 
-            {/* Action buttons row */}
-            <div className="flex flex-col md:flex-row gap-4 mt-6">
-              {/* Masukkan Keranjang - Rectangle 4230: outlined, border 3px #029154 */}
+            {/* Action buttons row - reduced from 91px to 52px */}
+            <div className="flex flex-col md:flex-row gap-3 mt-5">
+              {/* Masukkan Keranjang - reduced border and font */}
               <button
                 onClick={handleAddToCart}
-                className="flex-1 h-[70px] md:h-[91px] border-[3px] border-[#029154] rounded-[10px] text-[#029154] font-bold text-[20px] md:text-[28px] leading-[39px] hover:bg-[#029154]/5 transition-colors"
+                className="flex-1 h-[46px] md:h-[52px] border-2 border-[#029154] rounded-[8px] text-[#029154] font-bold text-[14px] md:text-[16px] leading-[22px] hover:bg-[#029154]/5 transition-colors"
               >
                 Masukkan Keranjang
               </button>
 
-              {/* Beli Sekarang - Rectangle 4231: filled #029154 */}
+              {/* Beli Sekarang - reduced font */}
               <button
                 onClick={handleBuyNow}
-                className="flex-1 h-[70px] md:h-[91px] bg-[#029154] rounded-[10px] text-white font-bold text-[20px] md:text-[28px] leading-[39px] hover:bg-[#027a47] transition-colors"
+                className="flex-1 h-[46px] md:h-[52px] bg-[#029154] rounded-[8px] text-white font-bold text-[14px] md:text-[16px] leading-[22px] hover:bg-[#027a47] transition-colors"
               >
                 Beli Sekarang
               </button>

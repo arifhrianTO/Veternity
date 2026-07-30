@@ -1,22 +1,14 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import StatsBar from "./components/StatsBar";
-import Categories from "./components/Categories";
-import FeaturedProducts from "./components/FeaturedProducts";
-import KoperasiSection from "./components/KoperasiSection";
-import Footer from "./components/Footer";
-
-// Petani
-import DashboardPage from "./pages/petani/dashboard";
-import ProdukPage from "./pages/petani/produk";
-import PesananPage from "./pages/petani/pesanan";
-import PenawaranPage from "./pages/petani/penawaran";
-import ProfilPage from "./pages/petani/profil";
+import AuthPage from "./pages/AuthPage";
+import Header from "./components/layout/Header";
+import Hero from "./components/home/Hero";
+import StatsBar from "./components/home/StatsBar";
+import Categories from "./components/home/Categories";
+import FeaturedProducts from "./components/home/FeaturedProducts";
+import KoperasiSection from "./components/home/KoperasiSection";
+import Footer from "./components/layout/Footer";
 
 // Petani
 import DashboardPage from "./pages/petani/Dashboard";
@@ -26,7 +18,7 @@ import PenawaranPage from "./pages/petani/Penawaran";
 import ProfilPage from "./pages/petani/Profil";
 
 // Pembeli 
-import MarketplacePage from "./pages/pembeli/Marketplace";
+import MarketplacePage from "./pages/pembeli/marketplace";
 import KeranjangPage from "./pages/pembeli/Keranjang";
 import PesananPembeliPage from "./pages/pembeli/Pesanan";
 import ProfilPembeliPage from "./pages/pembeli/Profil";
@@ -73,8 +65,8 @@ function App() {
     <Routes>
       {/* Home / Landing Page */}
       <Route path="/" element={<Home />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/login" element={<AuthPage />} />
+      <Route path="/register" element={<AuthPage />} />
 
       {/* Rute Petani */}
       <Route path="/petani" element={<Navigate to="/petani/dashboard" replace />} />
