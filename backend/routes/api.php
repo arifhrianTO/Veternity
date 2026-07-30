@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // API Routes untuk Petani (Terlindungi oleh autentikasi)
     Route::get('/dashboard/petani', [DashboardController::class, 'petani']);
+    Route::get('/dashboard/nelayan', [DashboardController::class, 'nelayan']);
     
     Route::apiResource('products', ProductController::class);
     Route::apiResource('orders', OrderController::class);

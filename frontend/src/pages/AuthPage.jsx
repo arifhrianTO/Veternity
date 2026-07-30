@@ -69,6 +69,8 @@ export default function AuthPage() {
       // Redirect berdasarkan role
       if (data.role === 'petani' || data.role === 'petani_binaan') {
         navigate("/petani/dashboard");
+      } else if (data.role === 'nelayan' || data.role === 'nelayan_binaan') {
+        navigate("/nelayan/dashboard");
       } else if (data.role === 'pembeli') {
         navigate("/pembeli/marketplace");
       } else {
