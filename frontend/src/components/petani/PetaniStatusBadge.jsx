@@ -1,4 +1,3 @@
-import React from "react";
 
 const variantStyles = {
   emerald: "bg-emerald-100 text-emerald-700 border border-emerald-200",

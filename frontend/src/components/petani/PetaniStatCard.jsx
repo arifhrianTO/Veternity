@@ -1,4 +1,3 @@
-import React from "react";
 
 export default function PetaniStatCard({ title, value, subtitle, icon: Icon, accent }) {
   return (

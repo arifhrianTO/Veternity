@@ -1,4 +1,3 @@
-import React from "react";
 import { stats } from "../../data/mockData";
 
 export default function StatsBar() {

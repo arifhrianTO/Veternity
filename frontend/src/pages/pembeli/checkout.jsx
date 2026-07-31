@@ -1,101 +1,271 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import api from "../../config/axios"; // Menggunakan axios instance yang sudah ada auth token
 
 export default function CheckoutPage() {
   const [checkoutItems, setCheckoutItems] = useState([]);
-  const [shippingMethod, setShippingMethod] = useState("reguler");
   const [paymentMethod, setPaymentMethod] = useState("transfer");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const saved = localStorage.getItem("checkoutItems");
-    if (saved) {
-      setCheckoutItems(JSON.parse(saved));
-    } else {
-      // Fallback to full cart
-      const cart = localStorage.getItem("cart");
-      if (cart) setCheckoutItems(JSON.parse(cart));
-    }
-  }, []);
+  // State untuk Data RajaOngkir
+  const [provinces, setProvinces] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [fullAddress, setFullAddress] = useState(""); // State baru untuk Alamat Lengkap
 
-  const parsePrice = (priceStr) => {
-    return parseInt(priceStr.replace(/[^0-9]/g, ""), 10) || 0;
+  // State untuk Loading dan Error Provinsi/Kota
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  // State untuk mengelompokkan item berdasarkan toko/koperasi
+  const [groupedItems, setGroupedItems] = useState({});
+  // State untuk menyimpan pilihan ongkir masing-masing toko
+  const [shippingMethods, setShippingMethods] = useState({});
+  // State untuk menyimpan daftar ongkir dari API untuk masing-masing toko
+  const [courierCostsByStore, setCourierCostsByStore] = useState({});
+  // State loading untuk masing-masing toko
+  const [loadingCostByStore, setLoadingCostByStore] = useState({});
+  const [shippingErrorByStore, setShippingErrorByStore] = useState({});
+
+  // --- Fungsi Interaksi API RajaOngkir ---
+
+  const fetchProvinces = async () => {
+    setLoadingProvinces(true);
+    try {
+      const res = await api.get("/shipping/provinces");
+      if (res.data.success) {
+        setProvinces(res.data.data);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil provinsi", error);
+    } finally {
+      setLoadingProvinces(false);
+    }
   };
 
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      let items = [];
+      const saved = localStorage.getItem("checkoutItems");
+      if (saved) {
+        items = JSON.parse(saved);
+      } else {
+        const cart = localStorage.getItem("cart");
+        if (cart) {
+          items = JSON.parse(cart);
+        }
+      }
+
+      setCheckoutItems(items);
+
+      // Mengelompokkan items berdasarkan koperasi
+      if (items.length > 0) {
+        const groups = items.reduce((acc, item) => {
+          const storeName = item.koperasi || "Toko Default";
+          if (!acc[storeName]) acc[storeName] = [];
+          acc[storeName].push(item);
+          return acc;
+        }, {});
+        setGroupedItems(groups);
+      }
+
+      // Ambil data provinsi saat pertama dimuat
+      fetchProvinces();
+
+      // Auto-fill alamat dari profil pembeli
+      setFullAddress("poltek");
+    });
+  }, []);
+
   const subTotal = checkoutItems.reduce((acc, item) => {
-    return acc + parsePrice(item.price) * (item.quantity || 1);
+    return acc + (item.priceNum || 0) * (item.quantity || 1);
   }, 0);
 
-  const shippingCost = shippingMethod === "express" ? 14000 : 0;
-  const totalPayment = subTotal + shippingCost;
+  // Total Berat Keseluruhan (untuk referensi, jika diperlukan)
+  const totalWeight = checkoutItems.reduce((acc, item) => {
+    const itemWeight = item.weight ? item.weight : 1000;
+    return acc + itemWeight * (item.quantity || 1);
+  }, 0);
 
-  const handleOrder = () => {
+  // Menghitung total ongkos kirim dari semua toko
+  const totalShippingCost = Object.keys(groupedItems).reduce((acc, storeName) => {
+    const selectedService = shippingMethods[storeName];
+    if (selectedService && courierCostsByStore[storeName]) {
+      const selectedShipping = courierCostsByStore[storeName].find(c => c.service === selectedService);
+      return acc + (selectedShipping ? selectedShipping.cost : 0);
+    }
+    return acc;
+  }, 0);
+
+  const totalPayment = subTotal + totalShippingCost;
+
+  const handleProvinceChange = async (e) => {
+    const provId = e.target.value;
+    setSelectedProvince(provId);
+    setSelectedCity("");
+    setCourierCostsByStore({});
+    setShippingMethods({});
+    setShippingErrorByStore({});
+
+    if (!provId) return;
+
+    setLoadingCities(true);
+    try {
+      const res = await api.get(`/shipping/cities/${provId}`);
+      if (res.data.success) {
+        setCities(res.data.data);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil kota", error);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
+
+  const handleCityChange = async (e) => {
+    const cityId = e.target.value;
+    setSelectedCity(cityId);
+    setCourierCostsByStore({});
+    setShippingMethods({});
+    setShippingErrorByStore({});
+
+    if (!cityId) return;
+
+    // Hitung ongkir otomatis saat kota dipilih untuk semua toko
+    Object.keys(groupedItems).forEach((storeName) => {
+      checkShippingCost(storeName, cityId, "jne");
+    });
+  };
+
+  const checkShippingCost = async (storeName, cityId, courier) => {
+    setLoadingCostByStore((prev) => ({ ...prev, [storeName]: true }));
+    setShippingErrorByStore((prev) => ({ ...prev, [storeName]: "" }));
+
+    // Ambil origin dari item pertama di toko tersebut (asumsi satu toko dari satu origin)
+    const itemsInStore = groupedItems[storeName];
+    const originCityId = itemsInStore[0]?.originCityId || 153; // fallback 153 jika kosong
+
+    const storeWeight = itemsInStore.reduce((acc, item) => {
+      const w = item.weight || 1000;
+      return acc + w * (item.quantity || 1);
+    }, 0);
+
+    try {
+      const res = await api.post("/shipping/cost", {
+        origin_city_id: originCityId,
+        destination_city_id: cityId,
+        weight: storeWeight,
+        courier: courier,
+      });
+
+      if (res.data.success && res.data.data.length > 0) {
+        setCourierCostsByStore((prev) => ({
+          ...prev,
+          [storeName]: res.data.data,
+        }));
+        setShippingMethods((prev) => ({
+          ...prev,
+          [storeName]: res.data.data[0].service, // Default ke service pertama
+        }));
+      } else {
+        setCourierCostsByStore((prev) => ({ ...prev, [storeName]: [] }));
+        setShippingErrorByStore((prev) => ({
+          ...prev,
+          [storeName]: "Kurir tidak tersedia.",
+        }));
+      }
+    } catch (error) {
+      console.error(`Gagal menghitung ongkir untuk ${storeName}`, error);
+      setShippingErrorByStore((prev) => ({
+        ...prev,
+        [storeName]: "Gagal menghitung ongkos kirim.",
+      }));
+    } finally {
+      setLoadingCostByStore((prev) => ({ ...prev, [storeName]: false }));
+    }
+  };
+
+  const handleOrder = async () => {
     if (checkoutItems.length === 0) {
       alert("Tidak ada produk untuk dipesan!");
       return;
     }
 
-    const orderId = `TRX-${Math.floor(100000 + Math.random() * 900000)}`;
-    const newOrder = {
-      id: orderId,
-      products: checkoutItems,
-      total: `Rp ${totalPayment.toLocaleString("id-ID")}`,
-      date: new Date().toLocaleDateString("id-ID"),
-      status: "Diproses",
-      shippingMethod:
-        shippingMethod === "reguler"
-          ? "Pengiriman Reguler"
-          : shippingMethod === "express"
-            ? "Pengiriman Express"
-            : "Ambil Sendiri",
-      paymentMethod: paymentMethod === "transfer" ? "Transfer Bank" : "QRIS",
-    };
-
-    // Save order
-    const savedOrders = localStorage.getItem("orders");
-    const orders = savedOrders ? JSON.parse(savedOrders) : [];
-    orders.unshift(newOrder);
-    localStorage.setItem("orders", JSON.stringify(orders));
-
-    // Remove checked-out items from cart
-    const cart = localStorage.getItem("cart");
-    if (cart) {
-      const cartItems = JSON.parse(cart);
-      const remaining = cartItems.filter(
-        (ci) => !checkoutItems.some((co) => co.name === ci.name),
-      );
-      localStorage.setItem("cart", JSON.stringify(remaining));
+    if (!selectedCity || !fullAddress.trim()) {
+      alert("Mohon lengkapi alamat pengiriman dan pilih kota tujuan!");
+      return;
     }
-    localStorage.removeItem("checkoutItems");
 
-    alert(`Pesanan ${orderId} berhasil dibuat!`);
-    navigate("/pembeli/pesanan");
+    // Cek apakah setiap toko sudah memiliki layanan pengiriman yang dipilih (jika ada ongkir)
+    const stores = Object.keys(groupedItems);
+    for (let i = 0; i < stores.length; i++) {
+      const storeName = stores[i];
+      if (courierCostsByStore[storeName] && courierCostsByStore[storeName].length > 0) {
+        if (!shippingMethods[storeName]) {
+          alert(`Mohon pilih layanan pengiriman untuk toko ${storeName}!`);
+          return;
+        }
+      }
+    }
+
+    try {
+      const payload = {
+        products: checkoutItems.map(item => ({
+          product_id: item.id,
+          cart_id: item.cart_id, // Untuk referensi penghapusan dari keranjang
+          kuantitas: item.quantity,
+          harga: item.priceNum
+        })),
+        groupedItems: groupedItems,
+        shippingMethods: shippingMethods,
+        fullAddress: fullAddress,
+        provinsi_id: selectedProvince,
+        kota_id: selectedCity,
+        total_berat_gram: totalWeight,
+        ongkos_kirim: totalShippingCost,
+        total: totalPayment,
+        paymentMethod: paymentMethod === "transfer" ? "Transfer Bank" : "QRIS",
+      };
+
+      const res = await api.post('/orders', payload);
+
+      if (res.data.success) {
+        // Hapus items dari keranjang di frontend
+        localStorage.removeItem("checkoutItems");
+        
+        // Panggil Midtrans Snap
+        if (res.data.snap_token) {
+           window.snap.pay(res.data.snap_token, {
+              onSuccess: function(){
+                 alert(`Pembayaran berhasil!`);
+                 navigate("/pembeli/pesanan");
+              },
+              onPending: function(){
+                 alert(`Menunggu pembayaran...`);
+                 navigate("/pembeli/pesanan");
+              },
+              onError: function(){
+                 alert(`Pembayaran gagal!`);
+                 navigate("/pembeli/pesanan");
+              },
+              onClose: function(){
+                 alert('Anda menutup jendela pembayaran. Anda dapat melanjutkannya nanti di halaman Pesanan.');
+                 navigate("/pembeli/pesanan");
+              }
+           });
+        } else {
+           // Jika tidak ada token (misal gratis/bypass)
+           alert(`Pesanan berhasil dibuat!`);
+           navigate("/pembeli/pesanan");
+        }
+      }
+    } catch (error) {
+       console.error("Gagal membuat pesanan", error);
+       alert("Gagal memproses pesanan. Silakan coba lagi.");
+    }
   };
-
-  const shippingOptions = [
-    {
-      id: "reguler",
-      label: "Pengiriman Reguler",
-      desc: "2 - 3 hari",
-      cost: "Gratis",
-      costColor: "text-[#006638]",
-    },
-    {
-      id: "express",
-      label: "Pengiriman Express",
-      desc: "1 hari",
-      cost: "Rp 14.000",
-      costColor: "text-black",
-    },
-    {
-      id: "pickup",
-      label: "Ambil sendiri",
-      desc: "Ambil sendiri di lokasi petani",
-      cost: "Gratis",
-      costColor: "text-[#006638]",
-    },
-  ];
 
   const paymentOptions = [
     { id: "transfer", label: "Transfer Bank" },
@@ -130,79 +300,165 @@ export default function CheckoutPage() {
               </h3>
             </div>
 
-            <div className="border border-[#006638] rounded-[12px] p-3 mb-4 relative">
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-[#006638] flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-[11px] font-medium text-black/50 leading-[14px]">
-                    Jl. Ahmad Yani, Tlk. Tering, Kec. Batam Kota, Kota Batam,
-                    Kepulauan Riau 29461
-                  </p>
-                  <p className="text-[11px] font-semibold text-black mt-1">
-                    08xxxxxxx
-                  </p>
+            <div className="border border-[#006638] rounded-[12px] p-4 mb-4 relative bg-white">
+              <div className="space-y-3">
+                {/* Dropdown Provinsi */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-black/70 mb-1">
+                    Provinsi
+                  </label>
+                  <select
+                    className="w-full border border-black/20 rounded-[8px] p-2 text-[13px] outline-none focus:border-[#006638]"
+                    value={selectedProvince}
+                    onChange={handleProvinceChange}
+                    disabled={loadingProvinces}
+                  >
+                    <option value="">-- Pilih Provinsi --</option>
+                    {provinces.map((prov) => (
+                      <option key={prov.id} value={prov.id}>
+                        {prov.name}
+                      </option>
+                    ))}
+                  </select>
+                  {loadingProvinces && (
+                    <span className="text-[11px] text-[#006638] flex items-center mt-1">
+                      <Loader2 className="w-3 h-3 animate-spin mr-1" />{" "}
+                      Memuat...
+                    </span>
+                  )}
                 </div>
-                <button className="text-[12px] font-semibold text-[#006638] hover:underline flex-shrink-0">
-                  Ubah
-                </button>
+
+                {/* Dropdown Kota */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-black/70 mb-1">
+                    Kota / Kabupaten
+                  </label>
+                  <select
+                    className="w-full border border-black/20 rounded-[8px] p-2 text-[13px] outline-none focus:border-[#006638]"
+                    value={selectedCity}
+                    onChange={handleCityChange}
+                    disabled={!selectedProvince || loadingCities}
+                  >
+                    <option value="">-- Pilih Kota/Kabupaten --</option>
+                    {cities.map((city) => (
+                      <option key={city.id} value={city.id}>
+                        {city.name}
+                      </option>
+                    ))}
+                  </select>
+                  {loadingCities && (
+                    <span className="text-[11px] text-[#006638] flex items-center mt-1">
+                      <Loader2 className="w-3 h-3 animate-spin mr-1" />{" "}
+                      Memuat...
+                    </span>
+                  )}
+                </div>
+
+                {/* Textarea Alamat Lengkap */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-black/70 mb-1">
+                    Detail Alamat (Jalan, RT/RW, Patokan)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Masukkan alamat lengkap..."
+                    value={fullAddress}
+                    onChange={(e) => setFullAddress(e.target.value)}
+                    className="w-full border border-black/20 rounded-[8px] p-2 text-[13px] outline-none focus:border-[#006638] resize-none"
+                  ></textarea>
+                </div>
               </div>
             </div>
 
-            {/* Section 2: Metode Pembelian */}
-            <div className="flex items-center gap-2.5 mb-2">
+            {/* Section 2: Metode Pengiriman Per Toko */}
+            <div className="flex items-center gap-2.5 mb-2 mt-6">
               <div className="w-[26px] h-[26px] rounded-full bg-[#006638] flex items-center justify-center flex-shrink-0">
                 <span className="text-white text-[14px] font-semibold">2</span>
               </div>
               <h3 className="text-[15px] font-semibold text-black">
-                Metode Pembelian
+                Layanan Pengiriman
               </h3>
             </div>
 
-            <div className="space-y-2 mb-4">
-              {shippingOptions.map((opt) => {
-                const isSelected = shippingMethod === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => setShippingMethod(opt.id)}
-                    className={`w-full flex items-center justify-between rounded-[12px] px-3 py-2 border transition text-left ${
-                      isSelected
-                        ? "border-[#006638] bg-[rgba(2,145,84,0.03)]"
-                        : "border-black/[0.25] bg-white hover:border-black/40"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Radio circle - reduced from 30px to 20px */}
-                      <div
-                        className={`w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0 ${
-                          isSelected ? "bg-[#006638]" : "border border-black"
-                        }`}
-                      >
-                        {isSelected && (
-                          <div className="w-[7px] h-[7px] rounded-full bg-white" />
-                        )}
+            <div className="space-y-4 mb-4">
+              {!selectedCity ? (
+                <div className="p-3 border border-yellow-300 bg-yellow-50 rounded-[12px] text-yellow-700 text-[13px]">
+                  Silakan pilih Provinsi dan Kota pengiriman terlebih dahulu untuk melihat opsi ongkos kirim.
+                </div>
+              ) : (
+                Object.keys(groupedItems).map((storeName) => {
+                  const isLoading = loadingCostByStore[storeName];
+                  const error = shippingErrorByStore[storeName];
+                  const costs = courierCostsByStore[storeName] || [];
+                  const selectedMethod = shippingMethods[storeName];
+
+                  return (
+                    <div key={storeName} className="border border-[#006638] rounded-[12px] p-4 bg-white">
+                      <div className="flex items-center gap-2 mb-3">
+                        <img src="/images/iconKoperasi.png" alt="Toko" className="w-5 h-5 opacity-80" />
+                        <h4 className="font-semibold text-[14px] text-black">Dikirim dari {storeName}</h4>
                       </div>
-                      <div>
-                        <p className="text-[13px] font-semibold text-black">
-                          {opt.label}
-                        </p>
-                        <p className="text-[12px] font-semibold text-black/50">
-                          {opt.desc}
-                        </p>
-                      </div>
+
+                      {isLoading ? (
+                        <div className="flex items-center justify-center p-3 border border-black/10 rounded-[8px] bg-slate-50">
+                          <Loader2 className="w-4 h-4 animate-spin text-[#006638] mr-2" />
+                          <span className="text-[12px] text-black/70">Menghitung ongkos kirim...</span>
+                        </div>
+                      ) : error ? (
+                        <div className="p-2 border border-red-300 bg-red-50 rounded-[8px] text-red-600 text-[12px]">
+                          {error}
+                        </div>
+                      ) : costs.length === 0 ? (
+                        <div className="p-2 border border-black/10 rounded-[8px] bg-white text-[12px] text-black/50">
+                          Layanan kurir tidak tersedia untuk pengiriman ini.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {costs.map((cost) => {
+                            const isSelected = selectedMethod === cost.service;
+                            return (
+                              <button
+                                key={cost.service}
+                                onClick={() => setShippingMethods(prev => ({ ...prev, [storeName]: cost.service }))}
+                                className={`w-full flex items-center justify-between rounded-[8px] px-3 py-2 border transition text-left ${
+                                  isSelected
+                                    ? "border-[#006638] bg-[rgba(2,145,84,0.03)]"
+                                    : "border-black/[0.25] bg-white hover:border-black/40"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0 ${
+                                      isSelected ? "bg-[#006638]" : "border border-black"
+                                    }`}
+                                  >
+                                    {isSelected && <div className="w-[6px] h-[6px] rounded-full bg-white" />}
+                                  </div>
+                                  <div>
+                                    <p className="text-[12px] font-bold text-black uppercase">
+                                      JNE - {cost.service}
+                                    </p>
+                                    <p className="text-[11px] font-medium text-black/50 mt-0.5">
+                                      Estimasi: {cost.etd} hari
+                                    </p>
+                                  </div>
+                                </div>
+                                <span className={`text-[13px] font-bold ${isSelected ? "text-black" : "text-black/70"}`}>
+                                  Rp {cost.cost.toLocaleString("id-ID")}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <span
-                      className={`text-[13px] font-semibold ${opt.costColor}`}
-                    >
-                      {opt.cost}
-                    </span>
-                  </button>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             {/* Section 3: Pilih Pembayaran */}
-            <div className="flex items-center gap-2.5 mb-2">
+            <div className="flex items-center gap-2.5 mb-2 mt-6">
               <div className="w-[26px] h-[26px] rounded-full bg-[#006638] flex items-center justify-center flex-shrink-0">
                 <span className="text-white text-[14px] font-semibold">3</span>
               </div>
@@ -271,7 +527,7 @@ export default function CheckoutPage() {
                   <span className="text-[12px] font-bold text-black/[0.6] flex-shrink-0">
                     Rp{" "}
                     {(
-                      parsePrice(item.price) * (item.quantity || 1)
+                      (item.priceNum || 0) * (item.quantity || 1)
                     ).toLocaleString("id-ID")}{" "}
                     {item.unit}
                   </span>
@@ -292,17 +548,17 @@ export default function CheckoutPage() {
               </span>
             </div>
 
-            {/* Ongkos Kirim */}
+            {/* Ongkos Kirim Total */}
             <div className="flex justify-between items-center mb-2">
               <span className="text-[14px] font-bold text-black/[0.6]">
-                Ongkos Kirim
+                Total Ongkos Kirim
               </span>
               <span
-                className={`text-[14px] font-semibold ${shippingCost === 0 ? "text-[#006638]" : "text-black"}`}
+                className={`text-[14px] font-semibold ${totalShippingCost === 0 ? "text-[#006638]" : "text-black"}`}
               >
-                {shippingCost === 0
-                  ? "Gratis"
-                  : `Rp ${shippingCost.toLocaleString("id-ID")}`}
+                {totalShippingCost === 0
+                  ? "Gratis / Belum Dipilih"
+                  : `Rp ${totalShippingCost.toLocaleString("id-ID")}`}
               </span>
             </div>
 
@@ -314,7 +570,7 @@ export default function CheckoutPage() {
               <span className="text-[16px] font-bold text-black">
                 Total Pembayaran
               </span>
-              <span className="text-[16px] font-bold text-black">
+              <span className="text-[16px] font-bold text-[#006638]">
                 Rp {totalPayment.toLocaleString("id-ID")}
               </span>
             </div>

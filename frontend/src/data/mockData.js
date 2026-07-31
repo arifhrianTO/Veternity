@@ -4,10 +4,6 @@ import {
   ShoppingBag,
   ShoppingCart,
   Store,
-  Fish,
-  Wheat,
-  Carrot,
-  Apple,
 } from "lucide-react";
 
 export const categories = [
@@ -27,6 +23,7 @@ export const products = [
     unit: "/kg",
     rating: 4.8,
     koperasi: "Koperasi Makmur",
+    originCityId: 78, // ID Bogor di RajaOngkir
     image: "/images/beras1.png",
     stock: "50kg",
     harvestDate: "01-01-26",
@@ -40,6 +37,7 @@ export const products = [
     unit: "/kg",
     rating: 4.9,
     koperasi: "Koperasi Sejahtera",
+    originCityId: 54, // ID Batam di RajaOngkir
     image: "/images/ikan1.png",
     stock: "30kg",
     harvestDate: "15-01-26",
@@ -53,6 +51,7 @@ export const products = [
     unit: "/kg",
     rating: 4.5,
     koperasi: "Koperasi Maju",
+    originCityId: 22, // ID Bandung di RajaOngkir
     image: "/images/telur.png",
     stock: "100kg",
     harvestDate: "10-01-26",
@@ -66,6 +65,7 @@ export const products = [
     unit: "/kg",
     rating: 4.8,
     koperasi: "Koperasi Sejahtera",
+    originCityId: 54, // ID Batam di RajaOngkir
     image: "/images/udang.png",
     stock: "20kg",
     harvestDate: "12-01-26",

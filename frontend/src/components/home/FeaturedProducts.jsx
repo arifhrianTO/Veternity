@@ -1,4 +1,3 @@
-import React from "react";
 import { ArrowRight, Star, Store } from "lucide-react";
 import { products } from "../../data/mockData";
 

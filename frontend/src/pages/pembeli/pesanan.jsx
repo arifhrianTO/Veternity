@@ -1,154 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import OrderDetailModal from "../../components/pembeli/OrderDetailModal";
-import { ChevronRight, ChevronLeft } from "lucide-react";
-
-const mockOrders = [
-  {
-    id: "BTC-982-IU7",
-    products: [
-      { name: "Beras Premium", image: "/images/beras1.png", quantity: 3, price: "Rp 14.000", unit: "/kg" },
-    ],
-    productCount: 3,
-    total: "Rp 1.400.000",
-    date: "01-01-25",
-    status: "Dikirim",
-    image: "/images/beras1.png",
-    tracking: {
-      created: "21 mei 11.00",
-      processed: "21 mei 11.01",
-      shipped: "22 mei 07.00",
-      completed: null,
-      currentStep: 3,
-    },
-  },
-  {
-    id: "BTC-982-IU8",
-    products: [
-      { name: "Beras Premium", image: "/images/beras1.png", quantity: 2, price: "Rp 14.000", unit: "/kg" },
-    ],
-    productCount: 3,
-    total: "Rp 1.400.000",
-    date: "01-01-25",
-    status: "Menunggu Pembayaran",
-    image: "/images/beras1.png",
-    tracking: {
-      created: "20 mei 09.00",
-      processed: null,
-      shipped: null,
-      completed: null,
-      currentStep: 1,
-    },
-  },
-  {
-    id: "BTC-982-IU9",
-    products: [
-      { name: "Ikan Tongkol Segar", image: "/images/ikan1.png", quantity: 5, price: "Rp 34.000", unit: "/kg" },
-    ],
-    productCount: 3,
-    total: "Rp 1.400.000",
-    date: "01-01-25",
-    status: "Diproses",
-    image: "/images/ikan1.png",
-    tracking: {
-      created: "19 mei 14.00",
-      processed: "19 mei 14.30",
-      shipped: null,
-      completed: null,
-      currentStep: 2,
-    },
-  },
-  {
-    id: "BTC-982-IU10",
-    products: [
-      { name: "Telur", image: "/images/telur.png", quantity: 10, price: "Rp 25.000", unit: "/kg" },
-    ],
-    productCount: 3,
-    total: "Rp 1.400.000",
-    date: "01-01-25",
-    status: "Selesai",
-    image: "/images/telur.png",
-    tracking: {
-      created: "15 mei 10.00",
-      processed: "15 mei 10.15",
-      shipped: "16 mei 08.00",
-      completed: "17 mei 12.00",
-      currentStep: 4,
-    },
-  },
-  {
-    id: "BTC-982-IU11",
-    products: [
-      { name: "Beras Premium", image: "/images/beras1.png", quantity: 3, price: "Rp 14.000", unit: "/kg" },
-    ],
-    productCount: 3,
-    total: "Rp 1.400.000",
-    date: "02-01-25",
-    status: "Dikirim",
-    image: "/images/beras1.png",
-    tracking: {
-      created: "21 mei 11.00",
-      processed: "21 mei 11.01",
-      shipped: "22 mei 07.00",
-      completed: null,
-      currentStep: 3,
-    },
-  },
-  {
-    id: "BTC-982-IU12",
-    products: [
-      { name: "Udang Segar", image: "/images/udang.png", quantity: 2, price: "Rp 50.000", unit: "/kg" },
-    ],
-    productCount: 3,
-    total: "Rp 1.400.000",
-    date: "03-01-25",
-    status: "Diproses",
-    image: "/images/udang.png",
-    tracking: {
-      created: "23 mei 08.00",
-      processed: "23 mei 08.30",
-      shipped: null,
-      completed: null,
-      currentStep: 2,
-    },
-  },
-  {
-    id: "BTC-982-IU13",
-    products: [
-      { name: "Beras Premium", image: "/images/beras1.png", quantity: 5, price: "Rp 14.000", unit: "/kg" },
-    ],
-    productCount: 3,
-    total: "Rp 1.400.000",
-    date: "04-01-25",
-    status: "Menunggu Pembayaran",
-    image: "/images/beras1.png",
-    tracking: {
-      created: "24 mei 15.00",
-      processed: null,
-      shipped: null,
-      completed: null,
-      currentStep: 1,
-    },
-  },
-  {
-    id: "BTC-982-IU14",
-    products: [
-      { name: "Ikan Tongkol Segar", image: "/images/ikan1.png", quantity: 4, price: "Rp 34.000", unit: "/kg" },
-    ],
-    productCount: 3,
-    total: "Rp 1.400.000",
-    date: "05-01-25",
-    status: "Selesai",
-    image: "/images/ikan1.png",
-    tracking: {
-      created: "10 mei 09.00",
-      processed: "10 mei 09.15",
-      shipped: "11 mei 07.00",
-      completed: "12 mei 14.00",
-      currentStep: 4,
-    },
-  },
-];
+import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import api from "../../config/axios";
 
 const tabItems = [
   { key: "semua", label: "Semua" },
@@ -196,45 +50,96 @@ export default function PesananPembeliPage() {
   const [activeTab, setActiveTab] = useState("semua");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [allOrders, setAllOrders] = useState(mockOrders);
+  const [allOrders, setAllOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const itemsPerPage = 4;
 
-  // Merge localStorage orders with mock orders
   useEffect(() => {
-    const saved = localStorage.getItem("orders");
-    if (saved) {
-      const lsOrders = JSON.parse(saved).map((o) => ({
-        id: o.id,
-        products: o.products || [],
-        productCount: o.products ? o.products.length : 0,
-        total: o.total,
-        date: o.date,
-        status: o.status || "Diproses",
-        image: o.products?.[0]?.image || "/images/beras1.png",
-        tracking: {
-          created: new Date().toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
-          processed: null,
-          shipped: null,
-          completed: null,
-          currentStep: 1,
-        },
-      }));
-      setAllOrders([...lsOrders, ...mockOrders]);
-    }
+    const fetchOrders = async () => {
+      try {
+        setIsLoading(true);
+        const res = await api.get("/orders");
+
+        const formattedOrders = res.data.map((o) => ({
+          id: o.id, // Primary key id di database
+          kode_pesanan: o.kode_pesanan,
+          products: o.items.map((i) => ({
+            name: i.nama_produk,
+            quantity: i.jumlah_beli,
+            price: `Rp ${Number(i.harga_satuan).toLocaleString("id-ID")}`,
+          })),
+          productCount: o.items.reduce(
+            (acc, curr) => acc + curr.jumlah_beli,
+            0,
+          ),
+          total: `Rp ${Number(o.total_harga).toLocaleString("id-ID")}`,
+          date: new Date(o.tanggal_pesanan).toLocaleDateString("id-ID"),
+          status: o.status || "Diproses",
+          image: o.items[0]?.product?.gambar
+            ? `http://localhost:8000/storage/${o.items[0].product.gambar}`
+            : "/images/beras.png",
+          tracking: {
+            created: new Date(o.created_at).toLocaleString("id-ID", {
+              day: "numeric",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            processed:
+              o.status !== "Menunggu Pembayaran"
+                ? new Date(o.updated_at).toLocaleString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : null,
+            shipped: null,
+            completed: o.status === "Selesai" ? "Selesai" : null,
+            currentStep:
+              o.status === "Selesai"
+                ? 4
+                : o.status === "Dikirim"
+                  ? 3
+                  : o.status === "Diproses"
+                    ? 2
+                    : 1,
+            resi: o.catatan ? o.catatan.replace("Resi: ", "") : null, // Asumsi resi ditaruh di catatan (sementara)
+            courier: "jne", // Default
+          },
+          snap_token: o.payment_token // Ambil token dari backend
+        }));
+        setAllOrders(formattedOrders);
+      } catch (error) {
+        console.error("Gagal mengambil data pesanan", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
   }, []);
 
   const filteredOrders = allOrders.filter((order) => {
     if (activeTab === "semua") return true;
     if (activeTab === "dalam-proses")
-      return order.status === "Diproses" || order.status === "Menunggu Pembayaran";
+      return (
+        order.status === "Diproses" || order.status === "Menunggu Pembayaran"
+      );
     if (activeTab === "dikirim") return order.status === "Dikirim";
     if (activeTab === "selesai") return order.status === "Selesai";
     return true;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / itemsPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredOrders.length / itemsPerPage),
+  );
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  const currentOrders = filteredOrders.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   const handleTabChange = (tabKey) => {
     setActiveTab(tabKey);
@@ -248,11 +153,16 @@ export default function PesananPembeliPage() {
 
         {/* Main content - consistent wrapper */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
-
           {/* Header */}
           <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
-            <h2 className="text-[24px] font-semibold text-[#005941]">Pesanan Saya</h2>
-            <img src="/images/ikan1.png" alt="avatar" className="w-10 h-10 rounded-full border border-slate-100" />
+            <h2 className="text-[24px] font-semibold text-[#005941]">
+              Pesanan Saya
+            </h2>
+            <img
+              src="/images/ikan1.png"
+              alt="avatar"
+              className="w-10 h-10 rounded-full border border-slate-100"
+            />
           </div>
 
           {/* Tab bar - Rectangle 4189 */}
@@ -264,7 +174,9 @@ export default function PesananPembeliPage() {
                   key={tab.key}
                   onClick={() => handleTabChange(tab.key)}
                   className={`relative px-5 py-2 text-[15px] font-bold transition ${
-                    isActive ? "text-[#005941]" : "text-black/[0.43] hover:text-black/60"
+                    isActive
+                      ? "text-[#005941]"
+                      : "text-black/[0.43] hover:text-black/60"
                   }`}
                 >
                   {tab.label}
@@ -278,22 +190,36 @@ export default function PesananPembeliPage() {
 
           {/* Table container - Rectangle 4186 */}
           <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-6">
-
             {/* Column headers */}
             <div className="flex items-center px-4 mb-4">
-              <span className="w-[120px] text-[13px] font-bold text-slate-500 uppercase tracking-wider">No Pesanan</span>
-              <span className="flex-[2] text-[13px] font-bold text-slate-500 uppercase tracking-wider pl-8">Produk</span>
-              <span className="flex-1 text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">Total</span>
-              <span className="flex-1 text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">Tanggal</span>
-              <span className="w-[130px] text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</span>
-              <span className="w-[40px]" />
+              <span className="w-[120px] text-[13px] font-bold text-slate-500 uppercase tracking-wider">
+                No Pesanan
+              </span>
+              <span className="flex-[2] text-[13px] font-bold text-slate-500 uppercase tracking-wider pl-8">
+                Produk
+              </span>
+              <span className="flex-1 text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                Total
+              </span>
+              <span className="flex-1 text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                Tanggal
+              </span>
+              <span className="w-[130px] text-[13px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                Status
+              </span>
+              <span className="w-[80px]" />
             </div>
 
             {/* Divider */}
             <div className="border-b-2 border-black/[0.13] mb-2" />
 
             {/* Order rows */}
-            {currentOrders.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-16 text-black/40 text-[16px] font-medium flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-[#006638]" />
+                Memuat pesanan Anda...
+              </div>
+            ) : currentOrders.length === 0 ? (
               <div className="text-center py-16 text-black/40 text-[16px] font-medium">
                 Tidak ada pesanan ditemukan.
               </div>
@@ -308,19 +234,23 @@ export default function PesananPembeliPage() {
                       <div className="flex items-center px-4 py-5">
                         {/* No Pesanan */}
                         <span className="w-[120px] text-[15px] font-bold text-[#273B4A]">
-                          {order.id}
+                          {order.kode_pesanan}
                         </span>
 
-                        {/* Produk - image + count */}
+                        {/* Produk */}
                         <div className="flex-[2] flex items-center gap-3 pl-8">
                           <img
                             src={order.image || "/images/beras1.png"}
                             alt="product"
                             className="w-[60px] h-[40px] object-cover rounded-md flex-shrink-0 border border-slate-200"
-                            onError={(e) => { e.target.src = "/images/beras.png"; }}
+                            onError={(e) => {
+                              e.target.src = "/images/beras.png";
+                            }}
                           />
+
                           <span className="text-[15px] font-medium text-[#273B4A]">
-                            {order.productCount || order.products?.length || 1} produk
+                            {order.productCount || order.products?.length || 1}{" "}
+                            produk
                           </span>
                         </div>
 
@@ -334,7 +264,7 @@ export default function PesananPembeliPage() {
                           {order.date}
                         </span>
 
-                        {/* Status badge */}
+                        {/* Status */}
                         <div className="w-[130px] flex justify-center">
                           <span
                             className={`inline-flex items-center justify-center px-3 py-1 rounded-[3px] border text-[13px] font-semibold text-center leading-[18px] ${badge.bg} ${badge.border} ${badge.text}`}
@@ -343,17 +273,47 @@ export default function PesananPembeliPage() {
                           </span>
                         </div>
 
-                        {/* Detail arrow */}
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="w-[40px] flex items-center justify-center hover:bg-emerald-50 rounded-lg transition"
-                        >
-                          <ChevronRight className="w-5 h-5 text-[#029154]" strokeWidth={2.5} />
-                        </button>
+                        {/* Detail / Bayar */}
+                        <div className="w-[80px] flex items-center justify-center gap-2">
+                           {order.status === "Menunggu Pembayaran" && order.snap_token && (
+                              <button 
+                                onClick={() => {
+                                  window.snap.pay(order.snap_token, {
+                                    onSuccess: function() {
+                                      alert("Pembayaran berhasil!");
+                                      window.location.reload();
+                                    },
+                                    onPending: function() {
+                                      alert("Menunggu pembayaran...");
+                                    },
+                                    onError: function() {
+                                      alert("Pembayaran gagal!");
+                                    },
+                                    onClose: function() {
+                                      alert('Anda menutup jendela pembayaran.');
+                                    }
+                                  });
+                                }}
+                                className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold rounded-[6px] transition"
+                              >
+                                Bayar
+                              </button>
+                           )}
+                          <button
+                            onClick={() => setSelectedOrder(order)}
+                            className="w-[35px] h-[35px] flex items-center justify-center hover:bg-emerald-50 rounded-lg transition"
+                          >
+                            <ChevronRight
+                              className="w-5 h-5 text-[#029154]"
+                              strokeWidth={2.5}
+                            />
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Row divider */}
-                      {!isLast && <div className="border-b-2 border-black/[0.13]" />}
+                      {!isLast && (
+                        <div className="border-b-2 border-black/[0.13]" />
+                      )}
                     </div>
                   );
                 })}
@@ -365,8 +325,11 @@ export default function PesananPembeliPage() {
           <div className="flex items-center justify-between mt-6 px-2">
             <span className="text-[14px] font-semibold text-black/[0.51]">
               Menampilkan {Math.min(startIndex + 1, filteredOrders.length)}-
-              {Math.min(startIndex + currentOrders.length, filteredOrders.length)} dari{" "}
-              {filteredOrders.length} produk
+              {Math.min(
+                startIndex + currentOrders.length,
+                filteredOrders.length,
+              )}{" "}
+              dari {filteredOrders.length} produk
             </span>
 
             <div className="flex items-center gap-2">
@@ -396,7 +359,9 @@ export default function PesananPembeliPage() {
 
               {/* Next arrow */}
               <button
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
                 className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
               >

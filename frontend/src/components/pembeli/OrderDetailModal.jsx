@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
-import { X, Check, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, Check, Truck, Loader2 } from "lucide-react";
+import api from "../../config/axios";
 
-const trackingSteps = [
+const defaultTrackingSteps = [
   { key: "created", label: "Pesanan dibuat" },
   { key: "processed", label: "Diproses" },
   { key: "shipped", label: "Dikirim" },
@@ -24,6 +25,10 @@ function getStatusBadgePopup(status) {
 }
 
 export default function OrderDetailModal({ order, onClose }) {
+  const [trackingHistory, setTrackingHistory] = useState([]);
+  const [isLoadingTracking, setIsLoadingTracking] = useState(false);
+  const [trackingError, setTrackingError] = useState("");
+
   // Lock body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -37,15 +42,58 @@ export default function OrderDetailModal({ order, onClose }) {
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  // Fetch tracking data if order is shipped and has a waybill
+  useEffect(() => {
+    const fetchTracking = async () => {
+      const resi = order.tracking?.resi;
+      const courier = order.tracking?.courier || "jne";
+
+      if (order.status === "Dikirim" && resi) {
+        setIsLoadingTracking(true);
+        try {
+          const res = await api.post("/shipping/track", {
+            waybill: resi,
+            courier: courier,
+          });
+
+          if (res.data.success && res.data.data.manifest) {
+            setTrackingHistory(res.data.data.manifest);
+          } else {
+             // Fallback history jika resi belum terdaftar/dummy
+             setTrackingHistory([
+               { manifest_description: "Pesanan diserahkan ke kurir (Data Dummy)", manifest_date: order.tracking.created, manifest_time: "" }
+             ]);
+          }
+        } catch (error) {
+          console.error("Gagal melacak pesanan:", error);
+          setTrackingError("Gagal mengambil status kurir terbaru.");
+        } finally {
+          setIsLoadingTracking(false);
+        }
+      }
+    };
+
+    fetchTracking();
+  }, [order]);
+
   if (!order) return null;
 
   const tracking = order.tracking || { currentStep: 1 };
-  const currentStep = tracking.currentStep || 1;
+  const currentStep = order.status === "Selesai" ? 4 : order.status === "Dikirim" ? 3 : order.status === "Diproses" ? 2 : 1;
   const badge = getStatusBadgePopup(order.status);
 
-  const handleConfirmReceived = () => {
-    alert("Pesanan dikonfirmasi diterima!");
-    onClose();
+  const handleConfirmReceived = async () => {
+    try {
+      // Update status ke backend
+      await api.put(`/orders/${order.id}`, {
+        status: "Selesai"
+      });
+      alert("Pesanan dikonfirmasi diterima!");
+      window.location.reload(); // Refresh the page to update the order list
+    } catch (error) {
+      console.error("Gagal mengonfirmasi pesanan:", error);
+      alert("Gagal mengonfirmasi pesanan. Coba lagi.");
+    }
   };
 
   return (
@@ -76,7 +124,7 @@ export default function OrderDetailModal({ order, onClose }) {
           {/* No Pesanan label + value + status badge */}
           <p className="text-[14px] font-bold text-slate-400 uppercase tracking-wider">no pesanan</p>
           <div className="flex items-center justify-between mt-1">
-            <span className="text-[18px] font-bold text-[#273B4A]">{order.id}</span>
+            <span className="text-[18px] font-bold text-[#273B4A]">{order.kode_pesanan || order.id}</span>
             <span
               className={`inline-flex items-center justify-center px-3 py-1 rounded-[3px] border text-[14px] font-bold ${badge.bg} ${badge.border} ${badge.text}`}
             >
@@ -92,10 +140,9 @@ export default function OrderDetailModal({ order, onClose }) {
 
           {/* Tracking timeline */}
           <div className="flex items-start justify-between mb-6 px-2">
-            {trackingSteps.map((step, idx) => {
+            {defaultTrackingSteps.map((step, idx) => {
               const stepNum = idx + 1;
               const isDone = stepNum <= currentStep;
-              const isCurrent = stepNum === currentStep;
               const isShippingStep = step.key === "shipped";
 
               // Get timestamp for this step
@@ -133,12 +180,46 @@ export default function OrderDetailModal({ order, onClose }) {
 
                   {/* Timestamp */}
                   <span className="text-[12px] md:text-[13px] font-medium text-black/[0.4] text-center mt-1 leading-[15px]">
-                    {timestamp || "-"}
+                    {timestamp || (isDone ? "Selesai" : "-")}
                   </span>
                 </div>
               );
             })}
           </div>
+
+          {/* Live Courier Tracking Section */}
+          {order.status === "Dikirim" && order.tracking?.resi && (
+            <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <h4 className="text-[14px] font-bold text-[#273B4A] mb-3">
+                Riwayat Perjalanan (Resi: <span className="uppercase">{order.tracking.resi}</span>)
+              </h4>
+              
+              {isLoadingTracking ? (
+                <div className="flex items-center gap-2 text-[#006638]">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-[13px] font-medium">Melacak paket...</span>
+                </div>
+              ) : trackingError ? (
+                <div className="text-[13px] text-red-500 font-medium">{trackingError}</div>
+              ) : trackingHistory.length > 0 ? (
+                <div className="space-y-3 mt-2">
+                  {trackingHistory.map((history, idx) => (
+                    <div key={idx} className="flex gap-3 text-[13px]">
+                      <div className="w-[120px] flex-shrink-0 text-slate-500 font-medium">
+                        {history.manifest_date} <br/> {history.manifest_time}
+                      </div>
+                      <div className="flex-1 text-[#273B4A] font-semibold border-l-2 border-[#006638] pl-3">
+                        {history.manifest_description}
+                        {history.city_name ? ` - ${history.city_name}` : ''}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                 <div className="text-[13px] text-slate-500 font-medium">Menunggu update dari kurir...</div>
+              )}
+            </div>
+          )}
 
           {/* Divider */}
           <div className="border-b border-black/[0.15] my-4" />

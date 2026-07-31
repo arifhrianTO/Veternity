@@ -1,62 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import { ChevronRight, ChevronLeft, X, Phone, MessageSquare, Mail, Loader2 } from "lucide-react";
 import api from "../../config/axios";
-
-const penawaranData = [
-  {
-    id: "PNW-001",
-    product: "Beras Premium",
-    img: "beras.png",
-    quantity: "50 Kg",
-    basePrice: "Rp 14.000 / kg",
-    offerPrice: "Rp 12.000 / kg",
-    date: "01-01-26",
-    status: "Menunggu",
-    buyer: "PT Sejahtera",
-    location: "Bogor, Jawa Barat",
-    message:
-      "Halo pak, saya tertarik membeli beras panen terbaru. Mohon konfirmasi harga dan pengiriman.",
-    history: [
-      { time: "10:30", label: "Pembeli mengajukan penawaran", value: "Rp 12.000 / kg" },
-      { time: "10:35", label: "Menunggu respon", value: "-" },
-    ],
-  },
-  {
-    id: "PNW-002",
-    product: "Beras Premium",
-    img: "beras.png",
-    quantity: "50 Kg",
-    basePrice: "Rp 14.000 / kg",
-    offerPrice: "Rp 12.000 / kg",
-    date: "01-01-26",
-    status: "Diterima",
-    buyer: "PT Sejahtera",
-    location: "Bogor, Jawa Barat",
-    message: "Terima kasih, penawaran diterima. Mohon siapkan pesanan.",
-    history: [
-      { time: "10:30", label: "Pembeli mengajukan penawaran", value: "Rp 12.000 / kg" },
-      { time: "10:35", label: "Penawaran diterima", value: "Rp 12.000 / kg" },
-    ],
-  },
-  {
-    id: "PNW-003",
-    product: "Beras Premium",
-    img: "beras.png",
-    quantity: "50 Kg",
-    basePrice: "Rp 14.000 / kg",
-    offerPrice: "Rp 12.000 / kg",
-    date: "01-01-26",
-    status: "Ditolak",
-    buyer: "PT Sejahtera",
-    location: "Bogor, Jawa Barat",
-    message: "Mohon maaf, penawaran tidak sesuai dengan harga kami.",
-    history: [
-      { time: "10:30", label: "Pembeli mengajukan penawaran", value: "Rp 12.000 / kg" },
-      { time: "10:35", label: "Penawaran ditolak", value: "-" },
-    ],
-  },
-];
 
 const tabItems = [
   { key: "semua", label: "Semua" },

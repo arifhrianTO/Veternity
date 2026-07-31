@@ -1,4 +1,3 @@
-import React from "react";
 import PetaniStatusBadge from "./PetaniStatusBadge";
 
 export default function PetaniOrders({ orders = [] }) {

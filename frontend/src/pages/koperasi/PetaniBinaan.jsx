@@ -1,147 +1,105 @@
-import React, { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
-import { Search, ChevronDown, Plus, Eye, ArrowLeft, Edit3, Trash2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import api from "../../config/axios";
+import { Search, Plus, Eye, ChevronLeft, ChevronRight, X, Upload, Loader2 } from "lucide-react";
+
+const ROLE = "petani_binaan";
+const LABEL = "Petani";
 
 export default function PetaniBinaan() {
-  // State Modal Detail Petani
-  const [selectedPetani, setSelectedPetani] = useState(null);
-  const [activeTab, setActiveTab] = useState("produk"); // 'produk' | 'riwayat'
+  const navigate = useNavigate();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const fileInputRef = useRef(null);
 
-  // Dummy Data Petani Binaan (foto diganti ke /images/user.png)
-  const listPetani = [
-    {
-      id: 1,
-      no: 1,
-      nama: "Budi santoso",
-      nik: "098765432109876",
-      noHp: "081234567890",
-      status: "Aktif",
-      jumlahProduk: 5,
-      alamat: "Poltek Batam",
-      tglLahir: "17-08-1995",
-      rekening: "73829292938399",
-      foto: "/images/user.png",
-    },
-    {
-      id: 2,
-      no: 2,
-      nama: "Budi santoso",
-      nik: "098765432109876",
-      noHp: "081234567890",
-      status: "Aktif",
-      jumlahProduk: 5,
-      alamat: "Poltek Batam",
-      tglLahir: "17-08-1995",
-      rekening: "73829292938399",
-      foto: "/images/user.png",
-    },
-    {
-      id: 3,
-      no: 3,
-      nama: "Budi santoso",
-      nik: "098765432109876",
-      noHp: "081234567890",
-      status: "Aktif",
-      jumlahProduk: 5,
-      alamat: "Poltek Batam",
-      tglLahir: "17-08-1995",
-      rekening: "73829292938399",
-      foto: "/images/user.png",
-    },
-    {
-      id: 4,
-      no: 4,
-      nama: "Budi santoso",
-      nik: "098765432109876",
-      noHp: "081234567890",
-      status: "Aktif",
-      jumlahProduk: 5,
-      alamat: "Poltek Batam",
-      tglLahir: "17-08-1995",
-      rekening: "73829292938399",
-      foto: "/images/user.png",
-    },
-    {
-      id: 5,
-      no: 5,
-      nama: "Budi santoso",
-      nik: "098765432109876",
-      noHp: "081234567890",
-      status: "Aktif",
-      jumlahProduk: 5,
-      alamat: "Poltek Batam",
-      tglLahir: "17-08-1995",
-      rekening: "73829292938399",
-      foto: "/images/user.png",
-    },
-    {
-      id: 6,
-      no: 6,
-      nama: "Budi santoso",
-      nik: "098765432109876",
-      noHp: "081234567890",
-      status: "Aktif",
-      jumlahProduk: 5,
-      alamat: "Poltek Batam",
-      tglLahir: "17-08-1995",
-      rekening: "73829292938399",
-      foto: "/images/user.png",
-    },
-  ];
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const itemsPerPage = 5;
 
-  // Dummy Produk di Modal (image diganti ke /images/beras.png)
-  const produkList = [
-    {
-      id: 1,
-      nama: "Beras Premium",
-      stok: "50 Kg",
-      harga: "Rp 14.000 / kg",
-      tglPanen: "01-01-25",
-      masaLayak: "7 Hari",
-      status: "Aktif",
-      image: "/images/beras.png",
-    },
-    {
-      id: 2,
-      nama: "Beras Premium",
-      stok: "50 Kg",
-      harga: "Rp 14.000 / kg",
-      tglPanen: "01-01-25",
-      masaLayak: "7 Hari",
-      status: "Aktif",
-      image: "/images/beras.png",
-    },
-  ];
+  // Form State untuk Tambah Petani
+  const [formData, setFormData] = useState({
+    nama_lengkap: "",
+    nik: "",
+    no_hp: "",
+    alamat: "",
+    tanggal_lahir: "",
+    rekening: "",
+    kelamin: "Laki-laki",
+    foto: null,
+  });
 
-  // Dummy Riwayat di Modal (image diganti ke /images/beras.png)
-  const riwayatList = [
-    {
-      id: 1,
-      noPesanan: "BTC-982-IU7",
-      pembeli: "Koperasi Mitra",
-      produk: "Beras Premium",
-      jumlah: "55 Kg",
-      total: "Rp 1.400.000",
-      tanggal: "01-01-25",
-      status: "Diproses",
-      image: "/images/beras.png",
-    },
-    {
-      id: 2,
-      noPesanan: "BTC-982-IU7",
-      pembeli: "Koperasi Mitra",
-      produk: "Beras Premium",
-      jumlah: "55 Kg",
-      total: "Rp 1.400.000",
-      tanggal: "01-01-25",
-      status: "Mengunggu Pembayaran",
-      image: "/images/beras.png",
-    },
-  ];
+  const fetchData = async () => {
+    try {
+      setFetchError(null);
+      const res = await api.get(`/koperasi/binaan?role=${ROLE}&search=${encodeURIComponent(search)}`);
+      setList(res.data || []);
+    } catch (error) {
+      console.error("Error fetching binaan:", error);
+      setFetchError("Gagal mengambil data dari server.");
+      setList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchData());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, foto: file }));
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const payload = new FormData();
+    payload.append("role", ROLE);
+    payload.append("nama_lengkap", formData.nama_lengkap);
+    payload.append("nik", formData.nik);
+    payload.append("no_hp", formData.no_hp);
+    payload.append("tanggal_lahir", formData.tanggal_lahir);
+    payload.append("kelamin", formData.kelamin);
+    payload.append("alamat", formData.alamat);
+    payload.append("rekening", formData.rekening);
+    if (formData.foto) payload.append("foto_profil", formData.foto);
+
+    try {
+      await api.post("/koperasi/binaan", payload, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      await fetchData();
+      setIsAddModalOpen(false);
+      setFormData({ nama_lengkap: "", nik: "", no_hp: "", alamat: "", tanggal_lahir: "", rekening: "", kelamin: "Laki-laki", foto: null });
+      setPreviewImage(null);
+    } catch (error) {
+      console.error("Gagal menambah", LABEL, error);
+      alert(error.response?.data?.message || `Gagal menambah ${LABEL} binaan.`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const totalPages = Math.max(1, Math.ceil(list.length / itemsPerPage));
+  const currentData = list.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900">
-      {/* Samakan py-8 & gap-6 persis seperti Dashboard */}
       <div className="flex w-full min-h-screen p-4 pl-[304px]">
         {/* Sidebar Koperasi */}
         <Sidebar />
@@ -149,9 +107,9 @@ export default function PetaniBinaan() {
         {/* Outer Main Container */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
-          {/* Header Panel (Avatar diganti ke /images/user.png) */}
+          {/* Header Panel */}
           <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
-            <h1 className="text-[24px] font-semibold text-[#005941]">Petani Binaan</h1>
+            <h1 className="text-[24px] font-semibold text-[#005941]">{LABEL} Binaan</h1>
             <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200 translate-y-[4px]">
               <img
                 src="/images/user.png"
@@ -165,304 +123,297 @@ export default function PetaniBinaan() {
             </div>
           </div>
 
-          {/* Action Bar (Search, Status Filter, Wilayah Filter, Tambah Petani) */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          {/* Action Bar (Search & Tambah) */}
+          <div className="flex items-center justify-between mb-6">
             {/* Input Search */}
-            <div className="relative w-full sm:w-[371px] h-[42px]">
+            <div className="relative w-[300px] h-[42px]">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#005941]" />
               <input
                 type="text"
-                placeholder="Cari Petani..."
+                placeholder={`Cari ${LABEL}...`}
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 className="w-full h-full bg-white border border-[#006638] rounded-full pl-12 pr-4 text-[15px] font-medium text-[#006638] placeholder-[#006638] focus:outline-none"
               />
             </div>
 
-            {/* Filters & Button Add */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Dropdown Status */}
-              <div className="relative w-[140px] sm:w-[153px] h-[42px]">
-                <select className="w-full h-full appearance-none bg-white border border-[#024D70] rounded-[5px] px-4 pr-8 text-[15px] font-medium text-[#00378A] focus:outline-none cursor-pointer">
-                  <option value="">Status</option>
-                  <option value="aktif">Aktif</option>
-                  <option value="nonaktif">Non-Aktif</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00378A] pointer-events-none" />
-              </div>
-
-              {/* Dropdown Wilayah */}
-              <div className="relative w-[140px] sm:w-[153px] h-[42px]">
-                <select className="w-full h-full appearance-none bg-white border border-[#024D70] rounded-[5px] px-4 pr-8 text-[15px] font-medium text-[#00378A] focus:outline-none cursor-pointer">
-                  <option value="">Wilayah</option>
-                  <option value="batam">Batam</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00378A] pointer-events-none" />
-              </div>
-
-              {/* Tombol Tambah Petani */}
-              <button className="w-[180px] sm:w-[205px] h-[42px] bg-gradient-to-r from-[#006638] to-[#029154] rounded-[5px] text-white flex items-center justify-center gap-2 font-semibold text-[18px] sm:text-[20px] hover:opacity-95 transition shadow-sm">
-                <span>Tambah Petani</span>
-                <Plus className="w-6 h-6 stroke-[2.5]" />
-              </button>
-            </div>
+            {/* Tombol Tambah */}
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="w-[180px] h-[42px] bg-gradient-to-r from-[#006638] to-[#029154] rounded-[5px] text-white flex items-center justify-center gap-2 font-semibold text-[16px] hover:opacity-95 transition shadow-sm"
+            >
+              <span>Tambah {LABEL}</span>
+              <Plus className="w-5 h-5 stroke-[2.5]" />
+            </button>
           </div>
 
           {/* Table Container */}
-          <div className="bg-white rounded-[20px] border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] p-6 min-h-[680px] flex flex-col justify-between">
+          <div className="bg-white rounded-[20px] border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] p-6">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="text-[#273B4A] font-bold text-[16px] border-b border-slate-100">
-                    <th className="py-4 px-3 w-[60px]">No</th>
-                    <th className="py-4 px-3">Nama</th>
-                    <th className="py-4 px-3">NIK</th>
-                    <th className="py-4 px-3">No HP</th>
-                    <th className="py-4 px-3">Status</th>
-                    <th className="py-4 px-3 text-center">Jumlah Produk</th>
-                    <th className="py-4 px-3 text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-black/10 text-[16px]">
-                  {listPetani.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50 transition">
-                      <td className="py-4 px-3 font-semibold text-[#273B4A]">{item.no}</td>
-                      <td className="py-4 px-3 font-semibold text-[#273B4A]">{item.nama}</td>
-                      <td className="py-4 px-3 font-medium text-black">{item.nik}</td>
-                      <td className="py-4 px-3 font-semibold text-[#273B4A]">{item.noHp}</td>
-                      <td className="py-4 px-3">
-                        <span className="bg-[rgba(0,174,43,0.19)] border border-[#006638] text-[#006638] px-3 py-0.5 rounded-[3px] text-[15px] font-medium inline-block">
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-3 text-center font-semibold text-[#273B4A]">
-                        {item.jumlahProduk}
-                      </td>
-                      <td className="py-4 px-3 text-center">
-                        <button
-                          onClick={() => {
-                            setSelectedPetani(item);
-                            setActiveTab("produk");
-                          }}
-                          className="w-9 h-9 rounded-full border-2 border-[#006638] flex items-center justify-center text-[#006638] hover:bg-emerald-50 transition mx-auto"
-                          title="View Detail"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                      </td>
+                  <thead>
+                    <tr className="text-[#273B4A] font-bold text-[14px] border-b-2 border-slate-200">
+                      <th className="pb-3 px-3 w-[60px]">No</th>
+                      <th className="pb-3 px-3">Nama</th>
+                      <th className="pb-3 px-3">NIK</th>
+                      <th className="pb-3 px-3">No HP</th>
+                      <th className="pb-3 px-3">Status</th>
+                      <th className="pb-3 px-3 text-center">Jumlah Produk</th>
+                      <th className="pb-3 px-3 text-center">Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
+                  </thead>
+                  <tbody className="text-[14px]">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={7} className="text-center py-10">
+                          <div className="flex items-center justify-center gap-2 text-[#006638]">
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <span className="font-semibold">Memuat data...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : fetchError ? (
+                      <tr>
+                        <td colSpan={7} className="text-center py-10 text-red-500 font-semibold bg-red-50">{fetchError}</td>
+                      </tr>
+                    ) : currentData.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="text-center py-10 text-slate-500 font-medium">
+                          Belum ada {LABEL.toLowerCase()} binaan.
+                        </td>
+                      </tr>
+                    ) : (
+                      currentData.map((item, idx) => (
+                        <tr key={item.id} className="hover:bg-slate-50 transition border-b border-black/10 last:border-0">
+                          <td className="py-2 px-3 font-semibold text-[#273B4A]">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                          <td className="py-2 px-3 font-semibold text-[#273B4A]">{item.nama_lengkap}</td>
+                          <td className="py-2 px-3 font-medium text-black">{item.nik || "-"}</td>
+                          <td className="py-2 px-3 font-semibold text-[#273B4A]">{item.no_hp || "-"}</td>
+                          <td className="py-2 px-3">
+                            <span className="bg-[rgba(0,174,43,0.19)] border border-[#006638] text-[#006638] px-3 py-0.5 rounded-[3px] text-[13px] font-medium inline-block">
+                              Aktif
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 text-center font-semibold text-[#273B4A]">
+                            {item.products_count}
+                          </td>
+                          <td className="py-2 px-3 text-center">
+                            <button
+                              onClick={() => navigate(`/koperasi/petani-binaan/${item.id}`)}
+                              className="w-8 h-8 rounded-full border-2 border-[#006638] flex items-center justify-center text-[#006638] hover:bg-emerald-50 transition mx-auto shadow-sm"
+                              title="View Detail"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
               </table>
             </div>
 
             {/* Pagination & Info */}
-            <div className="flex flex-wrap items-center justify-between border-t border-slate-100 pt-4 mt-6 gap-4">
-              <span className="text-[15px] sm:text-[16px] font-semibold text-black/50">
-                Menampilkan 1-6 dari 8 petani
-              </span>
-              <div className="flex items-center gap-2">
-                <button className="p-1 text-black/40 hover:text-black transition">
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button className="w-9 h-9 bg-[#006638] text-white rounded-[5px] font-semibold text-[20px] flex items-center justify-center">
-                  1
-                </button>
-                <button className="w-9 h-9 bg-white border border-[#006638] text-[#006638] rounded-[5px] font-semibold text-[20px] flex items-center justify-center hover:bg-emerald-50 transition">
-                  2
-                </button>
-                <button className="p-1 text-black/40 hover:text-black transition">
-                  <ChevronRight className="w-6 h-6" />
-                </button>
+            {list.length > itemsPerPage && (
+              <div className="flex flex-wrap items-center justify-between border-t border-slate-100 pt-4 mt-6 gap-4">
+                <span className="text-[15px] sm:text-[16px] font-semibold text-black/50">
+                  Menampilkan {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, list.length)} dari {list.length} {LABEL.toLowerCase()}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-1 text-black/40 hover:text-black transition disabled:opacity-30"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-9 h-9 rounded-[5px] font-semibold text-[16px] flex items-center justify-center transition ${
+                        currentPage === i + 1
+                          ? "bg-[#006638] text-white"
+                          : "bg-white border border-[#006638] text-[#006638] hover:bg-emerald-50"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-1 text-black/40 hover:text-black transition disabled:opacity-30"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
         </div>
       </div>
 
-      {/* ========================================================== */}
-      {/* MODAL POPUP DETAIL PETANI                                 */}
-      {/* ========================================================== */}
-      {selectedPetani && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-[20px] w-full max-w-[1280px] max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative shadow-2xl border border-[#006638]">
-            
-            {/* Header Modal / Arrow Back */}
+      {/* MODAL TAMBAH PETANI */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-[700px] rounded-[20px] p-8 shadow-2xl relative my-auto">
+            {/* Header Modal */}
             <div className="flex items-center justify-between mb-6 border-b border-[#029154] pb-4">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setSelectedPetani(null)}
-                  className="w-9 h-9 flex items-center justify-center border-2 border-[#006638] rounded-full text-[#006638] hover:bg-emerald-50 transition"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <h2 className="text-[22px] sm:text-[24px] font-semibold text-[#005941]">
-                  Detail Petani
-                </h2>
-              </div>
+              <h2 className="text-[22px] font-semibold text-[#005941]">
+                Tambah {LABEL} Baru
+              </h2>
               <button
-                onClick={() => setSelectedPetani(null)}
-                className="text-slate-400 hover:text-slate-600 transition"
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  setPreviewImage(null);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition"
               >
-                <X className="w-7 h-7" />
+                <X className="w-6 h-6 text-slate-500" />
               </button>
             </div>
 
-            {/* Profil Card */}
-            <div className="border border-[#006638] rounded-[20px] p-6 sm:p-8 mb-6 relative bg-white flex flex-col md:flex-row items-center md:items-start gap-8">
-              <img
-                src={selectedPetani.foto}
-                alt={selectedPetani.nama}
-                className="w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] rounded-full object-cover flex-shrink-0 border border-slate-200"
-              />
-
-              <div className="flex-1 w-full">
-                <div className="flex justify-between items-start mb-4">
-                  <h1 className="text-[28px] sm:text-[32px] font-semibold text-[#006638] leading-tight">
-                    {selectedPetani.nama}
-                  </h1>
-                  <button className="p-2 border-2 border-[#006638] rounded-lg text-[#006638] hover:bg-emerald-50 transition">
-                    <Edit3 className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-[140px_1fr] sm:grid-cols-[160px_1fr] gap-y-3 text-[16px] sm:text-[18px] font-semibold text-black">
-                  <div>Nik :</div>
-                  <div>{selectedPetani.nik}</div>
-
-                  <div>No Hp :</div>
-                  <div>{selectedPetani.noHp}</div>
-
-                  <div>Alamat :</div>
-                  <div>{selectedPetani.alamat}</div>
-
-                  <div>Tanggal Lahir :</div>
-                  <div>{selectedPetani.tglLahir}</div>
-
-                  <div>Rekening :</div>
-                  <div>{selectedPetani.rekening}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Tab Switcher */}
-            <div className="w-[280px] sm:w-[334px] h-[50px] sm:h-[60px] bg-white shadow-[0_0_5px_rgba(0,0,0,0.25)] rounded-[10px] flex items-center mb-6 p-1 relative">
-              <button
-                onClick={() => setActiveTab("produk")}
-                className={`flex-1 text-center text-[18px] sm:text-[20px] font-semibold transition ${
-                  activeTab === "produk" ? "text-[#006638]" : "text-black/40"
-                }`}
-              >
-                Produk
-              </button>
-              <button
-                onClick={() => setActiveTab("riwayat")}
-                className={`flex-1 text-center text-[18px] sm:text-[20px] font-semibold transition ${
-                  activeTab === "riwayat" ? "text-[#006638]" : "text-black/40"
-                }`}
-              >
-                Riwayat
-              </button>
+            {/* Form */}
+            <form onSubmit={handleSave} className="space-y-6">
               
-              <div
-                className={`absolute bottom-1.5 h-[3px] bg-[#006638] transition-all duration-300 w-[100px] sm:w-[120px] ${
-                  activeTab === "produk" ? "left-[20px] sm:left-[24px]" : "left-[155px] sm:left-[188px]"
-                }`}
-              />
-            </div>
-
-            {/* Content Tab */}
-            <div className="border border-[#006638] rounded-[20px] p-6 bg-white min-h-[280px]">
-              {activeTab === "produk" && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="text-[#273B4A] font-bold text-[16px] border-b border-slate-100 pb-4">
-                        <th className="py-3 px-4">Produk</th>
-                        <th className="py-3 px-4">Stok</th>
-                        <th className="py-3 px-4">Harga Harapan</th>
-                        <th className="py-3 px-4">Tanggal Panen</th>
-                        <th className="py-3 px-4">Masa Layak</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4 text-center">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-[15px] font-semibold text-[#273B4A]">
-                      {produkList.map((prod) => (
-                        <tr key={prod.id}>
-                          <td className="py-4 px-4">
-                            <span>{prod.nama}</span>
-                          </td>
-                          <td className="py-4 px-4">{prod.stok}</td>
-                          <td className="py-4 px-4 text-black font-normal">{prod.harga}</td>
-                          <td className="py-4 px-4">{prod.tglPanen}</td>
-                          <td className="py-4 px-4">{prod.masaLayak}</td>
-                          <td className="py-4 px-4">
-                            <span className="bg-[rgba(0,174,43,0.19)] border border-[#006638] text-[#006638] px-3 py-1 rounded-[3px] text-[14px] font-medium inline-block">
-                              {prod.status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center justify-center gap-2">
-                              <button className="w-[38px] h-[38px] rounded-[5px] border border-[#0220E1] flex items-center justify-center text-[#0004ED] hover:bg-blue-50 transition">
-                                <Edit3 className="w-4 h-4" />
-                              </button>
-                              <button className="w-[38px] h-[38px] rounded-[5px] border border-[#E10206] flex items-center justify-center text-[#FF0000] hover:bg-red-50 transition">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Upload Foto Profil */}
+              <div className="flex flex-col items-center gap-3">
+                <div 
+                  className="w-[120px] h-[120px] rounded-full border-2 border-dashed border-[#006638] bg-emerald-50 flex flex-col items-center justify-center overflow-hidden cursor-pointer hover:bg-emerald-100 transition relative"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  {previewImage ? (
+                    <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-[#006638] mb-1" />
+                      <span className="text-[11px] font-semibold text-[#006638] text-center px-2">Upload<br/>Foto Profil</span>
+                    </>
+                  )}
                 </div>
-              )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleImageChange} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+              </div>
 
-              {activeTab === "riwayat" && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="text-[#273B4A] font-bold text-[16px] border-b border-slate-100 pb-4">
-                        <th className="py-3 px-4">No Pesanan</th>
-                        <th className="py-3 px-4">Pembeli</th>
-                        <th className="py-3 px-4">Produk</th>
-                        <th className="py-3 px-4">Jumlah</th>
-                        <th className="py-3 px-4">Total</th>
-                        <th className="py-3 px-4">Tanggal</th>
-                        <th className="py-3 px-4 text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-[15px] font-semibold text-[#273B4A]">
-                      {riwayatList.map((rw) => (
-                        <tr key={rw.id}>
-                          <td className="py-4 px-4">{rw.noPesanan}</td>
-                          <td className="py-4 px-4">{rw.pembeli}</td>
-                          <td className="py-4 px-4">
-                            <span>{rw.produk}</span>
-                          </td>
-                          <td className="py-4 px-4">{rw.jumlah}</td>
-                          <td className="py-4 px-4">{rw.total}</td>
-                          <td className="py-4 px-4">{rw.tanggal}</td>
-                          <td className="py-4 px-4 text-center">
-                            {rw.status === "Diproses" && (
-                              <span className="bg-[rgba(172,105,255,0.19)] border border-[#520066] text-[#4B0066] px-4 py-1.5 rounded-[3px] text-[14px] font-semibold inline-block">
-                                Diproses
-                              </span>
-                            )}
-                            {rw.status === "Mengunggu Pembayaran" && (
-                              <span className="bg-[rgba(255,212,105,0.19)] border border-[#956100] text-[#DC8800] px-3 py-1.5 rounded-[3px] text-[13px] font-semibold inline-block">
-                                Mengunggu Pembayaran
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Grid Input Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Nama Lengkap</label>
+                  <input
+                    type="text"
+                    name="nama_lengkap"
+                    value={formData.nama_lengkap}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan nama"
+                    className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]"
+                    required
+                  />
                 </div>
-              )}
-            </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">NIK</label>
+                  <input
+                    type="text"
+                    name="nik"
+                    value={formData.nik}
+                    onChange={handleInputChange}
+                    placeholder="16 digit NIK"
+                    className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Nomor HP</label>
+                  <input
+                    type="text"
+                    name="no_hp"
+                    value={formData.no_hp}
+                    onChange={handleInputChange}
+                    placeholder="Contoh: 081234..."
+                    className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Tanggal Lahir</label>
+                  <input
+                    type="date"
+                    name="tanggal_lahir"
+                    value={formData.tanggal_lahir}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] text-gray-700"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Jenis Kelamin</label>
+                  <select
+                    name="kelamin"
+                    value={formData.kelamin}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white"
+                  >
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Nomor Rekening</label>
+                  <input
+                    type="text"
+                    name="rekening"
+                    value={formData.rekening}
+                    onChange={handleInputChange}
+                    placeholder="Contoh: 8392xxxx (BCA)"
+                    className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Alamat Lengkap</label>
+                  <textarea
+                    name="alamat"
+                    value={formData.alamat}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan alamat lengkap"
+                    rows="3"
+                    className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] resize-none"
+                    required
+                  />
+                </div>
+              </div>
 
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setPreviewImage(null);
+                  }}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-[#006638] text-white rounded-[8px] font-semibold hover:bg-emerald-800 transition shadow-sm disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Simpan {LABEL}
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}

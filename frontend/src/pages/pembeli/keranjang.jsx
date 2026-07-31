@@ -1,44 +1,84 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
-import { Trash2, Check } from "lucide-react";
+import { Trash2, Check, Loader2 } from "lucide-react";
+import api from "../../config/axios";
 
 export default function KeranjangPage() {
   const [cartItems, setCartItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const saved = localStorage.getItem("cart");
-    if (saved) {
-      const items = JSON.parse(saved);
-      setCartItems(items);
+  const fetchCart = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/carts');
+      
+      const formattedItems = res.data.map(item => ({
+        cart_id: item.id,
+        id: item.product_id, // Untuk checkout
+        name: item.product.nama_produk,
+        price: `Rp ${Number(item.product.harga_harapan).toLocaleString('id-ID')}`,
+        priceNum: Number(item.product.harga_harapan),
+        quantity: Number(item.kuantitas),
+        unit: `/${item.product.satuan}`,
+        image: item.product.gambar ? `http://localhost:8000/storage/${item.product.gambar}` : "/images/beras.png",
+        koperasi: item.product.user?.name || "Koperasi",
+        originCityId: item.product.user_id === 1 ? 78 : 54, // Mock city ID
+        stock: `${item.product.stok} ${item.product.satuan}`
+      }));
+
+      setCartItems(formattedItems);
       // Select all by default
-      setSelectedItems(items.map((_, i) => i));
+      setSelectedItems(formattedItems.map((_, i) => i));
+    } catch (error) {
+      console.error("Gagal memuat keranjang", error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchCart());
   }, []);
 
-  const syncCart = (items) => {
-    setCartItems(items);
-    localStorage.setItem("cart", JSON.stringify(items));
-  };
+  const updateQuantity = async (index, change) => {
+    const item = cartItems[index];
+    let newQty = item.quantity + change;
+    if (newQty <= 0) newQty = 1;
 
-  const updateQuantity = (index, change) => {
+    // Optimistic UI Update
     const newItems = [...cartItems];
-    newItems[index].quantity += change;
-    if (newItems[index].quantity <= 0) {
-      newItems[index].quantity = 1;
+    newItems[index].quantity = newQty;
+    setCartItems(newItems);
+
+    try {
+      await api.put(`/carts/${item.cart_id}`, { kuantitas: newQty });
+    } catch (error) {
+      console.error("Gagal update kuantitas", error);
+      // Revert if error
+      fetchCart();
     }
-    syncCart(newItems);
   };
 
-  const removeItem = (index) => {
+  const removeItem = async (index) => {
+    const item = cartItems[index];
+    
+    // Optimistic UI Update
     const newItems = [...cartItems];
     newItems.splice(index, 1);
+    setCartItems(newItems);
     setSelectedItems((prev) =>
       prev.filter((i) => i !== index).map((i) => (i > index ? i - 1 : i)),
     );
-    syncCart(newItems);
+
+    try {
+      await api.delete(`/carts/${item.cart_id}`);
+    } catch (error) {
+      console.error("Gagal menghapus produk", error);
+      fetchCart();
+    }
   };
 
   const toggleSelect = (index) => {
@@ -47,15 +87,11 @@ export default function KeranjangPage() {
     );
   };
 
-  const parsePrice = (priceStr) => {
-    return parseInt(priceStr.replace(/[^0-9]/g, ""), 10) || 0;
-  };
-
   const calculateTotal = () => {
     return selectedItems.reduce((acc, idx) => {
       const item = cartItems[idx];
       if (!item) return acc;
-      return acc + parsePrice(item.price) * item.quantity;
+      return acc + (item.priceNum * item.quantity);
     }, 0);
   };
 
@@ -91,7 +127,12 @@ export default function KeranjangPage() {
             />
           </div>
 
-          {cartItems.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20 text-[#006638]">
+               <Loader2 className="w-6 h-6 animate-spin mr-2"/>
+               Memuat Keranjang...
+            </div>
+          ) : cartItems.length === 0 ? (
             <div className="text-center py-16 text-black/40 text-[14px] font-medium">
               Keranjang belanja Anda kosong. Silakan kunjungi MarketPlace untuk
               berbelanja.
@@ -120,7 +161,7 @@ export default function KeranjangPage() {
               {/* Cart rows - reduced padding */}
               <div className="space-y-3">
                 {cartItems.map((item, idx) => {
-                  const itemTotal = parsePrice(item.price) * item.quantity;
+                  const itemTotal = item.priceNum * item.quantity;
                   const isSelected = selectedItems.includes(idx);
 
                   return (
