@@ -1,113 +1,101 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import api from "../../config/axios";
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Pencil, X, Loader2 } from "lucide-react";
+
+const STATUS_OPTIONS = ["Menunggu Pembayaran", "Diproses", "Dikirim", "Selesai", "Dibatalkan"];
 
 export default function PengirimanPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Semua");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedItem, setSelectedItem] = useState(null); // State untuk Modal Edit
-  const [editForm, setEditForm] = useState({ resi: "", status: "" });
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [editForm, setEditForm] = useState({ resi: "", status: "", kurir: "", layanan: "" });
 
-  // Data Pengiriman
-  const initialData = [
-    {
-      id: 1,
-      invoice: "IND-837448-73638",
-      pembeli: "PT Sejahtera",
-      logistik: "JNT Cargo",
-      noResi: "88927799387402",
-      status: "Selesai",
-    },
-    {
-      id: 2,
-      invoice: "IND-837448-73638",
-      pembeli: "PT Sejahtera",
-      logistik: "JNT Cargo",
-      noResi: "88927799387402",
-      status: "Dikirim",
-    },
-    {
-      id: 3,
-      invoice: "IND-837448-73638",
-      pembeli: "PT Sejahtera",
-      logistik: "JNT Cargo",
-      noResi: "88927799387402",
-      status: "Diproses",
-    },
-    {
-      id: 4,
-      invoice: "IND-837448-73638",
-      pembeli: "PT Sejahtera",
-      logistik: "JNT Cargo",
-      noResi: "88927799387402",
-      status: "Dikirim",
-    },
-    {
-      id: 5,
-      invoice: "IND-837448-73638",
-      pembeli: "PT Sejahtera",
-      logistik: "JNT Cargo",
-      noResi: "88927799387402",
-      status: "Selesai",
-    },
-  ];
+  const [pengirimanList, setPengirimanList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const itemsPerPage = 5;
 
-  const [pengirimanList, setPengirimanList] = useState(initialData);
-
-  // Helper Styling Badge Status
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "Selesai":
-        return (
-          <span className="w-[75px] h-[22px] bg-[rgba(0,174,43,0.19)] border border-[#006638] text-[#006638] text-[15px] font-medium rounded-[3px] flex items-center justify-center">
-            Selesai
-          </span>
-        );
-      case "Dikirim":
-        return (
-          <span className="w-[75px] h-[22px] bg-[rgba(105,170,255,0.19)] border border-[#0220E1] text-[#0220E1] text-[15px] font-medium rounded-[3px] flex items-center justify-center">
-            Dikirim
-          </span>
-        );
-      case "Diproses":
-        return (
-          <span className="w-[75px] h-[22px] bg-[rgba(215,105,255,0.19)] border border-[#790097] text-[#BC02E1] text-[15px] font-medium rounded-[3px] flex items-center justify-center">
-            Diproses
-          </span>
-        );
-      default:
-        return null;
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setFetchError(null);
+      const res = await api.get("/koperasi/orders");
+      setPengirimanList(res.data || []);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      setFetchError("Gagal mengambil data pengiriman dari server.");
+      setPengirimanList([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchOrders());
+  }, []);
+
+  const getStatusBadge = (status) => {
+    const map = {
+      Selesai: "bg-[rgba(0,174,43,0.19)] border border-[#006638] text-[#006638]",
+      Dikirim: "bg-[rgba(105,170,255,0.19)] border border-[#0220E1] text-[#0220E1]",
+      Diproses: "bg-[rgba(215,105,255,0.19)] border border-[#790097] text-[#BC02E1]",
+      "Menunggu Pembayaran": "bg-[#FFD469]/20 border border-[#956100] text-[#DC8800]",
+      Dibatalkan: "bg-[#FF696B]/20 border border-[#950002] text-[#DC0004]",
+    };
+    const cls = map[status] || "bg-gray-100 border border-gray-400 text-gray-600";
+    return (
+      <span className={`${cls} px-2 py-0.5 text-[12px] font-medium rounded-[3px] inline-flex items-center justify-center`}>
+        {status}
+      </span>
+    );
   };
 
   // Filter Data
   const filteredData = pengirimanList.filter((item) => {
+    const noResi = item.shipment?.nomor_resi || "-";
     const matchesSearch =
-      item.invoice.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.pembeli.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.noResi.includes(searchTerm);
+      item.kode_pesanan?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.pembeli?.nama_lengkap?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      noResi.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "Semua" || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  // Handle Open Modal
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
+  const currentData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const handleOpenEdit = (item) => {
     setSelectedItem(item);
-    setEditForm({ resi: item.noResi, status: item.status });
+    setEditForm({
+      resi: item.shipment?.nomor_resi || "",
+      status: item.status,
+      kurir: item.shipment?.kurir || "",
+      layanan: item.shipment?.layanan || "",
+    });
   };
 
-  // Handle Save Modal
-  const handleSaveEdit = (e) => {
+  const handleSaveEdit = async (e) => {
     e.preventDefault();
-    setPengirimanList((prev) =>
-      prev.map((item) =>
-        item.id === selectedItem.id
-          ? { ...item, noResi: editForm.resi, status: editForm.status }
-          : item
-      )
-    );
-    setSelectedItem(null);
+    setIsSubmitting(true);
+    try {
+      await api.put(`/orders/${selectedItem.id}`, {
+        status: editForm.status,
+        waybill: editForm.resi,
+        kurir: editForm.kurir,
+        layanan: editForm.layanan,
+      });
+      await fetchOrders();
+      setSelectedItem(null);
+    } catch (error) {
+      console.error("Gagal update pengiriman:", error);
+      alert(error.response?.data?.message || "Gagal memperbarui pengiriman.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -117,10 +105,9 @@ export default function PengirimanPage() {
         <Sidebar />
 
         {/* Main Content Area */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 flex flex-col justify-between">
-          <div>
-            {/* Header Panel */}
-            <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-6 flex flex-col h-[calc(100vh-32px)] overflow-hidden">
+          {/* Header Panel */}
+          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-3 shrink-0">
               <h1 className="text-[24px] font-semibold text-[#005941]">
                 Pengiriman
               </h1>
@@ -137,56 +124,40 @@ export default function PengirimanPage() {
               </div>
             </div>
 
-            {/* Filter & Search Bar */}
-            <div className="flex items-center justify-between mb-6">
+          {/* Filter & Search Bar */}
+          <div className="flex items-center justify-between mb-4 shrink-0">
               {/* Input Search */}
-              <div className="relative w-[371px] h-[42px]">
+              <div className="relative w-[300px] h-[42px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#005941]" />
                 <input
                   type="text"
                   placeholder="Cari Pengiriman..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-full bg-white border border-[#006638] rounded-[50px] pl-11 pr-4 text-[15px] text-[#006638] font-medium outline-none placeholder-[#006638]"
-                />
-                <img
-                  src="/images/search.png"
-                  alt="Search"
-                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 object-contain"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/search.png";
-                  }}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                  className="w-full h-full bg-white border border-[#006638] rounded-full pl-12 pr-4 text-[15px] text-[#006638] font-medium outline-none placeholder-[#006638]"
                 />
               </div>
 
               {/* Status Dropdown Filter */}
-              <div className="relative w-[153px] h-[42px]">
+              <div className="relative w-[130px] h-[42px]">
                 <select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full h-full bg-white border border-[#024D70] rounded-[5px] px-3 pr-8 text-[16px] text-[#00378A] font-medium outline-none appearance-none cursor-pointer"
+                  onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                  className="w-full h-full bg-white border border-[#024D70] rounded-[5px] px-3 pr-8 text-[15px] text-[#00378A] font-medium outline-none appearance-none cursor-pointer"
                 >
                   <option value="Semua">Status</option>
                   <option value="Diproses">Diproses</option>
                   <option value="Dikirim">Dikirim</option>
                   <option value="Selesai">Selesai</option>
                 </select>
-                <img
-                  src="/images/expand-down.png"
-                  alt="Expand"
-                  className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none object-contain"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/expand-down.png";
-                  }}
-                />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00378A] pointer-events-none" />
               </div>
             </div>
 
-            {/* Main Table Area */}
-            <div className="bg-white/50 border border-[#029154] rounded-[20px] p-6 shadow-[0_0_4px_rgba(0,0,0,0.25)]">
-              {/* Table Header */}
-              <div className="grid grid-cols-12 gap-2 pb-4 text-[#273B4A] font-bold text-[16px] text-center items-center border-b border-black/10">
+          {/* Main Table Area */}
+          <div className="bg-white/50 border border-[#029154] rounded-[15px] p-4 shadow-[0_0_4px_rgba(0,0,0,0.25)] flex flex-col flex-1 min-h-0">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-2 pb-2 text-[#273B4A] font-bold text-[13px] text-center items-center border-b-2 border-black/10 shrink-0">
                 <div className="col-span-3">Invoice</div>
                 <div className="col-span-2">Pembeli</div>
                 <div className="col-span-2">Logistik</div>
@@ -195,101 +166,84 @@ export default function PengirimanPage() {
                 <div className="col-span-1">Aksi</div>
               </div>
 
-              {/* Table Rows */}
-              <div className="divide-y divide-black/10">
-                {filteredData.map((item) => (
+            {/* Table Rows */}
+            <div className="divide-none flex-1 min-h-[250px] block">
+              {loading ? (
+                <div className="flex items-center justify-center gap-2 text-[#006638] py-10">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="font-semibold">Memuat pengiriman...</span>
+                </div>
+              ) : fetchError ? (
+                <div className="text-center py-10 text-red-500 font-semibold bg-red-50">{fetchError}</div>
+              ) : currentData.length === 0 ? (
+                <div className="text-center py-10 text-slate-500 font-medium">Belum ada data pengiriman.</div>
+              ) : (
+                currentData.map((item) => (
                   <div
                     key={item.id}
-                    className="grid grid-cols-12 gap-2 py-5 text-center items-center text-[#273B4A] font-semibold text-[16px]"
+                    className="grid grid-cols-12 gap-2 py-2 text-center items-center text-[#273B4A] font-semibold text-[13px] border-b border-black/10 last:border-0 hover:bg-slate-50 transition"
                   >
-                    <div className="col-span-3">{item.invoice}</div>
-                    <div className="col-span-2">{item.pembeli}</div>
-                    <div className="col-span-2">{item.logistik}</div>
-                    <div className="col-span-2 text-[15px]">{item.noResi}</div>
+                    <div className="col-span-3">{item.kode_pesanan}</div>
+                    <div className="col-span-2">{item.pembeli?.nama_lengkap || "-"}</div>
+                    <div className="col-span-2">{item.shipment?.kurir || "-"}</div>
+                    <div className="col-span-2 text-[14px] font-medium text-black/60">{item.shipment?.nomor_resi || "-"}</div>
                     <div className="col-span-2 flex justify-center">
                       {getStatusBadge(item.status)}
                     </div>
                     <div className="col-span-1 flex justify-center">
                       <button
                         onClick={() => handleOpenEdit(item)}
-                        className="w-[40px] h-[40px] bg-white border border-[#0220E1] rounded-[5px] shadow-[0_0_3px_rgba(0,0,0,0.25)] flex items-center justify-center hover:bg-blue-50 transition"
+                        className="w-7 h-7 bg-white border border-[#0220E1] rounded-[5px] shadow-[0_0_3px_rgba(0,0,0,0.25)] flex items-center justify-center hover:bg-blue-50 transition text-[#0004ED]"
                       >
-                        <img
-                          src="/images/edit.png"
-                          alt="Edit"
-                          className="w-5 h-5 object-contain"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/images/edit.png";
-                          }}
-                        />
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
+            </div>
 
-              {/* Table Footer / Pagination */}
-              <div className="flex items-center justify-between pt-6 border-t border-black/10 mt-2">
-                <span className="text-[16px] font-semibold text-black/50">
-                  Menampilkan 1-5 dari 8 produk
+            {/* Table Footer / Pagination */}
+            {filteredData.length > itemsPerPage && (
+              <div className="flex items-center justify-between pt-3 border-t border-black/10 mt-2 shrink-0">
+                <span className="text-[14px] sm:text-[15px] font-semibold text-black/50">
+                  Menampilkan {(currentPage - 1) * itemsPerPage + 1}-
+                  {Math.min(currentPage * itemsPerPage, filteredData.length)} dari {filteredData.length} pengiriman
                 </span>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    className="p-2 hover:opacity-70 transition"
+                    disabled={currentPage === 1}
+                    className="p-1 transition text-black/40 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    <img
-                      src="/images/chevron-left.png"
-                      alt="Previous"
-                      className="w-4 h-4 object-contain opacity-50"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "/images/chevron-left.png";
-                      }}
-                    />
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
 
-                  <button
-                    onClick={() => setCurrentPage(1)}
-                    className={`w-[40px] h-[40px] rounded-[5px] text-[24px] font-semibold flex items-center justify-center ${
-                      currentPage === 1
-                        ? "bg-[#006638] text-white"
-                        : "bg-white border border-[#006638] text-[#006638]"
-                    }`}
-                  >
-                    1
-                  </button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-8 h-8 rounded-[5px] text-[15px] font-semibold flex items-center justify-center transition ${
+                        currentPage === i + 1
+                          ? "bg-[#006638] text-white"
+                          : "bg-white border border-[#006638] text-[#006638] hover:bg-slate-50"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
 
                   <button
-                    onClick={() => setCurrentPage(2)}
-                    className={`w-[40px] h-[40px] rounded-[5px] text-[24px] font-semibold flex items-center justify-center ${
-                      currentPage === 2
-                        ? "bg-[#006638] text-white"
-                        : "bg-white border border-[#006638] text-[#006638]"
-                    }`}
+                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-1 transition text-black/40 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    2
-                  </button>
-
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, 2))}
-                    className="p-2 hover:opacity-70 transition"
-                  >
-                    <img
-                      src="/images/chevron-right.png"
-                      alt="Next"
-                      className="w-4 h-4 object-contain opacity-50"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "/images/chevron-right.png";
-                      }}
-                    />
+                    <ChevronRight className="w-5 h-5" />
                   </button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -300,17 +254,9 @@ export default function PengirimanPage() {
           <div className="bg-white w-full max-w-[500px] rounded-[20px] p-6 shadow-2xl relative">
             <button
               onClick={() => setSelectedItem(null)}
-              className="absolute top-4 right-5 hover:opacity-70 transition"
+              className="absolute top-4 right-5 hover:bg-slate-100 transition p-1 rounded-full text-slate-600"
             >
-              <img
-                src="/images/close.png"
-                alt="Close"
-                className="w-5 h-5 object-contain"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/images/close.png";
-                }}
-              />
+              <X className="w-6 h-6" />
             </button>
 
             <h3 className="text-[20px] font-bold text-[#005941] mb-4">
@@ -325,8 +271,21 @@ export default function PengirimanPage() {
                 <input
                   type="text"
                   disabled
-                  value={selectedItem.invoice}
+                  value={selectedItem.kode_pesanan}
                   className="w-full bg-gray-100 border rounded-[8px] p-2.5 text-[14px] text-gray-600 font-medium cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[14px] font-semibold text-[#273B4A] mb-1">
+                  Kurir
+                </label>
+                <input
+                  type="text"
+                  value={editForm.kurir}
+                  onChange={(e) => setEditForm({ ...editForm, kurir: e.target.value })}
+                  placeholder="Contoh: JNT Cargo"
+                  className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] text-[#273B4A] font-semibold outline-none focus:border-[#006638]"
                 />
               </div>
 
@@ -337,9 +296,7 @@ export default function PengirimanPage() {
                 <input
                   type="text"
                   value={editForm.resi}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, resi: e.target.value })
-                  }
+                  onChange={(e) => setEditForm({ ...editForm, resi: e.target.value })}
                   className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] text-[#273B4A] font-semibold outline-none focus:border-[#006638]"
                 />
               </div>
@@ -350,14 +307,12 @@ export default function PengirimanPage() {
                 </label>
                 <select
                   value={editForm.status}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, status: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] text-[#273B4A] font-semibold outline-none focus:border-[#006638]"
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] text-[#273B4A] font-semibold outline-none focus:border-[#006638] bg-white"
                 >
-                  <option value="Diproses">Diproses</option>
-                  <option value="Dikirim">Dikirim</option>
-                  <option value="Selesai">Selesai</option>
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
                 </select>
               </div>
 
@@ -365,14 +320,17 @@ export default function PengirimanPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedItem(null)}
-                  className="px-4 py-2 border rounded-[8px] text-[14px] font-semibold text-gray-600 hover:bg-gray-100"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border rounded-[8px] text-[14px] font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#006638] text-white rounded-[8px] text-[14px] font-semibold hover:bg-emerald-800 transition"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-[#006638] text-white rounded-[8px] text-[14px] font-semibold hover:bg-emerald-800 transition disabled:opacity-50 flex items-center gap-2"
                 >
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   Simpan Perubahan
                 </button>
               </div>

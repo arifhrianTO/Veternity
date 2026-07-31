@@ -1,4 +1,3 @@
-import React from "react";
 import { Leaf } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 

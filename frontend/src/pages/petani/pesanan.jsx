@@ -1,82 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
 import api from "../../config/axios";
-
-const mockOrders = [
-  {
-    id: "BTC-982-IU7",
-    buyer: "Koperasi Mitra",
-    product: "Beras Premium",
-    quantity: "55 Kg",
-    total: "Rp 1.400.000",
-    date: "01-01-25",
-    status: "Diproses",
-  },
-  {
-    id: "BTC-982-IU8",
-    buyer: "Koperasi Hijau",
-    product: "Beras Organik",
-    quantity: "30 Kg",
-    total: "Rp 840.000",
-    date: "02-01-25",
-    status: "Menunggu Pembayaran",
-  },
-  {
-    id: "BTC-982-IU9",
-    buyer: "Koperasi Mitra",
-    product: "Beras Premium",
-    quantity: "45 Kg",
-    total: "Rp 1.260.000",
-    date: "03-01-25",
-    status: "Dikirim",
-  },
-  {
-    id: "BTC-982-IU10",
-    buyer: "Koperasi Sejahtera",
-    product: "Beras Premium",
-    quantity: "24 Kg",
-    total: "Rp 672.000",
-    date: "04-01-25",
-    status: "Diproses",
-  },
-  {
-    id: "BTC-982-IU11",
-    buyer: "Koperasi Makmur",
-    product: "Beras Premium",
-    quantity: "10 Kg",
-    total: "Rp 280.000",
-    date: "05-01-25",
-    status: "Selesai",
-  },
-  {
-    id: "BTC-982-IU12",
-    buyer: "Koperasi Hijau",
-    product: "Beras Organik",
-    quantity: "18 Kg",
-    total: "Rp 504.000",
-    date: "06-01-25",
-    status: "Dikirim",
-  },
-  {
-    id: "BTC-982-IU13",
-    buyer: "Koperasi Sejahtera",
-    product: "Beras Premium",
-    quantity: "28 Kg",
-    total: "Rp 784.000",
-    date: "07-01-25",
-    status: "Menunggu Pembayaran",
-  },
-  {
-    id: "BTC-982-IU14",
-    buyer: "Koperasi Mitra",
-    product: "Beras Organik",
-    quantity: "35 Kg",
-    total: "Rp 980.000",
-    date: "08-01-25",
-    status: "Selesai",
-  },
-];
 
 const tabItems = [
   { key: "semua", label: "Semua" },
@@ -136,13 +61,15 @@ export default function PesananPage() {
         const response = await api.get('/orders');
         // Transform data from backend to match UI structure
         const formattedOrders = response.data.map(order => ({
-          id: order.kode_pesanan,
+          id: order.id,
+          kode: order.kode_pesanan,
           buyer: order.pembeli ? order.pembeli.nama_lengkap : 'Unknown',
           product: order.items && order.items.length > 0 ? order.items[0].nama_produk : 'Berbagai Produk',
           quantity: order.items && order.items.length > 0 ? `${order.items[0].jumlah_beli} Kg` : '-',
           total: `Rp ${Number(order.total_harga).toLocaleString('id-ID')}`,
           date: new Date(order.tanggal_pesanan).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: '2-digit'}),
-          status: order.status
+          status: order.status,
+          waybill: order.catatan ? order.catatan.replace('Resi: ', '') : null,
         }));
         setOrders(formattedOrders);
       } catch (err) {
@@ -225,16 +152,15 @@ export default function PesananPage() {
                     <th className="pb-4 px-2">No Pesanan</th>
                     <th className="pb-4 px-2">Pembeli</th>
                     <th className="pb-4 px-2">Produk</th>
-                    <th className="pb-4 px-2">Jumlah</th>
                     <th className="pb-4 px-2">Total</th>
-                    <th className="pb-4 px-2">Tanggal</th>
                     <th className="pb-4 px-2">Status</th>
+                    <th className="pb-4 px-2">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-10">
+                      <td colSpan="6" className="text-center py-10">
                         <div className="flex items-center justify-center gap-2 text-[#006638]">
                            <Loader2 className="w-6 h-6 animate-spin" />
                            <span className="font-semibold">Memuat pesanan...</span>
@@ -243,27 +169,68 @@ export default function PesananPage() {
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-10 text-red-500 font-semibold bg-red-50">
+                      <td colSpan="6" className="text-center py-10 text-red-500 font-semibold bg-red-50">
                         {error}
                       </td>
                     </tr>
                   ) : currentOrders.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-10 text-slate-500 font-medium">
+                      <td colSpan="6" className="text-center py-10 text-slate-500 font-medium">
                         Belum ada pesanan masuk.
                       </td>
                     </tr>
                   ) : (
                     currentOrders.map((order, index) => (
                       <tr key={`${order.id}-${index}`} className="border-b border-black/[0.13] last:border-b-0 hover:bg-slate-50/50 transition">
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.id}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.kode}</td>
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.buyer}</td>
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.product}</td>
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.quantity}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">
+                          {order.product} <br/> <span className="text-slate-500 font-normal">{order.quantity}</span>
+                        </td>
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.total}</td>
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{order.date}</td>
                         <td className="py-4 px-2">
                           {getStatusBadge(order.status)}
+                        </td>
+                        <td className="py-4 px-2">
+                          {order.status === "Diproses" ? (
+                            <button 
+                              onClick={() => {
+                                const resi = prompt(`Masukkan nomor resi untuk pesanan ${order.kode}:`);
+                                if (resi) {
+                                  // Panggil API untuk update status dan resi
+                                  const updateOrder = async () => {
+                                     try {
+                                        await api.put(`/orders/${order.id}`, {
+                                           status: 'Dikirim',
+                                           waybill: resi
+                                        });
+                                        
+                                        // Update state order secara lokal agar UI reaktif
+                                        const updatedOrders = orders.map(o => {
+                                          if (o.id === order.id) {
+                                            return { ...o, status: "Dikirim", waybill: resi, courier: "jne" };
+                                          }
+                                          return o;
+                                        });
+                                        setOrders(updatedOrders);
+                                        alert(`Pesanan ${order.kode} berhasil dikirim dengan resi: ${resi}`);
+                                     } catch (error) {
+                                        console.error("Gagal update resi", error);
+                                        alert("Gagal menyimpan resi.");
+                                     }
+                                  };
+                                  updateOrder();
+                                }
+                              }}
+                              className="px-3 py-1 bg-[#006638] text-white text-[12px] font-bold rounded-[6px] hover:bg-[#00522c]"
+                            >
+                              Kirim (Input Resi)
+                            </button>
+                          ) : order.status === "Dikirim" ? (
+                             <span className="text-[12px] font-semibold text-slate-500">Resi: {order.waybill || "Terkirim"}</span>
+                          ) : (
+                             <span className="text-[12px] font-semibold text-slate-500">-</span>
+                          )}
                         </td>
                       </tr>
                     ))

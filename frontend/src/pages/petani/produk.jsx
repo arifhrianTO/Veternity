@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import { ChevronRight, ChevronLeft, Edit3, Trash2, Eye, X, UploadCloud, Loader2 } from "lucide-react";
 import api from "../../config/axios"; // Import Axios Instance
@@ -45,7 +45,7 @@ export default function ProdukPage() {
       const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
       localStorage.setItem("token", testToken);
 
-      const response = await api.get('/products');
+      const response = await api.get('/my-products');
       setProducts(response.data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -57,7 +57,7 @@ export default function ProdukPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
+    Promise.resolve().then(() => fetchProducts());
   }, []);
 
   // Helper functions to open modals

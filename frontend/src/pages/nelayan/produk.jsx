@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import { ChevronRight, ChevronLeft, Edit3, Trash2, Eye, X, UploadCloud, Loader2 } from "lucide-react";
 import api from "../../config/axios"; // Import Axios Instance
@@ -57,7 +57,7 @@ export default function ProdukPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
+    Promise.resolve().then(() => fetchProducts());
   }, []);
 
   // Helper functions to open modals

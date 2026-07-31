@@ -1,8 +1,5 @@
-import React from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PetaniStatCard from "../../components/petani/PetaniStatCard";
-import TransactionChart from "../../components/admin/TransactionChart";
-import TopCategoriesTable from "../../components/admin/TopCategoriesTable";
 
 // Data statistik khusus Admin (path icon disesuaikan langsung ke /images/)
 const adminMetrics = [

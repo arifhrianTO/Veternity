@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, Sprout, Anchor, ShoppingCart } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import vectorShape from "../assets/Vector.png";
@@ -10,18 +10,9 @@ import ellipse179 from "../assets/Ellipse_179.png";
 export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // State for mode (Login vs Register)
-  const [isRegister, setIsRegister] = useState(false);
 
-  // Sync pathname with state
-  useEffect(() => {
-    if (location.pathname === "/register") {
-      setIsRegister(true);
-    } else {
-      setIsRegister(false);
-    }
-  }, [location.pathname]);
+  // Mode Login vs Register diturunkan langsung dari pathname
+  const isRegister = location.pathname === "/register";
 
   // Login States
   const [loginEmailOrPhone, setLoginEmailOrPhone] = useState("");
@@ -71,6 +62,10 @@ export default function AuthPage() {
         navigate("/petani/dashboard");
       } else if (data.role === 'nelayan' || data.role === 'nelayan_binaan') {
         navigate("/nelayan/dashboard");
+      } else if (data.role === 'koperasi') {
+        navigate("/koperasi/dashboard");
+      } else if (data.role === 'admin') {
+        navigate("/admin/dashboard");
       } else if (data.role === 'pembeli') {
         navigate("/pembeli/marketplace");
       } else {
@@ -99,7 +94,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       const axios = (await import('axios')).default;
-      const response = await axios.post("http://localhost:8000/api/register", {
+      await axios.post("http://localhost:8000/api/register", {
         role: role,
         nama_lengkap: fullName,
         email: registerEmail,
@@ -111,8 +106,6 @@ export default function AuthPage() {
       });
       
       alert("Registrasi berhasil! Silahkan masuk.");
-      // Optional: Reset form or navigate
-      setIsRegister(false);
       navigate("/login");
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {

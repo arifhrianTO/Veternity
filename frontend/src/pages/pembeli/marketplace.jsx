@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import api from "../../config/axios";
 import ProductDetailModal from "../../components/pembeli/ProductDetailModal";
-import { products } from "../../data/mockData";
 import { Star, Search } from "lucide-react";
 
 export default function MarketplacePage() {
@@ -12,27 +12,67 @@ export default function MarketplacePage() {
   const [selectedSort, setSelectedSort] = useState("Terbaru");
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const handleAddToCart = (product, qty = 1) => {
-    const saved = localStorage.getItem("cart");
-    const cart = saved ? JSON.parse(saved) : [];
-    
-    const existingIndex = cart.findIndex((item) => item.name === product.name);
-    if (existingIndex > -1) {
-      cart[existingIndex].quantity += qty;
-    } else {
-      cart.push({ ...product, quantity: qty });
-    }
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-    localStorage.setItem("cart", JSON.stringify(cart));
-    alert(`${product.name} (${qty} kg) telah ditambahkan ke keranjang.`);
+  // Ambil data produk dari backend (API)
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get('/products');
+        // Transform mapping dari DB ke format yang dibutuhkan UI (mockData format)
+          const formattedProducts = response.data.map(p => ({
+            id: p.id,
+            name: p.nama_produk,
+            location: "Indonesia", // Jika ada relasi kota di tabel users nanti bisa ditarik
+            price: `Rp ${Number(p.harga_harapan).toLocaleString('id-ID')}`,
+            priceNum: Number(p.harga_harapan),
+            unit: `/${p.satuan}`,
+            rating: 4.8, // Mock
+            koperasi: p.user?.name || "Petani", 
+            image: p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/beras.png",
+            stock: `${p.stok}${p.satuan}`,
+            harvestDate: new Date(p.tanggal_panen).toLocaleDateString(),
+            shelfLife: `${p.masa_layak} hari`,
+            originCityId: p.user_id === 1 ? 78 : 54, // Mock city ID untuk hitung ongkir
+            kategori: p.kategori
+          }));
+        setProducts(formattedProducts);
+      } catch (error) {
+        console.error("Gagal mengambil produk:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const handleAddToCart = async (product, qty = 1) => {
+    try {
+       // Panggil API untuk tambah ke keranjang
+       const res = await api.post('/carts', {
+          product_id: product.id,
+          kuantitas: qty
+       });
+       if(res.data.success) {
+          alert(`${product.name} (${qty} kg) telah ditambahkan ke keranjang.`);
+       }
+    } catch (error) {
+       console.error("Gagal tambah ke keranjang", error);
+       alert("Gagal menambahkan ke keranjang. Pastikan Anda sudah login.");
+    }
   };
 
   const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.koperasi.toLowerCase().includes(searchTerm.toLowerCase());
+    // Tambahkan pengaman agar tidak crash jika p.name atau p.koperasi undefined/null
+    const safeName = p.name || "";
+    const safeKoperasi = p.koperasi || "";
+
+    const matchesSearch = safeName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          safeKoperasi.toLowerCase().includes(searchTerm.toLowerCase());
     
     let productCategory = "Semua";
-    const nameLower = p.name.toLowerCase();
+    const nameLower = safeName.toLowerCase();
     if (nameLower.includes("beras")) productCategory = "Beras";
     else if (nameLower.includes("ikan") || nameLower.includes("tongkol") || nameLower.includes("udang")) productCategory = "Ikan";
     else if (nameLower.includes("sayur")) productCategory = "Sayur";
@@ -40,7 +80,9 @@ export default function MarketplacePage() {
     else if (nameLower.includes("telur")) productCategory = "Telur";
 
     const matchesCategory = selectedCategory === "Semua" || productCategory === selectedCategory;
-    const matchesLocation = selectedLocation === "Semua" || p.location.includes(selectedLocation);
+    
+    const safeLocation = p.location || "";
+    const matchesLocation = selectedLocation === "Semua" || safeLocation.includes(selectedLocation);
     
     return matchesSearch && matchesCategory && matchesLocation;
   });
@@ -129,6 +171,11 @@ export default function MarketplacePage() {
           </div>
 
           {/* Grid Card Produk */}
+          {isLoading ? (
+             <div className="flex justify-center items-center py-20 text-[#006638]">
+               Memuat Produk...
+             </div>
+          ) : (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
             {filteredProducts.map((p, idx) => (
               <div
@@ -186,6 +233,7 @@ export default function MarketplacePage() {
               </div>
             ))}
           </div>
+          )}
 
         </div>
       </div>

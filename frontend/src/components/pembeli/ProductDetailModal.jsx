@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Star, X, Minus, Plus } from "lucide-react";
 
 export default function ProductDetailModal({ product, onClose, onAddToCart }) {

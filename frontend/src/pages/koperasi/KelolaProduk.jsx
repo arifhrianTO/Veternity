@@ -1,57 +1,195 @@
-import React, { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar from "../../components/layout/Sidebar";
-import { Search, Plus, Edit3, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import api from "../../config/axios";
+import { Search, Plus, Edit3, Trash2, ChevronLeft, ChevronRight, Eye, X, Upload, Loader2 } from "lucide-react";
+
+const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/beras.png");
 
 export default function KoperasiKelolaProduk() {
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Dummy data produk
-  const [produkList] = useState([
-    {
-      id: 1,
-      nama: "Beras Premium",
-      gambar: "/images/beras.png",
-      pemilik: "Budi Santoso",
-      stok: "50 Kg",
-      harga: "Rp 14.000 / kg",
-      tanggalPanen: "01-01-25",
-      masaLayak: "7 Hari",
-      status: "Aktif",
-    },
-    {
-      id: 2,
-      nama: "Beras Premium",
-      gambar: "/images/beras.png",
-      pemilik: "Budi Santoso",
-      stok: "50 Kg",
-      harga: "Rp 14.000 / kg",
-      tanggalPanen: "01-01-25",
-      masaLayak: "7 Hari",
-      status: "Aktif",
-    },
-    {
-      id: 3,
-      nama: "Beras Premium",
-      gambar: "/images/beras.png",
-      pemilik: "Budi Santoso",
-      stok: "50 Kg",
-      harga: "Rp 14.000 / kg",
-      tanggalPanen: "01-01-25",
-      masaLayak: "7 Hari",
-      status: "Aktif",
-    },
-    {
-      id: 4,
-      nama: "Beras Premium",
-      gambar: "/images/beras.png",
-      pemilik: "Budi Santoso",
-      stok: "50 Kg",
-      harga: "Rp 14.000 / kg",
-      tanggalPanen: "01-01-25",
-      masaLayak: "7 Hari",
-      status: "Aktif",
-    },
-  ]);
+  // State untuk Modals
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedDetailItem, setSelectedDetailItem] = useState(null);
+  const [productToEdit, setProductToEdit] = useState(null);
+  const [productToDelete, setProductToDelete] = useState(null);
+
+  // State Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Form Upload Image Reference
+  const fileInputRef = useRef(null);
+  const [previewImage, setPreviewImage] = useState(null);
+
+  // Data dari server
+  const [produkList, setProdukList] = useState([]);
+  const [binaanList, setBinaanList] = useState([]);
+
+  // Form State untuk Tambah
+  const [addFormData, setAddFormData] = useState({
+    nama: "", pemilik_id: "", stok: "", harga_harapan: "", tanggal_panen: "", masa_layak: "", status: "Aktif"
+  });
+
+  const fetchProduk = async () => {
+    try {
+      setLoading(true);
+      setFetchError(null);
+      const res = await api.get("/koperasi/produk");
+      setProdukList(res.data || []);
+    } catch (error) {
+      console.error("Error fetching produk:", error);
+      setFetchError("Gagal mengambil data produk dari server.");
+      setProdukList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBinaan = async () => {
+    try {
+      const res = await api.get("/koperasi/binaan");
+      setBinaanList(res.data || []);
+    } catch (error) {
+      console.error("Error fetching binaan:", error);
+      setBinaanList([]);
+    }
+  };
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      fetchProduk();
+      fetchBinaan();
+    });
+  }, []);
+
+  const productName = (p) => p?.category?.nama_kategori || p?.kategori || "Produk";
+  const ownerName = (p) => p?.user?.nama_lengkap || "Koperasi";
+
+  // ==================== HANDLER TAMBAH PRODUK ====================
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAddFormData((prev) => ({ ...prev, gambar: file }));
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAddInputChange = (e) => {
+    const { name, value } = e.target;
+    setAddFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveAddProduct = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const payload = new FormData();
+    payload.append("kategori", addFormData.nama);
+    if (addFormData.pemilik_id) payload.append("pemilik_id", addFormData.pemilik_id);
+    payload.append("stok", addFormData.stok);
+    payload.append("harga_harapan", addFormData.harga_harapan);
+    payload.append("tanggal_panen", addFormData.tanggal_panen);
+    payload.append("masa_layak", addFormData.masa_layak);
+    payload.append("status", addFormData.status);
+    if (addFormData.gambar) payload.append("gambar", addFormData.gambar);
+
+    try {
+      await api.post("/products", payload, { headers: { "Content-Type": "multipart/form-data" } });
+      await fetchProduk();
+      setIsAddModalOpen(false);
+      setAddFormData({ nama: "", pemilik_id: "", stok: "", harga_harapan: "", tanggal_panen: "", masa_layak: "", status: "Aktif" });
+      setPreviewImage(null);
+    } catch (error) {
+      console.error("Gagal menambah produk:", error);
+      alert(error.response?.data?.message || "Gagal menambah produk.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ==================== HANDLER EDIT PRODUK ====================
+  const openEditModal = (item) => {
+    setProductToEdit({
+      id: item.id,
+      nama: productName(item),
+      pemilik_id: item.user_id,
+      stok: item.stok,
+      harga_harapan: item.harga_harapan,
+      tanggal_panen: item.tanggal_panen,
+      masa_layak: item.masa_layak,
+      status: item.status,
+    });
+    setPreviewImage(item.gambar ? `http://localhost:8000/storage/${item.gambar}` : null);
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setProductToEdit((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveEditProduct = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const payload = new FormData();
+    payload.append("kategori", productToEdit.nama);
+    payload.append("stok", productToEdit.stok);
+    payload.append("harga_harapan", productToEdit.harga_harapan);
+    payload.append("tanggal_panen", productToEdit.tanggal_panen);
+    payload.append("masa_layak", productToEdit.masa_layak);
+    payload.append("status", productToEdit.status);
+    if (productToEdit.gambar instanceof File) {
+      payload.append("gambar", productToEdit.gambar);
+    }
+    payload.append("_method", "PUT");
+
+    try {
+      await api.post(`/products/${productToEdit.id}`, payload, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      await fetchProduk();
+      setProductToEdit(null);
+      setPreviewImage(null);
+    } catch (error) {
+      console.error("Gagal mengupdate produk:", error);
+      alert(error.response?.data?.message || "Gagal memperbarui produk.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ==================== HANDLER HAPUS PRODUK ====================
+  const openDeleteModal = (item) => setProductToDelete(item);
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+    setIsSubmitting(true);
+    try {
+      await api.delete(`/products/${productToDelete.id}`);
+      await fetchProduk();
+      setProductToDelete(null);
+    } catch (error) {
+      console.error("Gagal menghapus produk:", error);
+      alert(error.response?.data?.message || "Gagal menghapus produk.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ==================== HANDLER DETAIL PRODUK ====================
+  const openDetailModal = (item) => setSelectedDetailItem(item);
+
+  // Filter + Pagination Logic
+  const filtered = produkList.filter((p) =>
+    productName(p).toLowerCase().includes(search.toLowerCase()) ||
+    ownerName(p).toLowerCase().includes(search.toLowerCase())
+  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const currentData = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const formatRupiah = (val) => "Rp " + Number(val).toLocaleString("id-ID");
 
   return (
     <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900">
@@ -61,10 +199,9 @@ export default function KoperasiKelolaProduk() {
         <Sidebar />
 
         {/* Outer Main Container */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 flex flex-col justify-between">
-          <div>
-            {/* Header Panel */}
-            <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
+        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-6 flex flex-col h-[calc(100vh-32px)] overflow-hidden">
+          {/* Header Panel */}
+          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-3 shrink-0">
               <h1 className="text-[24px] font-semibold text-[#005941]">
                 Kelola Produk
               </h1>
@@ -82,128 +219,388 @@ export default function KoperasiKelolaProduk() {
             </div>
 
             {/* Action Bar (Search & Tambah) */}
-            <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 shrink-0">
               {/* Search Bar */}
-              <div className="relative w-[371px]">
+              <div className="relative w-[300px] h-[42px]">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#005941]" />
                 <input
                   type="text"
                   placeholder="Cari Produk..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2 bg-white border border-[#006638] rounded-full text-sm text-[#006638] placeholder-[#006638] focus:outline-none"
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                  className="w-full h-full pl-12 pr-4 bg-white border border-[#006638] rounded-full text-[15px] font-medium text-[#006638] placeholder-[#006638] focus:outline-none"
                 />
               </div>
 
               {/* Tombol Tambah */}
-              <button className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#006638] to-[#029154] text-white font-semibold text-[18px] rounded-[5px] hover:opacity-90 transition shadow-sm">
+              <button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center justify-center gap-2 w-[180px] h-[42px] bg-gradient-to-r from-[#006638] to-[#029154] text-white font-semibold text-[16px] rounded-[5px] hover:opacity-95 transition shadow-sm"
+              >
                 <span>Tambah</span>
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5 stroke-[2.5]" />
               </button>
             </div>
 
-            {/* Table Box Container */}
-            <div className="bg-white/80 border border-[#029154] rounded-[20px] p-6 shadow-[0_0_4px_rgba(0,0,0,0.25)]">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="text-[#273B4A] font-bold text-[16px] border-b border-black/10">
-                      <th className="py-3 px-4">Produk</th>
-                      <th className="py-3 px-4 text-center">Pemilik</th>
-                      <th className="py-3 px-4 text-center">Stok</th>
-                      <th className="py-3 px-4 text-center leading-tight">
-                        Harga<br />Harapan
-                      </th>
-                      <th className="py-3 px-4 text-center leading-tight">
-                        Tanggal<br />Panen
-                      </th>
-                      <th className="py-3 px-4 text-center leading-tight">
-                        Masa<br />Layak
-                      </th>
-                      <th className="py-3 px-4 text-center">Status</th>
-                      <th className="py-3 px-4 text-center">Aksi</th>
+          {/* Table Box Container */}
+          <div className="bg-white/80 border border-[#029154] rounded-[15px] p-4 shadow-[0_0_4px_rgba(0,0,0,0.25)] flex flex-col flex-1 min-h-0">
+              <div className="overflow-x-auto flex-1 flex flex-col min-h-[300px]">
+                <table className="w-full text-left border-collapse flex flex-col h-full">
+                  <thead className="table w-full table-fixed">
+                    <tr className="text-[#273B4A] font-bold text-[13px] border-b-2 border-black/10">
+                      <th className="pb-2 px-4">Produk</th>
+                      <th className="pb-2 px-4 text-center">Pemilik</th>
+                      <th className="pb-2 px-4 text-center">Stok</th>
+                      <th className="pb-2 px-4 text-center leading-tight">Harga<br />Harapan</th>
+                      <th className="pb-2 px-4 text-center leading-tight">Tanggal<br />Panen</th>
+                      <th className="pb-2 px-4 text-center leading-tight">Masa<br />Layak</th>
+                      <th className="pb-2 px-4 text-center">Status</th>
+                      <th className="pb-2 px-4 text-center">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-black/10">
-                    {produkList.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/50 transition">
-                        {/* Nama Produk */}
-                        <td className="py-4 px-4 font-semibold text-[#273B4A]">
-                          {item.nama}
-                        </td>
-
-                        {/* Pemilik */}
-                        <td className="py-4 px-4 font-semibold text-[#273B4A] text-center text-[15px]">
-                          {item.pemilik}
-                        </td>
-
-                        {/* Stok */}
-                        <td className="py-4 px-4 font-semibold text-[#273B4A] text-center text-[15px]">
-                          {item.stok}
-                        </td>
-
-                        {/* Harga Harapan */}
-                        <td className="py-4 px-4 font-medium text-black text-center text-[15px]">
-                          {item.harga}
-                        </td>
-
-                        {/* Tanggal Panen */}
-                        <td className="py-4 px-4 font-semibold text-[#273B4A] text-center text-[15px]">
-                          {item.tanggalPanen}
-                        </td>
-
-                        {/* Masa Layak */}
-                        <td className="py-4 px-4 font-semibold text-[#273B4A] text-center text-[15px]">
-                          {item.masaLayak}
-                        </td>
-
-                        {/* Status */}
-                        <td className="py-4 px-4 text-center">
-                          <span className="inline-block bg-[rgba(0,174,43,0.19)] text-[#006638] border border-[#006638] text-[12px] font-semibold px-3 py-1 rounded-[3px]">
-                            {item.status}
-                          </span>
-                        </td>
-
-                        {/* Aksi (Edit & Delete) */}
-                        <td className="py-4 px-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <button className="w-10 h-10 bg-white border border-[#0220E1]/50 rounded-[5px] flex items-center justify-center shadow-[0_0_3px_rgba(0,0,0,0.25)] hover:bg-blue-50 transition">
-                              <Edit3 className="w-5 h-5 text-[#0004ED]" />
-                            </button>
-                            <button className="w-10 h-10 bg-white border border-[#E10206]/50 rounded-[5px] flex items-center justify-center shadow-[0_0_3px_rgba(0,0,0,0.25)] hover:bg-red-50 transition">
-                              <Trash2 className="w-5 h-5 text-[#FF0000]" />
-                            </button>
+                  <tbody className="w-full">
+                    {loading ? (
+                      <tr className="table w-full table-fixed">
+                        <td colSpan={8} className="text-center py-10">
+                          <div className="flex items-center justify-center gap-2 text-[#006638]">
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <span className="font-semibold">Memuat produk...</span>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    ) : fetchError ? (
+                      <tr className="table w-full table-fixed">
+                        <td colSpan={8} className="text-center py-10 text-red-500 font-semibold bg-red-50">{fetchError}</td>
+                      </tr>
+                    ) : currentData.length === 0 ? (
+                      <tr className="table w-full table-fixed">
+                        <td colSpan={8} className="text-center py-10 text-slate-500 font-medium">Belum ada produk yang ditambahkan.</td>
+                      </tr>
+                    ) : (
+                      currentData.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50/50 transition border-b border-black/10 last:border-0 table w-full table-fixed">
+                          <td className="py-2 px-4 font-semibold text-[#273B4A] text-[13px]">
+                            <div className="flex items-center gap-2">
+                              <img src={storageUrl(item.gambar)} alt={productName(item)} className="w-10 h-8 object-cover rounded-[5px] border border-slate-100" onError={(e) => { e.target.onerror = null; e.target.src = "/images/beras.png"; }} />
+                              {productName(item)}
+                            </div>
+                          </td>
+                          <td className="py-2 px-4 font-semibold text-[#273B4A] text-center text-[13px]">{ownerName(item)}</td>
+                          <td className="py-2 px-4 font-semibold text-[#273B4A] text-center text-[13px]">{item.stok} {item.satuan || "Kg"}</td>
+                          <td className="py-2 px-4 font-medium text-black/60 text-center text-[13px]">{formatRupiah(item.harga_harapan)}</td>
+                          <td className="py-2 px-4 font-medium text-black/60 text-center text-[13px]">{item.tanggal_panen}</td>
+                          <td className="py-2 px-4 font-medium text-black/60 text-center text-[13px]">{item.masa_layak} Hari</td>
+                          <td className="py-2 px-4 text-center">
+                            {item.status === "Aktif" ? (
+                              <span className="bg-[rgba(0,174,43,0.19)] border border-[#006638] text-[#006638] px-2 py-0.5 rounded-[3px] text-[12px] font-semibold inline-block">Aktif</span>
+                            ) : (
+                              <span className="bg-red-100 border border-red-500 text-red-600 px-2 py-0.5 rounded-[3px] text-[12px] font-semibold inline-block">Tidak Aktif</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-4">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button onClick={() => openDetailModal(item)} className="w-7 h-7 rounded-[5px] bg-emerald-50 border border-emerald-200 text-[#006638] flex items-center justify-center hover:bg-emerald-100 transition shadow-sm">
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => openEditModal(item)} className="w-7 h-7 rounded-[5px] bg-white border border-[#0220E1] text-[#0004ED] flex items-center justify-center hover:bg-blue-50 transition shadow-sm">
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => openDeleteModal(item)} className="w-7 h-7 rounded-[5px] bg-white border border-[#E10206] text-[#FF0000] flex items-center justify-center hover:bg-red-50 transition shadow-sm">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
 
-          {/* Pagination Footer */}
-          <div className="flex items-center justify-between mt-6 text-sm text-black/50 font-semibold pt-4">
-            <div>Menampilkan 1-4 dari 8 produk</div>
-            <div className="flex items-center gap-2">
-              <button className="p-2 text-black/40 hover:text-black transition">
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button className="w-[40px] h-[40px] rounded-[5px] bg-[#006638] text-white font-semibold text-[18px] flex items-center justify-center">
-                1
-              </button>
-              <button className="w-[40px] h-[40px] rounded-[5px] bg-white border border-[#006638] text-[#006638] font-semibold text-[18px] flex items-center justify-center hover:bg-slate-50">
-                2
-              </button>
-              <button className="p-2 text-black/40 hover:text-black transition">
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+              {/* Pagination Footer */}
+              {filtered.length > itemsPerPage && (
+                <div className="flex items-center justify-between mt-2 pt-3 border-t border-black/10 text-sm text-black/50 font-semibold shrink-0">
+                  <div>
+                    Menampilkan {(currentPage - 1) * itemsPerPage + 1}-
+                    {Math.min(currentPage * itemsPerPage, filtered.length)} dari {filtered.length} produk
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="p-1 text-black/40 hover:text-black transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`w-8 h-8 rounded-[5px] font-semibold text-[15px] flex items-center justify-center transition ${
+                          currentPage === i + 1
+                            ? "bg-[#006638] text-white"
+                            : "bg-white border border-[#006638] text-[#006638] hover:bg-slate-50"
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+
+                    <button 
+                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="p-1 text-black/40 hover:text-black transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
 
         </div>
       </div>
+      </div>
+      {/* ========================================= */}
+      {/* MODAL TAMBAH PRODUK */}
+      {/* ========================================= */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-[700px] rounded-[20px] p-8 shadow-2xl relative my-auto">
+            <div className="flex items-center justify-between mb-6 border-b border-[#029154] pb-4">
+              <h2 className="text-[22px] font-semibold text-[#005941]">Tambah Produk Baru</h2>
+              <button onClick={() => { setIsAddModalOpen(false); setPreviewImage(null); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+                <X className="w-6 h-6 text-slate-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAddProduct} className="space-y-6">
+              <div className="flex flex-col items-center gap-3">
+                <div 
+                  className="w-[120px] h-[120px] rounded-lg border-2 border-dashed border-[#006638] bg-emerald-50 flex flex-col items-center justify-center overflow-hidden cursor-pointer hover:bg-emerald-100 transition relative"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  {previewImage ? (
+                    <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <><Upload className="w-6 h-6 text-[#006638] mb-1" /><span className="text-[11px] font-semibold text-[#006638] text-center px-2">Upload<br/>Gambar</span></>
+                  )}
+                </div>
+                <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Nama Produk</label>
+                  <input type="text" name="nama" value={addFormData.nama} onChange={handleAddInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Pemilik</label>
+                  <select name="pemilik_id" value={addFormData.pemilik_id} onChange={handleAddInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white">
+                    <option value="">Koperasi sendiri</option>
+                    {binaanList.map((b) => (
+                      <option key={b.id} value={b.id}>{b.nama_lengkap} ({b.role})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Stok</label>
+                  <input type="number" name="stok" value={addFormData.stok} onChange={handleAddInputChange} placeholder="Contoh: 50" className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Harga Harapan</label>
+                  <input type="number" name="harga_harapan" value={addFormData.harga_harapan} onChange={handleAddInputChange} placeholder="Contoh: 14000" className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Tanggal Panen</label>
+                  <input type="date" name="tanggal_panen" value={addFormData.tanggal_panen} onChange={handleAddInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Masa Layak (Hari)</label>
+                  <input type="number" name="masa_layak" value={addFormData.masa_layak} onChange={handleAddInputChange} placeholder="Contoh: 7" className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Status</label>
+                  <select name="status" value={addFormData.status} onChange={handleAddInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white">
+                    <option value="Aktif">Aktif</option>
+                    <option value="Tidak Aktif">Tidak Aktif</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                <button type="button" onClick={() => { setIsAddModalOpen(false); setPreviewImage(null); }} disabled={isSubmitting} className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-[#006638] text-white rounded-[8px] font-semibold hover:bg-emerald-800 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Simpan Produk
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================= */}
+      {/* MODAL EDIT PRODUK */}
+      {/* ========================================= */}
+      {productToEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-[700px] rounded-[20px] p-8 shadow-2xl relative my-auto">
+            <div className="flex items-center justify-between mb-6 border-b border-[#029154] pb-4">
+              <h2 className="text-[22px] font-semibold text-[#005941]">Edit Produk</h2>
+              <button onClick={() => { setProductToEdit(null); setPreviewImage(null); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+                <X className="w-6 h-6 text-slate-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditProduct} className="space-y-6">
+              <div className="flex flex-col items-center gap-3">
+                <div 
+                  className="w-[120px] h-[120px] rounded-lg border-2 border-dashed border-[#006638] bg-emerald-50 flex flex-col items-center justify-center overflow-hidden cursor-pointer hover:bg-emerald-100 transition relative"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  {previewImage ? (
+                    <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <><Upload className="w-6 h-6 text-[#006638] mb-1" /><span className="text-[11px] font-semibold text-[#006638] text-center px-2">Upload<br/>Gambar</span></>
+                  )}
+                </div>
+                <input type="file" ref={fileInputRef} onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setProductToEdit((prev) => ({ ...prev, gambar: file }));
+                    setPreviewImage(URL.createObjectURL(file));
+                  }
+                }} accept="image/*" className="hidden" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Nama Produk</label>
+                  <input type="text" name="nama" value={productToEdit.nama} onChange={handleEditInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Stok</label>
+                  <input type="number" name="stok" value={productToEdit.stok} onChange={handleEditInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Harga Harapan</label>
+                  <input type="number" name="harga_harapan" value={productToEdit.harga_harapan} onChange={handleEditInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Tanggal Panen</label>
+                  <input type="date" name="tanggal_panen" value={productToEdit.tanggal_panen} onChange={handleEditInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Masa Layak (Hari)</label>
+                  <input type="number" name="masa_layak" value={productToEdit.masa_layak} onChange={handleEditInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Status</label>
+                  <select name="status" value={productToEdit.status} onChange={handleEditInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white">
+                    <option value="Aktif">Aktif</option>
+                    <option value="Tidak Aktif">Tidak Aktif</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                <button type="button" onClick={() => { setProductToEdit(null); setPreviewImage(null); }} disabled={isSubmitting} className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-[#0004ED] text-white rounded-[8px] font-semibold hover:bg-blue-800 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================= */}
+      {/* MODAL KONFIRMASI HAPUS PRODUK */}
+      {/* ========================================= */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-[400px] rounded-[20px] p-6 shadow-2xl text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-[20px] font-bold text-[#273B4A] mb-2">Hapus Produk?</h3>
+            <p className="text-[14px] text-slate-500 mb-6">
+              Apakah Anda yakin ingin menghapus produk <b>{productName(productToDelete)}</b> milik <b>{ownerName(productToDelete)}</b>? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setProductToDelete(null)} disabled={isSubmitting} className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
+              <button onClick={handleDeleteProduct} disabled={isSubmitting} className="px-6 py-2 bg-red-600 text-white rounded-[8px] font-semibold hover:bg-red-700 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================= */}
+      {/* MODAL DETAIL PRODUK */}
+      {/* ========================================= */}
+      {selectedDetailItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-[500px] rounded-[20px] p-6 shadow-2xl relative">
+            <button onClick={() => setSelectedDetailItem(null)} className="absolute top-4 right-5 hover:bg-slate-100 transition p-1 rounded-full text-slate-600">
+              <X className="w-6 h-6" />
+            </button>
+            
+            <h2 className="text-[22px] font-semibold text-[#005941] mb-6 border-b border-[#029154] pb-4">
+              Detail Produk
+            </h2>
+
+            <div className="flex flex-col items-center mb-6">
+              <img 
+                src={storageUrl(selectedDetailItem.gambar)} 
+                alt={productName(selectedDetailItem)} 
+                className="w-[180px] h-[120px] object-cover rounded-lg border border-slate-200 mb-4"
+                onError={(e) => { e.target.onerror = null; e.target.src = "/images/beras.png"; }}
+              />
+              <h3 className="text-[24px] font-bold text-[#273B4A]">{productName(selectedDetailItem)}</h3>
+              <p className="text-[16px] font-medium text-slate-500">{ownerName(selectedDetailItem)}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-[15px] font-medium text-slate-800 bg-slate-50 p-4 rounded-[12px] border border-slate-200">
+              <div>
+                <span className="block text-[12px] font-bold text-slate-400 mb-1">Stok</span>
+                {selectedDetailItem.stok} {selectedDetailItem.satuan || "Kg"}
+              </div>
+              <div>
+                <span className="block text-[12px] font-bold text-slate-400 mb-1">Harga Harapan</span>
+                <span className="text-[#006638] font-bold">{formatRupiah(selectedDetailItem.harga_harapan)}</span>
+              </div>
+              <div>
+                <span className="block text-[12px] font-bold text-slate-400 mb-1">Tanggal Panen</span>
+                {selectedDetailItem.tanggal_panen}
+              </div>
+              <div>
+                <span className="block text-[12px] font-bold text-slate-400 mb-1">Masa Layak</span>
+                {selectedDetailItem.masa_layak} Hari
+              </div>
+              <div className="col-span-2 pt-2 mt-2 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-[14px] font-bold text-slate-600">Status Produk:</span>
+                {selectedDetailItem.status === "Aktif" ? (
+                  <span className="bg-[rgba(0,174,43,0.19)] border border-[#006638] text-[#006638] px-3 py-1 rounded-[3px] text-[13px] font-semibold">Aktif</span>
+                ) : (
+                  <span className="bg-red-100 border border-red-500 text-red-600 px-3 py-1 rounded-[3px] text-[13px] font-semibold">Tidak Aktif</span>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button onClick={() => setSelectedDetailItem(null)} className="px-6 py-2 bg-[#006638] text-white rounded-[8px] font-semibold hover:bg-emerald-800 transition shadow-sm">
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

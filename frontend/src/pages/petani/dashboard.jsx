@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PetaniStatCard from "../../components/petani/PetaniStatCard";
 import PetaniOffers from "../../components/petani/PetaniOffers";
@@ -15,8 +15,6 @@ export default function DashboardPage() {
   });
   const [latestOffers, setLatestOffers] = useState([]);
   const [latestOrders, setLatestOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -31,9 +29,6 @@ export default function DashboardPage() {
         setLatestOrders(response.data.latestOrders);
       } catch (err) {
         console.error("Gagal mengambil data dashboard:", err);
-        setError("Gagal memuat data dari server.");
-      } finally {
-        setIsLoading(false);
       }
     };
 

@@ -1,4 +1,3 @@
-import React from "react";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { Logo } from "./Header";
 
