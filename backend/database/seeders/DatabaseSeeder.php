@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CategorySeeder::class,
-            // RajaOngkirSeeder::class, // Anda dapat me-uncomment ini jika sudah mensetting RAJAONGKIR_API_KEY di .env
+            UserSeeder::class,
         ]);
     }
 }
