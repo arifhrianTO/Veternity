@@ -3,6 +3,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import api from "../../config/axios";
 import ProductDetailModal from "../../components/pembeli/ProductDetailModal";
 import { Star, Search } from "lucide-react";
+import { swalSuccess, swalError } from "../../utils/swal";
 
 export default function MarketplacePage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,11 +56,11 @@ export default function MarketplacePage() {
           kuantitas: qty
        });
        if(res.data.success) {
-          alert(`${product.name} (${qty} kg) telah ditambahkan ke keranjang.`);
+          swalSuccess("Ditambahkan ke keranjang", `${product.name} (${qty} kg) telah ditambahkan ke keranjang.`);
        }
     } catch (error) {
        console.error("Gagal tambah ke keranjang", error);
-       alert("Gagal menambahkan ke keranjang. Pastikan Anda sudah login.");
+       swalError("Gagal menambahkan ke keranjang", "Pastikan Anda sudah login.");
     }
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import api from "../../config/axios";
 import { X, MapPin, Phone, MessageCircle, Mail, Check, XCircle, Send, Loader2 } from "lucide-react";
+import { swalError } from "../../utils/swal";
 
 const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/beras.png");
 
@@ -128,7 +129,7 @@ export default function PenawaranPage() {
       setCounterPrice("");
     } catch (error) {
       console.error("Gagal update penawaran:", error);
-      alert(error.response?.data?.message || "Gagal memperbarui penawaran.");
+      swalError("Gagal memperbarui penawaran", error.response?.data?.message || "Terjadi kesalahan saat menyimpan penawaran.");
     } finally {
       setIsSubmitting(false);
     }

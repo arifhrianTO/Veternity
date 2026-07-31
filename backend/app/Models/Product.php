@@ -8,6 +8,7 @@ class Product extends Model
 {
     protected $fillable = [
         'user_id',
+        'nama_produk',
         'category_id',
         'stok',
         'satuan',

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { swalSuccess, swalError } from "../../utils/swal";
 
 const tabItems = [
   { key: "semua", label: "Semua" },
@@ -213,10 +214,10 @@ export default function PesananPage() {
                                           return o;
                                         });
                                         setOrders(updatedOrders);
-                                        alert(`Pesanan ${order.kode} berhasil dikirim dengan resi: ${resi}`);
+                                        swalSuccess("Pesanan dikirim", `Pesanan ${order.kode} berhasil dikirim dengan resi: ${resi}`);
                                      } catch (error) {
                                         console.error("Gagal update resi", error);
-                                        alert("Gagal menyimpan resi.");
+                                        swalError("Gagal menyimpan resi", "Terjadi kesalahan saat menyimpan nomor resi.");
                                      }
                                   };
                                   updateOrder();

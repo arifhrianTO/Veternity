@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import api from "../../config/axios";
 import { X, Upload, Loader2 } from "lucide-react";
+import { swalError } from "../../utils/swal";
 
 const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/user.png");
 
@@ -85,7 +86,7 @@ export default function KoperasiProfilPage() {
       setIsEditOpen(false);
     } catch (error) {
       console.error("Gagal update profil:", error);
-      alert(error.response?.data?.message || "Gagal memperbarui profil.");
+      swalError("Gagal memperbarui profil", error.response?.data?.message || "Terjadi kesalahan saat menyimpan profil.");
     } finally {
       setIsSubmitting(false);
     }

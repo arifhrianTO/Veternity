@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../config/axios";
 import { ArrowLeft, Edit3, Trash2, X, Upload, Loader2 } from "lucide-react";
+import { swalError } from "../../utils/swal";
 
 const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/user.png");
 
@@ -97,7 +98,7 @@ export default function DetailPetani() {
       setIsEditProfilOpen(false);
     } catch (error) {
       console.error("Gagal update profil:", error);
-      alert(error.response?.data?.message || "Gagal memperbarui profil.");
+      swalError("Gagal memperbarui profil", error.response?.data?.message || "Terjadi kesalahan saat menyimpan profil.");
     } finally {
       setIsSubmitting(false);
     }
@@ -113,7 +114,7 @@ export default function DetailPetani() {
       setProductToDelete(null);
     } catch (error) {
       console.error("Gagal menghapus produk:", error);
-      alert(error.response?.data?.message || "Gagal menghapus produk.");
+      swalError("Gagal menghapus produk", error.response?.data?.message || "Terjadi kesalahan saat menghapus produk.");
     } finally {
       setIsSubmitting(false);
     }
@@ -140,7 +141,7 @@ export default function DetailPetani() {
       setProductToEdit(null);
     } catch (error) {
       console.error("Gagal mengupdate produk:", error);
-      alert(error.response?.data?.message || "Gagal memperbarui produk.");
+      swalError("Gagal memperbarui produk", error.response?.data?.message || "Terjadi kesalahan saat menyimpan produk.");
     } finally {
       setIsSubmitting(false);
     }

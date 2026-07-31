@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Landmark, QrCode, Wallet, Store } from "lucide-react";
 import api from "../../config/axios"; // Menggunakan axios instance yang sudah ada auth token
+import { swalSuccess, swalError, swalWarning, swalInfo } from "../../utils/swal";
 
 export default function CheckoutPage() {
   const [checkoutItems, setCheckoutItems] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState("transfer");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const navigate = useNavigate();
 
   // State untuk Data RajaOngkir
@@ -189,12 +190,17 @@ export default function CheckoutPage() {
 
   const handleOrder = async () => {
     if (checkoutItems.length === 0) {
-      alert("Tidak ada produk untuk dipesan!");
+      swalWarning("Tidak ada produk", "Tidak ada produk untuk dipesan!");
       return;
     }
 
     if (!selectedCity || !fullAddress.trim()) {
-      alert("Mohon lengkapi alamat pengiriman dan pilih kota tujuan!");
+      swalWarning("Alamat belum lengkap", "Mohon lengkapi alamat pengiriman dan pilih kota tujuan!");
+      return;
+    }
+
+    if (!paymentMethod) {
+      swalWarning("Metode pembayaran belum dipilih", "Silakan pilih metode pembayaran terlebih dahulu!");
       return;
     }
 
@@ -204,7 +210,7 @@ export default function CheckoutPage() {
       const storeName = stores[i];
       if (courierCostsByStore[storeName] && courierCostsByStore[storeName].length > 0) {
         if (!shippingMethods[storeName]) {
-          alert(`Mohon pilih layanan pengiriman untuk toko ${storeName}!`);
+          swalWarning("Layanan pengiriman belum dipilih", `Mohon pilih layanan pengiriman untuk toko ${storeName}!`);
           return;
         }
       }
@@ -226,7 +232,7 @@ export default function CheckoutPage() {
         total_berat_gram: totalWeight,
         ongkos_kirim: totalShippingCost,
         total: totalPayment,
-        paymentMethod: paymentMethod === "transfer" ? "Transfer Bank" : "QRIS",
+        paymentMethod: paymentMethod,
       };
 
       const res = await api.post('/orders', payload);
@@ -234,42 +240,76 @@ export default function CheckoutPage() {
       if (res.data.success) {
         // Hapus items dari keranjang di frontend
         localStorage.removeItem("checkoutItems");
-        
+        const orderIds = res.data.order_ids || [];
+
         // Panggil Midtrans Snap
         if (res.data.snap_token) {
            window.snap.pay(res.data.snap_token, {
-              onSuccess: function(){
-                 alert(`Pembayaran berhasil!`);
+              onSuccess: async function(){
+                 try {
+                    if (orderIds.length > 0) {
+                       await Promise.all(orderIds.map(id => api.put(`/orders/${id}`, { status: "Diproses" })));
+                    }
+                 } catch (e) {
+                    console.error("Gagal mengupdate status pesanan", e);
+                 }
+                 await swalSuccess("Pembayaran berhasil!", "Status pesanan Anda telah diperbarui.");
                  navigate("/pembeli/pesanan");
               },
-              onPending: function(){
-                 alert(`Menunggu pembayaran...`);
+              onPending: async function(){
+                 await swalInfo("Menunggu pembayaran...", "Pesanan Anda sedang menunggu pembayaran.");
                  navigate("/pembeli/pesanan");
               },
-              onError: function(){
-                 alert(`Pembayaran gagal!`);
+              onError: async function(){
+                 await swalError("Pembayaran gagal!", "Silakan coba lagi atau gunakan metode lain.");
                  navigate("/pembeli/pesanan");
               },
-              onClose: function(){
-                 alert('Anda menutup jendela pembayaran. Anda dapat melanjutkannya nanti di halaman Pesanan.');
+              onClose: async function(){
+                 await swalInfo("Pembayaran ditutup", "Anda dapat melanjutkan pembayaran nanti di halaman Pesanan.");
                  navigate("/pembeli/pesanan");
               }
            });
         } else {
            // Jika tidak ada token (misal gratis/bypass)
-           alert(`Pesanan berhasil dibuat!`);
+           await swalSuccess("Pesanan berhasil dibuat!");
            navigate("/pembeli/pesanan");
         }
       }
     } catch (error) {
        console.error("Gagal membuat pesanan", error);
-       alert("Gagal memproses pesanan. Silakan coba lagi.");
+       swalError("Gagal memproses pesanan", "Silakan coba lagi.");
     }
   };
 
   const paymentOptions = [
-    { id: "transfer", label: "Transfer Bank" },
-    { id: "qris", label: "QRIS" },
+    {
+      id: "Transfer Bank",
+      label: "Transfer Bank / Virtual Account",
+      icon: Landmark,
+      channels: "BCA, BNI, BRI, Mandiri, Permata",
+      description: "Bayar lewat transfer ke nomor virtual account bank",
+    },
+    {
+      id: "qris",
+      label: "QRIS",
+      icon: QrCode,
+      channels: "QRIS, GoPay, ShopeePay",
+      description: "Scan QR menggunakan aplikasi e-wallet atau m-banking",
+    },
+    {
+      id: "ewallet",
+      label: "E-Wallet",
+      icon: Wallet,
+      channels: "GoPay, ShopeePay",
+      description: "Bayar langsung dari saldo e-wallet Anda",
+    },
+    {
+      id: "retail",
+      label: "Retail Store",
+      icon: Store,
+      channels: "Indomaret, Alfamart",
+      description: "Bayar tunai di gerai retail terdekat",
+    },
   ];
 
   return (
@@ -467,31 +507,49 @@ export default function CheckoutPage() {
               </h3>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {paymentOptions.map((opt) => {
                 const isSelected = paymentMethod === opt.id;
+                const Icon = opt.icon;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => setPaymentMethod(opt.id)}
-                    className={`w-full flex items-center gap-3 rounded-[12px] px-3 py-2 border transition text-left ${
+                    className={`w-full flex items-center gap-3.5 rounded-[12px] px-3.5 py-3 border transition text-left ${
                       isSelected
-                        ? "border-[#006638] bg-[rgba(2,145,84,0.03)]"
+                        ? "border-[#006638] bg-[rgba(2,145,84,0.04)] ring-1 ring-[#006638]/20"
                         : "border-black/[0.25] bg-white hover:border-black/40"
                     }`}
                   >
                     <div
-                      className={`w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0 ${
-                        isSelected ? "bg-[#006638]" : "border border-black"
+                      className={`w-[42px] h-[42px] rounded-[10px] flex items-center justify-center flex-shrink-0 ${
+                        isSelected ? "bg-[#006638] text-white" : "bg-[#EAF6F1] text-[#006638]"
                       }`}
                     >
-                      {isSelected && (
-                        <div className="w-[7px] h-[7px] rounded-full bg-white" />
-                      )}
+                      <Icon className="w-5 h-5" />
                     </div>
-                    <p className="text-[14px] font-semibold text-black">
-                      {opt.label}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[14px] font-bold text-black">
+                          {opt.label}
+                        </p>
+                        <div
+                          className={`w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0 ${
+                            isSelected ? "bg-[#006638]" : "border border-black/30"
+                          }`}
+                        >
+                          {isSelected && (
+                            <div className="w-[7px] h-[7px] rounded-full bg-white" />
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[12px] font-semibold text-[#006638] mt-0.5">
+                        {opt.channels}
+                      </p>
+                      <p className="text-[11px] text-black/50 mt-0.5">
+                        {opt.description}
+                      </p>
+                    </div>
                   </button>
                 );
               })}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import api from "../../config/axios";
 import { Search, ChevronDown, ChevronLeft, ChevronRight, Pencil, X, Loader2 } from "lucide-react";
+import { swalError } from "../../utils/swal";
 
 const STATUS_OPTIONS = ["Menunggu Pembayaran", "Diproses", "Dikirim", "Selesai", "Dibatalkan"];
 
@@ -92,7 +93,7 @@ export default function PengirimanPage() {
       setSelectedItem(null);
     } catch (error) {
       console.error("Gagal update pengiriman:", error);
-      alert(error.response?.data?.message || "Gagal memperbarui pengiriman.");
+      swalError("Gagal memperbarui pengiriman", error.response?.data?.message || "Terjadi kesalahan saat menyimpan pengiriman.");
     } finally {
       setIsSubmitting(false);
     }

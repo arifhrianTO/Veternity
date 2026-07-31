@@ -26,6 +26,7 @@ export default function ProdukPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   
   const initialFormState = {
+    nama_produk: "",
     kategori: "",
     stok: "",
     harga_harapan: "",
@@ -75,6 +76,7 @@ export default function ProdukPage() {
   const openEditModal = (product) => {
     setSelectedProduct(product);
     setFormData({
+      nama_produk: product.nama_produk,
       kategori: product.kategori,
       stok: product.stok,
       harga_harapan: product.harga_harapan,
@@ -368,6 +370,10 @@ export default function ProdukPage() {
               {/* Form Input Section (Right) */}
               <div className="flex-1 space-y-4">
                 <div className="space-y-1">
+                  <label className="font-semibold text-[#273B4A] text-[13px]">Nama Produk</label>
+                  <input type="text" name="nama_produk" value={formData.nama_produk} onChange={handleInputChange} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638]" placeholder="Contoh: Ikan Tongkol" />
+                </div>
+                <div className="space-y-1">
                   <label className="font-semibold text-[#273B4A] text-[13px]">Kategori Produk</label>
                   <select name="kategori" value={formData.kategori} onChange={handleInputChange} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white">
                     <option value="">Pilih Kategori...</option>
@@ -453,6 +459,10 @@ export default function ProdukPage() {
 
               {/* Form Input Section (Right) */}
               <div className="flex-1 space-y-4">
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#273B4A] text-[13px]">Nama Produk</label>
+                  <input type="text" name="nama_produk" value={formData.nama_produk} onChange={handleInputChange} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638]" placeholder="Contoh: Ikan Tongkol" />
+                </div>
                 <div className="space-y-1">
                   <label className="font-semibold text-[#273B4A] text-[13px]">Kategori Produk</label>
                   <select name="kategori" value={formData.kategori} onChange={handleInputChange} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white">

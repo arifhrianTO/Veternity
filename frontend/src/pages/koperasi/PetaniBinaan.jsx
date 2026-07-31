@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import api from "../../config/axios";
 import { Search, Plus, Eye, ChevronLeft, ChevronRight, X, Upload, Loader2 } from "lucide-react";
+import { swalError } from "../../utils/swal";
 
 const ROLE = "petani_binaan";
 const LABEL = "Petani";
@@ -89,7 +90,7 @@ export default function PetaniBinaan() {
       setPreviewImage(null);
     } catch (error) {
       console.error("Gagal menambah", LABEL, error);
-      alert(error.response?.data?.message || `Gagal menambah ${LABEL} binaan.`);
+      swalError("Gagal menambah binaan", error.response?.data?.message || `Gagal menambah ${LABEL} binaan.`);
     } finally {
       setIsSubmitting(false);
     }
