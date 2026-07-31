@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import api from "../../config/axios";
 import { Search, Plus, Edit3, Trash2, ChevronLeft, ChevronRight, Eye, X, Upload, Loader2 } from "lucide-react";
+import { swalError } from "../../utils/swal";
 
 const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/beras.png");
 
@@ -104,7 +105,7 @@ export default function KoperasiKelolaProduk() {
       setPreviewImage(null);
     } catch (error) {
       console.error("Gagal menambah produk:", error);
-      alert(error.response?.data?.message || "Gagal menambah produk.");
+      swalError("Gagal menambah produk", error.response?.data?.message || "Terjadi kesalahan saat menambah produk.");
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +155,7 @@ export default function KoperasiKelolaProduk() {
       setPreviewImage(null);
     } catch (error) {
       console.error("Gagal mengupdate produk:", error);
-      alert(error.response?.data?.message || "Gagal memperbarui produk.");
+      swalError("Gagal memperbarui produk", error.response?.data?.message || "Terjadi kesalahan saat menyimpan produk.");
     } finally {
       setIsSubmitting(false);
     }
@@ -172,7 +173,7 @@ export default function KoperasiKelolaProduk() {
       setProductToDelete(null);
     } catch (error) {
       console.error("Gagal menghapus produk:", error);
-      alert(error.response?.data?.message || "Gagal menghapus produk.");
+      swalError("Gagal menghapus produk", error.response?.data?.message || "Terjadi kesalahan saat menghapus produk.");
     } finally {
       setIsSubmitting(false);
     }

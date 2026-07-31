@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import { Trash2, Check, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { swalWarning } from "../../utils/swal";
 
 export default function KeranjangPage() {
   const [cartItems, setCartItems] = useState([]);
@@ -97,7 +98,7 @@ export default function KeranjangPage() {
 
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
-      alert("Pilih minimal satu produk untuk checkout!");
+      swalWarning("Belum ada produk dipilih", "Pilih minimal satu produk untuk checkout!");
       return;
     }
     // Store selected items for checkout page

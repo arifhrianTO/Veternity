@@ -6,6 +6,7 @@ import logo from "../assets/logo.png";
 import ellipse181 from "../assets/Ellipse_181.png";
 import ellipse182 from "../assets/Ellipse_182.png";
 import ellipse179 from "../assets/Ellipse_179.png";
+import { swalSuccess, swalWarning } from "../utils/swal";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ export default function AuthPage() {
         password: registerPassword,
       });
       
-      alert("Registrasi berhasil! Silahkan masuk.");
+      await swalSuccess("Registrasi berhasil!", "Silahkan masuk.");
       navigate("/login");
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
@@ -547,7 +548,7 @@ export default function AuthPage() {
                       if (fullName && phone && birthDate && gender && address) {
                         setStep(3);
                       } else {
-                        alert("Silakan isi semua data pribadi terlebih dahulu.");
+                        swalWarning("Data belum lengkap", "Silakan isi semua data pribadi terlebih dahulu.");
                       }
                     }}
                     className="flex-1 rounded-full py-2 text-base font-bold text-white shadow-md hover:opacity-90 transition flex items-center justify-center gap-2"

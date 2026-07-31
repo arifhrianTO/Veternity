@@ -115,7 +115,7 @@ class OrderController extends Controller
                     'pembeli_id' => $user->id,
                     'petani_id' => $petaniId,
                     'total_harga' => $group['total_harga'], // Harga barang saja (tambahkan logic ongkir jika diperlukan detail)
-                    'status' => 'Diproses',
+                    'status' => 'Menunggu Pembayaran',
                     'tanggal_pesanan' => now(),
                     'alamat_pengiriman' => $request->fullAddress,
                     'kota_id' => $request->kota_id,
@@ -130,6 +130,7 @@ class OrderController extends Controller
                         'nama_produk' => $item['nama_produk'],
                         'jumlah_beli' => $item['jumlah_beli'],
                         'harga_satuan' => $item['harga_satuan'],
+                        'subtotal' => $item['jumlah_beli'] * $item['harga_satuan'],
                     ]);
                 }
                 
@@ -154,12 +155,13 @@ class OrderController extends Controller
             $grossAmount = collect($createdOrders)->sum('total_harga') + $request->ongkos_kirim; 
 
             // Tentukan Enabled Payments berdasarkan pilihan frontend
-            $enabledPayments = [];
-            if ($request->paymentMethod === 'qris') {
-                $enabledPayments = ['qris', 'gopay', 'shopeepay'];
-            } elseif ($request->paymentMethod === 'Transfer Bank') {
-                $enabledPayments = ['bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'permata_va'];
-            }
+            $enabledPayments = match ($request->paymentMethod) {
+                'Transfer Bank' => ['bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'permata_va'],
+                'qris' => ['qris', 'gopay', 'shopeepay'],
+                'ewallet' => ['gopay', 'shopeepay'],
+                'retail' => ['indomaret', 'alfamart'],
+                default => [],
+            };
 
             // Item Details untuk Midtrans
             $itemDetails = [];
@@ -209,7 +211,8 @@ class OrderController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Pesanan berhasil dibuat',
-                'snap_token' => $snapToken
+                'snap_token' => $snapToken,
+                'order_ids' => collect($createdOrders)->pluck('id')->all()
             ], 201);
 
         } catch (\Exception $e) {

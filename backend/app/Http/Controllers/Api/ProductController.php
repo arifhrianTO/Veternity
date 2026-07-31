@@ -84,6 +84,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'nama_produk' => 'required|string|max:255',
             'kategori' => 'nullable|string',
             'category_id' => 'nullable|integer|exists:categories,id',
             'stok' => 'required|numeric',
@@ -154,6 +155,7 @@ class ProductController extends Controller
         }
 
         $validated = $request->validate([
+            'nama_produk' => 'sometimes|required|string|max:255',
             'kategori' => 'nullable|string',
             'category_id' => 'nullable|integer|exists:categories,id',
             'stok' => 'sometimes|required|numeric',

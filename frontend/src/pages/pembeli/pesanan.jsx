@@ -3,6 +3,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import OrderDetailModal from "../../components/pembeli/OrderDetailModal";
 import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { swalSuccess, swalError, swalInfo } from "../../utils/swal";
 
 const tabItems = [
   { key: "semua", label: "Semua" },
@@ -279,18 +280,23 @@ export default function PesananPembeliPage() {
                               <button 
                                 onClick={() => {
                                   window.snap.pay(order.snap_token, {
-                                    onSuccess: function() {
-                                      alert("Pembayaran berhasil!");
+                                    onSuccess: async function() {
+                                      try {
+                                        await api.put(`/orders/${order.id}`, { status: "Diproses" });
+                                      } catch (e) {
+                                        console.error("Gagal mengupdate status pesanan", e);
+                                      }
+                                      await swalSuccess("Pembayaran berhasil!", "Status pesanan Anda telah diperbarui.");
                                       window.location.reload();
                                     },
-                                    onPending: function() {
-                                      alert("Menunggu pembayaran...");
+                                    onPending: async function() {
+                                      await swalInfo("Menunggu pembayaran...", "Pesanan Anda sedang menunggu pembayaran.");
                                     },
-                                    onError: function() {
-                                      alert("Pembayaran gagal!");
+                                    onError: async function() {
+                                      await swalError("Pembayaran gagal!", "Silakan coba lagi atau gunakan metode lain.");
                                     },
-                                    onClose: function() {
-                                      alert('Anda menutup jendela pembayaran.');
+                                    onClose: async function() {
+                                      await swalInfo("Pembayaran ditutup", "Anda dapat melanjutkan pembayaran nanti.");
                                     }
                                   });
                                 }}

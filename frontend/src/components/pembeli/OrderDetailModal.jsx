@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { X, Check, Truck, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { swalSuccess, swalError } from "../../utils/swal";
 
 const defaultTrackingSteps = [
   { key: "created", label: "Pesanan dibuat" },
@@ -88,11 +89,11 @@ export default function OrderDetailModal({ order, onClose }) {
       await api.put(`/orders/${order.id}`, {
         status: "Selesai"
       });
-      alert("Pesanan dikonfirmasi diterima!");
+      await swalSuccess("Pesanan diterima", "Pesanan dikonfirmasi diterima!");
       window.location.reload(); // Refresh the page to update the order list
     } catch (error) {
       console.error("Gagal mengonfirmasi pesanan:", error);
-      alert("Gagal mengonfirmasi pesanan. Coba lagi.");
+      swalError("Gagal mengonfirmasi pesanan", "Terjadi kesalahan. Coba lagi.");
     }
   };
 
