@@ -7,9 +7,14 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\Offer;
+use App\Models\OrderItem;
+use App\Models\User;
+use App\Traits\KoperasiScope;
 
 class DashboardController extends Controller
 {
+    use KoperasiScope;
+
     public function petani(Request $request)
     {
         $userId = $request->user()->id;
@@ -169,5 +174,83 @@ class DashboardController extends Controller
         if ($status === 'Diproses') return 'purple';
         if ($status === 'Menunggu Pembayaran') return 'yellow';
         return 'slate';
+    }
+
+    public function koperasi(Request $request)
+    {
+        $user = $request->user();
+        $ids = $this->sellerIds($user);
+
+        // 1. Jumlah anggota binaan
+        $petaniBinaan = User::where('koperasi_id', $user->id)
+            ->where('role', 'petani_binaan')
+            ->count();
+        $nelayanBinaan = User::where('koperasi_id', $user->id)
+            ->where('role', 'nelayan_binaan')
+            ->count();
+
+        // 2. Produk aktif (koperasi + binaan)
+        $produkAktif = Product::whereIn('user_id', $ids)
+            ->where('status', 'Aktif')
+            ->count();
+
+        // 3. Total penjualan dari pesanan selesai
+        $totalPenjualan = Order::whereIn('petani_id', $ids)
+            ->where('status', 'Selesai')
+            ->sum('total_harga');
+
+        // 4. Grafik penjualan per bulan (7 bulan terakhir)
+        $grafikPenjualan = collect(range(6, 0))->map(function ($i) use ($ids) {
+            $month = now()->startOfMonth()->subMonths($i);
+            $sum = Order::whereIn('petani_id', $ids)
+                ->where('status', 'Selesai')
+                ->whereYear('tanggal_pesanan', $month->year)
+                ->whereMonth('tanggal_pesanan', $month->month)
+                ->sum('total_harga');
+
+            return [
+                'bulan' => $month->format('M'),
+                'penjualan' => round($sum / 1000000, 2),
+            ];
+        })->values();
+
+        // 5. Penjualan terbaik (top 5 produk berdasarkan jumlah terjual)
+        $penjualanTerbaik = OrderItem::whereIn('order_id', function ($query) use ($ids) {
+            $query->select('id')->from('orders')->whereIn('petani_id', $ids);
+        })
+            ->selectRaw('product_id, nama_produk, SUM(jumlah_beli) as total_qty, SUM(subtotal) as total_penjualan')
+            ->groupBy('product_id', 'nama_produk')
+            ->orderByDesc('total_qty')
+            ->limit(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->product_id,
+                    'nama' => $item->nama_produk,
+                    'qty' => (float) $item->total_qty,
+                    'total' => 'Rp ' . number_format($item->total_penjualan, 0, ',', '.'),
+                ];
+            });
+
+        return response()->json([
+            'stats' => [
+                'petaniBinaan' => (string) $petaniBinaan,
+                'nelayanBinaan' => (string) $nelayanBinaan,
+                'produkAktif' => (string) $produkAktif,
+                'totalPenjualan' => 'Rp ' . number_format($totalPenjualan, 0, ',', '.'),
+            ],
+            'grafikPenjualan' => $grafikPenjualan,
+            'penjualanTerbaik' => $penjualanTerbaik,
+        ]);
+    }
+
+    public function admin(Request $request)
+    {
+        // Untuk saat ini kita return mock/empty data
+        // Nantinya disesuaikan dengan logika rekap keseluruhan
+        return response()->json([
+            'message' => 'Dashboard Admin API reached',
+            'stats' => []
+        ]);
     }
 }
