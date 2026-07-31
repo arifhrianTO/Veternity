@@ -6,20 +6,31 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Offer;
 use App\Models\OfferHistory;
+use App\Traits\KoperasiScope;
 
 class OfferController extends Controller
 {
+    use KoperasiScope;
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $offers = Offer::with(['pembeli', 'product', 'histories' => function($query) {
+        $user = $request->user();
+
+        $query = Offer::with(['pembeli', 'petani', 'product.category', 'histories' => function($query) {
             $query->orderBy('created_at', 'desc');
-        }])
-        ->where('petani_id', $request->user()->id)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        }]);
+
+        // Koperasi melihat penawaran dirinya + anggota binaannya
+        if ($user->role === 'koperasi') {
+            $query->whereIn('petani_id', $this->sellerIds($user));
+        } else {
+            $query->where('petani_id', $user->id);
+        }
+
+        $offers = $query->orderBy('created_at', 'desc')->get();
 
         return response()->json($offers);
     }
@@ -37,11 +48,11 @@ class OfferController extends Controller
      */
     public function show(string $id)
     {
-        $offer = Offer::with(['pembeli', 'product', 'histories' => function($query) {
+        $offer = Offer::with(['pembeli', 'petani', 'product.category', 'histories' => function($query) {
             $query->orderBy('created_at', 'desc');
         }])->findOrFail($id);
-        
-        if ($offer->petani_id !== request()->user()->id) {
+
+        if (! $this->canManageOffer(request()->user(), $offer)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -55,7 +66,7 @@ class OfferController extends Controller
     {
         $offer = Offer::findOrFail($id);
 
-        if ($offer->petani_id !== $request->user()->id) {
+        if (! $this->canManageOffer($request->user(), $offer)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -82,8 +93,21 @@ class OfferController extends Controller
 
         return response()->json([
             'message' => 'Penawaran berhasil diperbarui',
-            'offer' => $offer
+            'offer' => $offer->load(['pembeli', 'product'])
         ]);
+    }
+
+    /**
+     * Cek otorisasi: pemilik produk (petani/nelayan) atau koperasi pembina.
+     */
+    private function canManageOffer($user, Offer $offer): bool
+    {
+        if ($offer->petani_id === $user->id) {
+            return true;
+        }
+
+        return $user->role === 'koperasi'
+            && in_array($offer->petani_id, $this->binaanIds($user));
     }
 
     /**

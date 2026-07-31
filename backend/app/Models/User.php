@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable([
-    'role', 'nama_lengkap', 'email', 'no_hp', 'tanggal_lahir', 'kelamin', 'alamat', 'password',
+    'role', 'nama_lengkap', 'email', 'no_hp', 'nik', 'rekening', 'tanggal_lahir', 'kelamin', 'alamat', 'password',
     'provinsi_id', 'kota_id', 'kode_pos', 'koperasi_id', 'foto_profil'
 ])]
 #[Hidden(['password', 'remember_token'])]
@@ -60,5 +60,10 @@ class User extends Authenticatable
     public function carts()
     {
         return $this->hasMany(Cart::class);
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
     }
 }
