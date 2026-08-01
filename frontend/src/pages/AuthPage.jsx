@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, Sprout, Anchor, ShoppingCart } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import vectorShape from "../assets/Vector.png";
-import logo from "../assets/logo.png";
 import ellipse181 from "../assets/Ellipse_181.png";
 import ellipse182 from "../assets/Ellipse_182.png";
 import ellipse179 from "../assets/Ellipse_179.png";
@@ -166,11 +165,7 @@ export default function AuthPage() {
           />
 
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center">
-            <img src={logo} alt="TaniNelayan" className="mb-2 h-40 w-40 object-contain" />
-            <h1 className="text-4xl font-bold text-white tracking-tight">TaniNelayan</h1>
-            <p className="mt-4 max-w-xs text-sm text-white/85">
-              Membangun Masa Depan Pertanian dan Perikanan Indonesia
-            </p>
+            <img src="/images/jala.png" alt="JALA" className="w-[min(85%,380px)] h-auto object-contain drop-shadow-lg" />
           </div>
 
           <div className="relative z-10 flex flex-col items-center gap-4 pb-4">
@@ -219,11 +214,7 @@ export default function AuthPage() {
           />
 
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center">
-            <img src={logo} alt="TaniNelayan" className="mb-2 h-40 w-40 object-contain" />
-            <h1 className="text-4xl font-bold text-white tracking-tight">TaniNelayan</h1>
-            <p className="mt-4 max-w-xs text-sm text-white/85">
-              Membangun Masa Depan Pertanian dan Perikanan Indonesia
-            </p>
+            <img src="/images/jala.png" alt="JALA" className="w-[min(85%,380px)] h-auto object-contain drop-shadow-lg" />
           </div>
 
           <div className="relative z-10 flex flex-col items-center gap-4 pb-4">
