@@ -30,6 +30,12 @@ function getStatusBadge(status) {
           Ditolak
         </span>
       );
+    case "Counter":
+      return (
+        <span className="inline-flex items-center justify-center px-3 py-1 rounded-[12px] bg-sky-100 border border-sky-300 text-[14px] font-semibold text-sky-700">
+          Counter
+        </span>
+      );
     default:
       return (
         <span className="inline-flex items-center justify-center px-3 py-1 rounded-[12px] bg-slate-100 border border-slate-300 text-[14px] font-semibold text-slate-700">
@@ -43,41 +49,48 @@ export default function PenawaranPage() {
   const [offers, setOffers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isActionSubmitting, setIsActionSubmitting] = useState(false);
+
+  const fetchOffers = async () => {
+    try {
+      setIsLoading(true);
+      const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
+      localStorage.setItem("token", testToken);
+
+      const response = await api.get('/offers');
+      const formattedOffers = response.data.map(offer => ({
+        offerId: offer.id, // id asli untuk keperluan API (PUT /offers/{id})
+        id: offer.kode_penawaran, // dipakai sebagai key tampilan
+        product: offer.product ? (offer.product.nama_produk || offer.product.category?.nama_kategori || 'Unknown') : 'Unknown',
+        img: offer.product && offer.product.gambar ? `http://localhost:8000/storage/${offer.product.gambar}` : '/images/placeholder.png',
+        quantity: `${offer.jumlah_diminta} ${offer.product ? offer.product.satuan : 'Kg'}`,
+        hargaHarapan: offer.product ? `Rp ${Number(offer.product.harga_harapan).toLocaleString('id-ID')} / ${offer.product.satuan}` : '-',
+        basePrice: offer.harga_acuan
+          ? `Rp ${Number(offer.harga_acuan).toLocaleString('id-ID')} / Kg`
+          : 'Belum tersedia',
+        hargaAcuanTanggal: offer.harga_acuan_tanggal,
+        offerPrice: `Rp ${Number(offer.harga_tawaran).toLocaleString('id-ID')} / ${offer.product ? offer.product.satuan : 'Kg'}`,
+        date: new Date(offer.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: '2-digit'}),
+        status: offer.status,
+        buyer: offer.pembeli ? offer.pembeli.nama_lengkap : 'Unknown',
+        location: offer.pembeli ? offer.pembeli.alamat : 'Unknown',
+        message: offer.pesan_pembeli || 'Tidak ada pesan.',
+        history: offer.histories ? offer.histories.map(h => ({
+          time: new Date(h.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
+          label: h.aksi,
+          value: h.harga_terkait ? `Rp ${Number(h.harga_terkait).toLocaleString('id-ID')}` : '-'
+        })) : []
+      }));
+      setOffers(formattedOffers);
+    } catch (err) {
+      console.error("Gagal mengambil data penawaran:", err);
+      setError("Gagal memuat data penawaran.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOffers = async () => {
-      try {
-        setIsLoading(true);
-        const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
-        localStorage.setItem("token", testToken);
-
-        const response = await api.get('/offers');
-        const formattedOffers = response.data.map(offer => ({
-          id: offer.kode_penawaran,
-          product: offer.product ? offer.product.kategori : 'Unknown',
-          img: offer.product && offer.product.gambar ? `http://localhost:8000/storage/${offer.product.gambar}` : '/images/placeholder.png',
-          quantity: `${offer.jumlah_diminta} ${offer.product ? offer.product.satuan : 'Kg'}`,
-          basePrice: offer.product ? `Rp ${Number(offer.product.harga_harapan).toLocaleString('id-ID')} / ${offer.product.satuan}` : '-',
-          offerPrice: `Rp ${Number(offer.harga_tawaran).toLocaleString('id-ID')} / ${offer.product ? offer.product.satuan : 'Kg'}`,
-          date: new Date(offer.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: '2-digit'}),
-          status: offer.status,
-          buyer: offer.pembeli ? offer.pembeli.nama_lengkap : 'Unknown',
-          location: offer.pembeli ? offer.pembeli.alamat : 'Unknown',
-          message: offer.pesan_pembeli || 'Tidak ada pesan.',
-          history: offer.histories ? offer.histories.map(h => ({
-            time: new Date(h.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
-            label: h.aksi,
-            value: h.harga_terkait ? `Rp ${Number(h.harga_terkait).toLocaleString('id-ID')}` : '-'
-          })) : []
-        }));
-        setOffers(formattedOffers);
-      } catch (err) {
-        console.error("Gagal mengambil data penawaran:", err);
-        setError("Gagal memuat data penawaran.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchOffers();
   }, []);
 
@@ -102,6 +115,43 @@ export default function PenawaranPage() {
   const handleTabChange = (tabKey) => {
     setActiveTab(tabKey);
     setPage(1);
+  };
+
+  // Handler generik untuk update status penawaran (Terima / Tolak / Counter)
+  const handleUpdateOfferStatus = async (status, aksiLabel, hargaTawaranOverride = null) => {
+    if (!selectedOffer) return;
+    setIsActionSubmitting(true);
+    try {
+      const payload = { status, aksi_label: aksiLabel };
+      if (hargaTawaranOverride !== null) {
+        payload.harga_tawaran = hargaTawaranOverride;
+      }
+      await api.put(`/offers/${selectedOffer.offerId}`, payload);
+      await fetchOffers();
+      setSelectedOffer(null);
+      setCounterPrice("");
+    } catch (err) {
+      console.error("Gagal memperbarui penawaran", err);
+      alert(err.response?.data?.message || "Gagal memperbarui penawaran.");
+    } finally {
+      setIsActionSubmitting(false);
+    }
+  };
+
+  const handleTerima = () => {
+    handleUpdateOfferStatus("Diterima", "Penawaran diterima");
+  };
+
+  const handleTolak = () => {
+    handleUpdateOfferStatus("Ditolak", "Penawaran ditolak");
+  };
+
+  const handleKirimCounter = () => {
+    if (!counterPrice || Number(counterPrice) <= 0) {
+      alert("Masukkan harga counter yang valid.");
+      return;
+    }
+    handleUpdateOfferStatus("Counter", "Penawaran counter diajukan", Number(counterPrice));
   };
 
   return (
@@ -151,7 +201,7 @@ export default function PenawaranPage() {
                   <thead>
                     <tr className="text-[15px] font-bold text-[#273B4A] border-b-2 border-black/[0.13]">
                       <th className="pb-4 px-2">Produk</th>
-                      <th className="pb-4 px-2">Harga Acuan</th>
+                      <th className="pb-4 px-2">Harga Acuan (Bapanas)</th>
                       <th className="pb-4 px-2">Harga Tawaran</th>
                       <th className="pb-4 px-2">Status</th>
                       <th className="pb-4 px-2 text-center">Aksi</th>
@@ -266,7 +316,7 @@ export default function PenawaranPage() {
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 shrink-0">
               <h3 className="text-[18px] font-bold text-[#005941]">Detail Penawaran</h3>
               <button
-                onClick={() => setSelectedOffer(null)}
+                onClick={() => { setSelectedOffer(null); setCounterPrice(""); }}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
               >
                 <X className="w-5 h-5" />
@@ -280,7 +330,7 @@ export default function PenawaranPage() {
               <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
                 <div className="rounded-[12px] border border-slate-200 bg-slate-50 p-2.5 flex items-center gap-3">
                   <img
-                    src={`/images/${selectedOffer.img}`}
+                    src={selectedOffer.img}
                     alt={selectedOffer.product}
                     className="w-12 h-12 object-cover rounded-[8px]"
                   />
@@ -300,6 +350,11 @@ export default function PenawaranPage() {
                     <div className="font-bold text-[#006638] text-[13px]">{selectedOffer.offerPrice}</div>
                   </div>
                 </div>
+              </div>
+
+              {/* Info tambahan: Harga Harapan penjual */}
+              <div className="text-[12px] text-slate-500 px-1">
+                Harga Harapan Anda (penjual): <span className="font-semibold text-[#273B4A]">{selectedOffer.hargaHarapan}</span>
               </div>
 
               {/* Info Pembeli & Pesan - 1 Baris Grid */}
@@ -356,10 +411,18 @@ export default function PenawaranPage() {
                <div className="flex flex-col sm:flex-row gap-3">
                   {/* Left: Terima / Tolak */}
                   <div className="flex gap-2 sm:w-[40%]">
-                    <button className="flex-1 rounded-[10px] bg-[#006638] py-2.5 font-semibold text-white hover:bg-[#00522d] transition text-[13px]">
+                    <button
+                      onClick={handleTerima}
+                      disabled={isActionSubmitting}
+                      className="flex-1 rounded-[10px] bg-[#006638] py-2.5 font-semibold text-white hover:bg-[#00522d] transition text-[13px] disabled:opacity-50"
+                    >
                       Terima
                     </button>
-                    <button className="flex-1 rounded-[10px] border-2 border-red-500 bg-white py-2 font-semibold text-red-500 hover:bg-red-50 transition text-[13px]">
+                    <button
+                      onClick={handleTolak}
+                      disabled={isActionSubmitting}
+                      className="flex-1 rounded-[10px] border-2 border-red-500 bg-white py-2 font-semibold text-red-500 hover:bg-red-50 transition text-[13px] disabled:opacity-50"
+                    >
                       Tolak
                     </button>
                   </div>
@@ -374,7 +437,11 @@ export default function PenawaranPage() {
                       placeholder="Harga counter..."
                       className="flex-1 bg-transparent py-2.5 text-[13px] text-slate-900 outline-none font-semibold"
                     />
-                    <button className="bg-[#273B4A] h-full px-4 font-semibold text-white hover:bg-[#1f2f3b] transition text-[13px]">
+                    <button
+                      onClick={handleKirimCounter}
+                      disabled={isActionSubmitting}
+                      className="bg-[#273B4A] h-full px-4 font-semibold text-white hover:bg-[#1f2f3b] transition text-[13px] disabled:opacity-50"
+                    >
                       Kirim
                     </button>
                   </div>

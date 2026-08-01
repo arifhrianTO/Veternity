@@ -22,22 +22,23 @@ export default function MarketplacePage() {
       try {
         const response = await api.get('/products');
         // Transform mapping dari DB ke format yang dibutuhkan UI (mockData format)
-          const formattedProducts = response.data.map(p => ({
-            id: p.id,
-            name: p.nama_produk,
-            location: "Indonesia", // Jika ada relasi kota di tabel users nanti bisa ditarik
-            price: `Rp ${Number(p.harga_harapan).toLocaleString('id-ID')}`,
-            priceNum: Number(p.harga_harapan),
-            unit: `/${p.satuan}`,
-            rating: 4.8, // Mock
-            koperasi: p.user?.name || "Petani", 
-            image: p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/beras.png",
-            stock: `${p.stok}${p.satuan}`,
-            harvestDate: new Date(p.tanggal_panen).toLocaleDateString(),
-            shelfLife: `${p.masa_layak} hari`,
-            originCityId: p.user_id === 1 ? 78 : 54, // Mock city ID untuk hitung ongkir
-            kategori: p.kategori
-          }));
+         const formattedProducts = response.data.map(p => ({
+          id: p.id,
+          name: p.nama_produk,
+          location: "Indonesia",
+          price: `Rp ${Number(p.harga_harapan).toLocaleString('id-ID')}`,
+          priceNum: Number(p.harga_harapan),
+          harga_acuan: p.harga_acuan ? Number(p.harga_acuan) : null,   // ← tambahkan baris ini
+          unit: `/${p.satuan}`,
+          rating: 4.8,
+          koperasi: p.user?.name || "Petani", 
+          image: p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/beras.png",
+          stock: `${p.stok}${p.satuan}`,
+          harvestDate: new Date(p.tanggal_panen).toLocaleDateString(),
+          shelfLife: `${p.masa_layak} hari`,
+          originCityId: p.user_id === 1 ? 78 : 54,
+          kategori: p.kategori
+        }));
         setProducts(formattedProducts);
       } catch (error) {
         console.error("Gagal mengambil produk:", error);
@@ -63,6 +64,23 @@ export default function MarketplacePage() {
        swalError("Gagal menambahkan ke keranjang", "Pastikan Anda sudah login.");
     }
   };
+  const handleSubmitOffer = async (product, qty, offerPrice, message) => {
+  try {
+    const res = await api.post('/offers', {
+      product_id: product.id,
+      jumlah_diminta: qty,
+      harga_tawaran: offerPrice,
+      pesan_pembeli: message || null,
+    });
+    swalSuccess("Penawaran Terkirim", `Penawaran untuk ${product.name} sudah dikirim ke penjual. Menunggu respon.`);
+    return res.data;
+  } catch (error) {
+    console.error("Gagal mengajukan penawaran", error);
+    const msg = error.response?.data?.message || "Terjadi kesalahan, pastikan Anda sudah login.";
+    swalError("Gagal Mengajukan Penawaran", msg);
+    throw error; // biar modal tetap terbuka & loading state berhenti
+  }
+};
 
   const filteredProducts = products.filter((p) => {
     // Tambahkan pengaman agar tidak crash jika p.name atau p.koperasi undefined/null
@@ -245,8 +263,12 @@ export default function MarketplacePage() {
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
           onAddToCart={handleAddToCart}
+          onSubmitOffer={handleSubmitOffer}
         />
+        
       )}
+      
     </div>
+    
   );
 }

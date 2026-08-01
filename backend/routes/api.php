@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\KoperasiController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\API\ShippingController;
+use App\Http\Controllers\Api\BapanasPriceController;
 
 use App\Http\Controllers\Api\CartController;
 
@@ -19,6 +20,9 @@ Route::post('/login', [AuthController::class, 'login']);
 // ... API Routes untuk produk (public)
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
+
+Route::get('/bapanas/commodities', [BapanasPriceController::class, 'commodities']);
+Route::get('/bapanas/latest-price', [BapanasPriceController::class, 'latestPrice']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -43,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Cart Routes
     Route::apiResource('carts', CartController::class);
     
+    Route::get('/my-offers', [OfferController::class, 'myOffers']); // List penawaran milik pembeli
     Route::apiResource('orders', OrderController::class);
     Route::apiResource('offers', OfferController::class);
 

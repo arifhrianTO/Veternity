@@ -47,7 +47,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $offer->kode_penawaran,
                     'buyer' => $offer->pembeli->nama_lengkap ?? 'Unknown',
-                    'product' => $offer->product->kategori ?? 'Unknown',
+                    'product' => $offer->product ? ($offer->product.nama_produk ?? $offer->product.category->nama_kategori ?? 'Unknown') : 'Unknown',
                     'quantity' => $offer->jumlah_diminta . ' ' . ($offer->product->satuan ?? 'Kg'),
                     'offerPrice' => 'Rp ' . number_format($offer->harga_tawaran, 0, ',', '.'),
                     'status' => $offer->status,
@@ -120,7 +120,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $offer->kode_penawaran,
                     'buyer' => $offer->pembeli->nama_lengkap ?? 'Unknown',
-                    'product' => $offer->product->kategori ?? 'Unknown',
+                    'product' => $offer->product ? ($offer->product.nama_produk ?? $offer->product.category->nama_kategori ?? 'Unknown') : 'Unknown',
                     'quantity' => $offer->jumlah_diminta . ' ' . ($offer->product->satuan ?? 'Kg'),
                     'offerPrice' => 'Rp ' . number_format($offer->harga_tawaran, 0, ',', '.'),
                     'status' => $offer->status,

@@ -9,7 +9,12 @@ export default function ProdukPage() {
   const [fetchError, setFetchError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [page, setPage] = useState(1);
-  
+
+  // Daftar komoditas dari Bapanas (untuk dropdown "Komoditas Acuan")
+  const [komoditasList, setKomoditasList] = useState([]);
+  // Preview harga acuan realtime saat komoditas dipilih di form
+  const [hargaAcuanPreview, setHargaAcuanPreview] = useState(null);
+
   const itemsPerPage = 4;
   const safeProducts = Array.isArray(products) ? products : [];
   const totalPages = Math.max(1, Math.ceil(safeProducts.length / itemsPerPage));
@@ -27,6 +32,7 @@ export default function ProdukPage() {
   
   const initialFormState = {
     nama_produk: "",
+    komoditas_acuan: "",
     kategori: "",
     stok: "",
     harga_harapan: "",
@@ -42,7 +48,6 @@ export default function ProdukPage() {
     try {
       setIsLoading(true);
       setFetchError(null);
-      // HARDCODE TOKEN SEMENTARA UNTUK TESTING JIKA LOGIN BELUM JALAN
       const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
       localStorage.setItem("token", testToken);
 
@@ -51,17 +56,28 @@ export default function ProdukPage() {
     } catch (error) {
       console.error("Error fetching products:", error);
       setFetchError("Gagal mengambil data produk dari server. Pastikan API menyala.");
-      setProducts([]); // Fallback to empty array
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Fetch daftar komoditas Bapanas (sekali saat halaman dibuka)
+  const fetchKomoditasList = async () => {
+    try {
+      const response = await api.get('/bapanas/commodities');
+      setKomoditasList(response.data);
+    } catch (error) {
+      console.error("Gagal mengambil daftar komoditas Bapanas", error);
+      setKomoditasList([]);
+    }
+  };
+
   useEffect(() => {
     Promise.resolve().then(() => fetchProducts());
+    fetchKomoditasList();
   }, []);
 
-  // Helper functions to open modals
   const openDetailModal = (product) => {
     setSelectedProduct(product);
     setIsDetailModalOpen(true);
@@ -70,6 +86,7 @@ export default function ProdukPage() {
   const openAddModal = () => {
     setFormData(initialFormState);
     setImagePreview(null);
+    setHargaAcuanPreview(null);
     setIsAddModalOpen(true);
   };
 
@@ -77,14 +94,16 @@ export default function ProdukPage() {
     setSelectedProduct(product);
     setFormData({
       nama_produk: product.nama_produk,
+      komoditas_acuan: product.komoditas_acuan || "",
       kategori: product.kategori,
       stok: product.stok,
       harga_harapan: product.harga_harapan,
       tanggal_panen: product.tanggal_panen,
       masa_layak: product.masa_layak,
-      gambar: null // File direset, preview pakai path dari server
+      gambar: null
     });
     setImagePreview(product.gambar ? `http://localhost:8000/storage/${product.gambar}` : null);
+    setHargaAcuanPreview(product.harga_acuan || null);
     setIsEditModalOpen(true);
   };
 
@@ -101,11 +120,31 @@ export default function ProdukPage() {
     setSelectedProduct(null);
     setFormData(initialFormState);
     setImagePreview(null);
+    setHargaAcuanPreview(null);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handler khusus dropdown Komoditas Acuan: update form + fetch preview harga Bapanas
+  const handleKomoditasAcuanChange = async (e) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, komoditas_acuan: value }));
+
+    if (!value) {
+      setHargaAcuanPreview(null);
+      return;
+    }
+
+    try {
+      const res = await api.get('/bapanas/latest-price', { params: { commodity: value } });
+      setHargaAcuanPreview(res.data.price);
+    } catch (error) {
+      console.error("Harga acuan tidak ditemukan untuk komoditas ini", error);
+      setHargaAcuanPreview(null);
+    }
   };
 
   const handleImageChange = (e) => {
@@ -150,12 +189,11 @@ export default function ProdukPage() {
     
     const payload = new FormData();
     Object.keys(formData).forEach(key => {
-      // Hanya append jika ada value. Untuk gambar, hanya append jika user benar2 milih file baru
       if (formData[key] !== null && formData[key] !== "") {
         payload.append(key, formData[key]);
       }
     });
-    payload.append('_method', 'PUT'); // Laravel requirement for multipart/form-data update
+    payload.append('_method', 'PUT');
 
     try {
       await api.post(`/products/${selectedProduct.id}`, payload, {
@@ -188,16 +226,13 @@ export default function ProdukPage() {
       <div className="flex w-full min-h-screen p-4 pl-[304px]">
         <Sidebar />
 
-        {/* Outer Container Wrapper */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
-          {/* Top Header */}
           <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-6">
             <h2 className="text-[24px] font-semibold text-[#005941]">Produk saya</h2>
             <img src="/images/ikan1.png" alt="avatar" className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]" />
           </div>
 
-          {/* Sub Header (Deskripsi & Tombol Tambah) */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-[14px] text-slate-500">Kelola produk hasil panen anda</p>
             <button 
@@ -208,7 +243,6 @@ export default function ProdukPage() {
             </button>
           </div>
 
-          {/* Inner Table Card Container */}
           <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-6">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -255,7 +289,14 @@ export default function ProdukPage() {
                           </div>
                         </td>
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{p.stok} {p.satuan}</td>
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">Rp {Number(p.harga_harapan).toLocaleString('id-ID')}</td>
+                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">
+                          Rp {Number(p.harga_harapan).toLocaleString('id-ID')}
+                          {p.harga_acuan && (
+                            <div className="text-[11px] font-normal text-slate-400">
+                              Acuan: Rp {Number(p.harga_acuan).toLocaleString('id-ID')}
+                            </div>
+                          )}
+                        </td>
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{p.tanggal_panen}</td>
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{p.masa_layak} Hari</td>
                         <td className="py-4 px-2">
@@ -296,7 +337,6 @@ export default function ProdukPage() {
             </div>
           </div>
 
-          {/* Bottom Pagination Info & Controls */}
           <div className="flex items-center justify-between mt-6 px-2">
             <span className="text-[16px] font-semibold text-black/[0.51]">
               Menampilkan {products.length === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + itemsPerPage, products.length)} dari {products.length} produk
@@ -351,7 +391,6 @@ export default function ProdukPage() {
             
             <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col sm:flex-row gap-6 text-[14px]">
               
-              {/* Image Upload Area (Left) */}
               <label className="shrink-0 w-full sm:w-[250px] h-[200px] border-2 border-dashed border-slate-300 rounded-[12px] bg-slate-50 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-100 hover:border-[#006638] transition group p-4 overflow-hidden relative">
                 {imagePreview ? (
                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover absolute inset-0" />
@@ -367,7 +406,6 @@ export default function ProdukPage() {
                 <input type="file" className="hidden" accept="image/png, image/jpeg, image/jpg" onChange={handleImageChange} />
               </label>
 
-              {/* Form Input Section (Right) */}
               <div className="flex-1 space-y-4">
                 <div className="space-y-1">
                   <label className="font-semibold text-[#273B4A] text-[13px]">Nama Produk</label>
@@ -382,6 +420,26 @@ export default function ProdukPage() {
                     <option value="Beras Merah">Beras Merah</option>
                     <option value="Ikan Nila Fresh">Ikan Nila Fresh</option>
                   </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#273B4A] text-[13px]">Komoditas Acuan (Bapanas)</label>
+                  <select
+                    name="komoditas_acuan"
+                    value={formData.komoditas_acuan}
+                    onChange={handleKomoditasAcuanChange}
+                    className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white"
+                  >
+                    <option value="">Pilih Komoditas Acuan...</option>
+                    {komoditasList.map((k, i) => (
+                      <option key={i} value={k}>{k}</option>
+                    ))}
+                  </select>
+                  {hargaAcuanPreview && (
+                    <p className="text-[12px] text-[#006638] font-medium">
+                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString('id-ID')} / kg
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -443,7 +501,6 @@ export default function ProdukPage() {
             
             <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col sm:flex-row gap-6 text-[14px]">
               
-              {/* Image Edit Section (Left) */}
               <label className="shrink-0 w-full sm:w-[250px] space-y-2 cursor-pointer">
                 <div className="relative rounded-[12px] border border-slate-200 overflow-hidden group">
                   <img src={imagePreview} alt="Product" className="w-full h-[200px] object-cover" />
@@ -457,7 +514,6 @@ export default function ProdukPage() {
                 <input type="file" className="hidden" accept="image/png, image/jpeg, image/jpg" onChange={handleImageChange} />
               </label>
 
-              {/* Form Input Section (Right) */}
               <div className="flex-1 space-y-4">
                 <div className="space-y-1">
                   <label className="font-semibold text-[#273B4A] text-[13px]">Nama Produk</label>
@@ -472,6 +528,26 @@ export default function ProdukPage() {
                     <option value="Beras Merah">Beras Merah</option>
                     <option value="Ikan Nila Fresh">Ikan Nila Fresh</option>
                   </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#273B4A] text-[13px]">Komoditas Acuan (Bapanas)</label>
+                  <select
+                    name="komoditas_acuan"
+                    value={formData.komoditas_acuan}
+                    onChange={handleKomoditasAcuanChange}
+                    className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white"
+                  >
+                    <option value="">Pilih Komoditas Acuan...</option>
+                    {komoditasList.map((k, i) => (
+                      <option key={i} value={k}>{k}</option>
+                    ))}
+                  </select>
+                  {hargaAcuanPreview && (
+                    <p className="text-[12px] text-[#006638] font-medium">
+                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString('id-ID')} / kg
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -557,12 +633,10 @@ export default function ProdukPage() {
             </div>
             
             <div className="p-6 flex flex-col sm:flex-row gap-6">
-              {/* Image Section (Left) */}
               <div className="rounded-[12px] border border-slate-200 p-2 bg-slate-50 shrink-0 w-full sm:w-[250px] h-fit flex items-center justify-center">
                  <img src={selectedProduct.gambar ? `http://localhost:8000/storage/${selectedProduct.gambar}` : "/images/placeholder.png"} alt={selectedProduct.kategori} className="w-full h-[200px] object-cover rounded-[8px]" />
               </div>
               
-              {/* Details Section (Right) */}
               <div className="flex-1 space-y-3">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-[14px]">Kategori</span>
@@ -576,6 +650,12 @@ export default function ProdukPage() {
                   <span className="text-slate-500 text-[14px]">Harga Harapan</span>
                   <span className="font-bold text-[#006638]">Rp {Number(selectedProduct.harga_harapan).toLocaleString('id-ID')}</span>
                 </div>
+                {selectedProduct.harga_acuan && (
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500 text-[14px]">Harga Acuan (Bapanas)</span>
+                    <span className="font-semibold text-[#273B4A]">Rp {Number(selectedProduct.harga_acuan).toLocaleString('id-ID')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-[14px]">Tanggal Panen</span>
                   <span className="font-semibold text-[#273B4A]">{selectedProduct.tanggal_panen}</span>
