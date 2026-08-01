@@ -20,6 +20,7 @@ import ProfilNelayanPage from "./pages/nelayan/profil";
 import MarketplacePage from "./pages/pembeli/marketplace";
 import KeranjangPage from "./pages/pembeli/keranjang";
 import PesananPembeliPage from "./pages/pembeli/pesanan";
+import PenawaranPembeliPage from "./pages/pembeli/penawaran";
 import ProfilPembeliPage from "./pages/pembeli/profil";
 import CheckoutPage from "./pages/pembeli/checkout";
 // Admin
@@ -71,6 +72,7 @@ function App() {
       <Route path="/pembeli/keranjang" element={<KeranjangPage />} />
       <Route path="/pembeli/checkout" element={<CheckoutPage />} />
       <Route path="/pembeli/pesanan" element={<PesananPembeliPage />} />
+      <Route path="/pembeli/penawaran" element={<PenawaranPembeliPage />} />
       <Route path="/pembeli/profil" element={<ProfilPembeliPage />} />
 
       {/* Rute Admin */}

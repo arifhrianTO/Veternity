@@ -41,11 +41,12 @@ export default function PenawaranPage() {
   const mappedOffers = offers.map((o) => ({
     id: o.id,
     kode: o.kode_penawaran,
-    nama: o.product?.category?.nama_kategori || o.product?.kategori || "Produk",
+    nama: o.product ? (o.product.nama_produk || o.product.category?.nama_kategori || o.product.kategori || "Produk") : "Produk",
     berat: o.jumlah_diminta ? `${o.jumlah_diminta} Kg` : "-",
     gambar: storageUrl(o.product?.gambar),
     pemilik: o.petani?.nama_lengkap || "Koperasi",
-    hargaAcuan: o.product ? formatRupiah(o.product.harga_harapan) : "-",
+    hargaAcuan: o.harga_acuan ? formatRupiah(o.harga_acuan) : "Belum tersedia",
+    hargaHarapan: o.product ? formatRupiah(o.product.harga_harapan) : "-",
     hargaTawaran: formatRupiah(o.harga_tawaran),
     status: o.status || "Menunggu",
     tanggal: o.created_at?.split("T")[0] || "-",
@@ -336,8 +337,12 @@ export default function PenawaranPage() {
 
               <div className="text-right">
                 <div className="mb-2">
-                  <span className="block text-[12px] font-bold text-[#273B4A]">Harga Acuan</span>
-                  <span className="text-[14px] font-medium text-black">{selectedItem.hargaAcuan}</span>
+                  <span className="block text-[12px] font-bold text-[#273B4A]">Harga Acuan (Bapanas)</span>
+                  <span className="text-[14px] font-semibold text-emerald-700">{selectedItem.hargaAcuan}</span>
+                </div>
+                <div className="mb-2">
+                  <span className="block text-[12px] font-bold text-[#273B4A]">Harga Harapan</span>
+                  <span className="text-[14px] font-medium text-black">{selectedItem.hargaHarapan}</span>
                 </div>
                 <div>
                   <span className="block text-[12px] font-bold text-[#273B4A]">Harga Tawaran</span>

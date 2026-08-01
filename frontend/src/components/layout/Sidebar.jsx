@@ -57,6 +57,7 @@ export default function Sidebar() {
       { to: "/pembeli/marketplace", label: "Katalog Produk", icon: ShoppingBag },
       { to: "/pembeli/keranjang", label: "Keranjang", icon: ClipboardList },
       { to: "/pembeli/pesanan", label: "Pesanan Saya", icon: Tag },
+      { to: "/pembeli/penawaran", label: "Penawaran Saya", icon: Tag },
       { to: "/pembeli/profil", label: "Profil", icon: Users },
     ],
   };
