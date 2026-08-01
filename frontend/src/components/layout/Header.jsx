@@ -1,11 +1,14 @@
-import { Leaf } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+
+const LOGO_SRC = "/images/jala.png";
 
 export function Logo({ className = "w-8 h-8" }) {
   return (
-    <div className={`${className} rounded-full bg-emerald-700 flex items-center justify-center shrink-0`}>
-      <Leaf className="w-4 h-4 text-white" />
-    </div>
+    <img
+      src={LOGO_SRC}
+      alt="TaniNelayan"
+      className={`${className} object-contain shrink-0`}
+    />
   );
 }
 
