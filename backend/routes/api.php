@@ -30,35 +30,55 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     Route::put('/user', [UserController::class, 'update']);
+    Route::get('/koperasi-list', [UserController::class, 'getKoperasiList']);
     Route::post('/user/change-password', [UserController::class, 'changePassword']);
 
-    // API Routes untuk Petani (Terlindungi oleh autentikasi)
-    Route::get('/dashboard/petani', [DashboardController::class, 'petani']);
-    Route::get('/dashboard/nelayan', [DashboardController::class, 'nelayan']);
-    Route::get('/dashboard/koperasi', [DashboardController::class, 'koperasi']);
-    Route::get('/dashboard/admin', [DashboardController::class, 'admin']);
-    
-    // CRUD product (hanya penjual yang bisa create, update, delete)
-    Route::get('/my-products', [ProductController::class, 'myProducts']);
-    Route::post('/products', [ProductController::class, 'store']);
-    Route::put('/products/{product}', [ProductController::class, 'update']);
-    Route::delete('/products/{product}', [ProductController::class, 'destroy']);
-    
-    // Cart Routes
-    Route::apiResource('carts', CartController::class);
-    
-    Route::get('/my-offers', [OfferController::class, 'myOffers']); // List penawaran milik pembeli
-    Route::apiResource('orders', OrderController::class);
-    Route::apiResource('offers', OfferController::class);
+    // Cart Routes (pembeli)
+    Route::middleware('role:pembeli')->group(function () {
+        Route::apiResource('carts', CartController::class);
+    });
 
-    // Routes khusus Koperasi (kelola binaan & produk/order agregasi)
-    Route::get('/koperasi/binaan', [KoperasiController::class, 'binaanIndex']);
-    Route::post('/koperasi/binaan', [KoperasiController::class, 'binaanStore']);
-    Route::get('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanShow']);
-    Route::put('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanUpdate']);
-    Route::delete('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanDestroy']);
-    Route::get('/koperasi/produk', [KoperasiController::class, 'produkIndex']);
-    Route::get('/koperasi/orders', [KoperasiController::class, 'orderIndex']);
+    // Routes untuk Petani & Petani Binaan (dashboard)
+    Route::middleware('role:petani,petani_binaan')->group(function () {
+        Route::get('/dashboard/petani', [DashboardController::class, 'petani']);
+    });
+
+    // Routes untuk Nelayan & Nelayan Binaan (dashboard)
+    Route::middleware('role:nelayan,nelayan_binaan')->group(function () {
+        Route::get('/dashboard/nelayan', [DashboardController::class, 'nelayan']);
+    });
+
+    // CRUD product — semua penjual (petani, nelayan, koperasi)
+    Route::middleware('role:petani,petani_binaan,nelayan,nelayan_binaan,koperasi')->group(function () {
+        Route::get('/my-products', [ProductController::class, 'myProducts']);
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::put('/products/{product}', [ProductController::class, 'update']);
+        Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+    });
+
+    // Routes shared: Orders, Offers (controller handle role filtering internally)
+    Route::middleware('role:petani,petani_binaan,nelayan,nelayan_binaan,koperasi,pembeli')->group(function () {
+        Route::get('/my-offers', [OfferController::class, 'myOffers']);
+        Route::apiResource('orders', OrderController::class);
+        Route::apiResource('offers', OfferController::class);
+    });
+
+    // Routes khusus Admin
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/dashboard/admin', [DashboardController::class, 'admin']);
+    });
+
+    // Routes khusus Koperasi
+    Route::middleware('role:koperasi')->group(function () {
+        Route::get('/dashboard/koperasi', [DashboardController::class, 'koperasi']);
+        Route::get('/koperasi/binaan', [KoperasiController::class, 'binaanIndex']);
+        Route::post('/koperasi/binaan', [KoperasiController::class, 'binaanStore']);
+        Route::get('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanShow']);
+        Route::put('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanUpdate']);
+        Route::delete('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanDestroy']);
+        Route::get('/koperasi/produk', [KoperasiController::class, 'produkIndex']);
+        Route::get('/koperasi/orders', [KoperasiController::class, 'orderIndex']);
+    });
 });
 
 // RajaOngkir Shipping Routes (Public - Tidak memerlukan token Sanctum)

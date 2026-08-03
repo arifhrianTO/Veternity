@@ -28,6 +28,7 @@ class UserController extends Controller
             'provinsi_id' => 'nullable|integer',
             'kota_id' => 'nullable|integer',
             'kode_pos' => 'nullable|string|max:10',
+            'koperasi_id' => 'nullable|exists:users,id',
             'foto_profil' => 'nullable|image|max:2048',
         ]);
 
@@ -41,7 +42,7 @@ class UserController extends Controller
 
         $data = $request->only([
             'nama_lengkap', 'no_hp', 'nik', 'rekening', 'tanggal_lahir',
-            'kelamin', 'alamat', 'provinsi_id', 'kota_id', 'kode_pos'
+            'kelamin', 'alamat', 'provinsi_id', 'kota_id', 'kode_pos', 'koperasi_id'
         ]);
 
         if ($request->hasFile('foto_profil')) {
@@ -58,6 +59,15 @@ class UserController extends Controller
             'message' => 'Profil berhasil diperbarui',
             'data' => $user
         ]);
+    }
+
+    /**
+     * Dapatkan daftar koperasi untuk dropdown pendaftaran/profil petani/nelayan.
+     */
+    public function getKoperasiList()
+    {
+        $koperasi = User::where('role', 'koperasi')->get(['id', 'nama_lengkap']);
+        return response()->json($koperasi);
     }
 
     /**
