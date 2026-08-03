@@ -16,11 +16,11 @@ return new class extends Migration
             $table->string('commodity_name');
             $table->date('date');
             $table->decimal('price', 15, 2);
-            $table->unsignedInteger('province_id')->nullable();
-            $table->unsignedInteger('city_id')->nullable();
             
-            $table->foreign('province_id')->references('id')->on('provinces')->nullOnDelete();
-            $table->foreign('city_id')->references('id')->on('cities')->nullOnDelete();
+            // Menggunakan foreignIdId agar otomatis bernilai BIGINT UNSIGNED
+            $table->foreignId('province_id')->nullable()->constrained('provinces')->nullOnDelete();
+            $table->foreignId('city_id')->nullable()->constrained('cities')->nullOnDelete();
+            
             $table->timestamps();
             
             // Untuk memastikan tidak ada duplikat data komoditas yang sama di tanggal dan wilayah yang sama
