@@ -11,6 +11,7 @@ class Product extends Model
         'nama_produk',
         'komoditas_acuan',
         'category_id',
+        'commodity_id',
         'stok',
         'satuan',
         'berat_gram',
@@ -29,5 +30,10 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function commodity()
+    {
+        return $this->belongsTo(Commodity::class);
     }
 }

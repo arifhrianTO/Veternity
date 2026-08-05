@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
         $middleware->alias([
+            'role' => \App\Http\Middleware\EnsureRole::class,
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
     })

@@ -45,7 +45,7 @@ function getStatusBadge(status) {
   }
 }
 
-export default function PenawaranPage() {
+export default function MitraPenawaranPage() {
   const [offers, setOffers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,9 +54,6 @@ export default function PenawaranPage() {
   const fetchOffers = async () => {
     try {
       setIsLoading(true);
-      const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
-      localStorage.setItem("token", testToken);
-
       const response = await api.get('/offers');
       const formattedOffers = response.data.map(offer => ({
         offerId: offer.id, // id asli untuk keperluan API (PUT /offers/{id})

@@ -1,6 +1,6 @@
-import PetaniStatusBadge from "./PetaniStatusBadge";
+import MitraStatusBadge from "./MitraStatusBadge";
 
-export default function PetaniOrders({ orders = [] }) {
+export default function MitraOrders({ orders = [] }) {
   return (
     <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-6 flex flex-col justify-between">
       <div>
@@ -26,7 +26,7 @@ export default function PetaniOrders({ orders = [] }) {
               </div>
               <div className="font-medium text-[#273B4A]">{o.quantity}</div>
               <div className="flex justify-end">
-                <PetaniStatusBadge variant={o.statusVariant || 'emerald'}>{o.status}</PetaniStatusBadge>
+                <MitraStatusBadge variant={o.statusVariant || 'emerald'}>{o.status}</MitraStatusBadge>
               </div>
             </div>
           ))}

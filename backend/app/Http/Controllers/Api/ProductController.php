@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BapanasPrice;
 use App\Models\Category;
+use App\Models\Commodity;
 use App\Models\Product;
 use App\Models\User;
 use App\Traits\KoperasiScope;
@@ -61,7 +62,41 @@ class ProductController extends Controller
  
         return null;
     }
- 
+
+    /**
+     * Resolusi commodity_id: lengkapi category_id dari komoditas & isi
+     * komoditas_acuan (string) dengan bapanas_match agar matching harga
+     * acuan tetap konsisten.
+     */
+    private function resolveCommodity(array $validated): array
+    {
+        $validated['commodity_id'] = !empty($validated['commodity_id'])
+            ? (int) $validated['commodity_id']
+            : null;
+
+        if (!$validated['commodity_id']) {
+            unset($validated['commodity_id']);
+            return $validated;
+        }
+
+        $commodity = Commodity::find($validated['commodity_id']);
+        if (!$commodity) {
+            unset($validated['commodity_id']);
+            return $validated;
+        }
+
+        // Kategori mengikuti komoditas jika tidak ditentukan sendiri
+        if (empty($validated['category_id'])) {
+            $validated['category_id'] = $commodity->category_id;
+        }
+
+        // komoditas_acuan diisi otomatis dari nama komoditas Bapanas
+        $validated['komoditas_acuan'] = $commodity->bapanas_match;
+        $validated['satuan'] = $validated['satuan'] ?? $commodity->satuan;
+
+        return $validated;
+    }
+
     /**
      * Sisipkan harga_acuan (dari Bapanas) & tanggal update-nya ke object produk,
      * berdasarkan nama produk atau nama kategori produk.
@@ -70,12 +105,22 @@ class ProductController extends Controller
     {
         $bapanas = null;
 
-        // Prioritas 1: coba dari nama produk spesifik (mis. "Ikan Bandeng", "Ikan Tongkol")
-        if (!empty($product->nama_produk)) {
+        // Prioritas 1: dari komoditas terpilih (bapanas_match komoditas)
+        if ($product->commodity && !empty($product->commodity->bapanas_match)) {
+            $bapanas = BapanasPrice::latestFor($product->commodity->bapanas_match);
+        }
+
+        // Prioritas 2: dari komoditas_acuan (string bebas / hasil auto-fill)
+        if (!$bapanas && !empty($product->komoditas_acuan)) {
+            $bapanas = BapanasPrice::latestFor($product->komoditas_acuan);
+        }
+
+        // Prioritas 3: dari nama produk spesifik (mis. "Ikan Bandeng", "Ikan Tongkol")
+        if (!$bapanas && !empty($product->nama_produk)) {
             $bapanas = BapanasPrice::latestForCategory($product->nama_produk);
         }
 
-        // Prioritas 2: dari nama kategori (mis. "Ikan", "Beras", "Sayur")
+        // Prioritas 4: dari nama kategori (mis. "Ikan Air Laut", "Padi & Serealia")
         if (!$bapanas) {
             $kategoriName = null;
             if ($product->category) {
@@ -104,7 +149,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         // Katalog publik: kembalikan semua produk beserta data user (pemilik) yang aktif
-        $products = Product::with('user')->where('status', 'Aktif')->get()
+        $products = Product::with(['user', 'category', 'commodity'])->where('status', 'Aktif')->get()
             ->map(fn ($product) => $this->attachHargaAcuan($product));
  
         return response()->json($products);
@@ -119,11 +164,11 @@ class ProductController extends Controller
  
         // Untuk Koperasi, tampilkan juga produk anggota binaannya
         if ($user->role === 'koperasi') {
-            $products = Product::with(['user', 'category'])
+            $products = Product::with(['user', 'category', 'commodity'])
                 ->whereIn('user_id', $this->sellerIds($user))
                 ->get();
         } else {
-            $products = Product::where('user_id', $user->id)->get();
+            $products = Product::with('commodity')->where('user_id', $user->id)->get();
         }
  
         $products = $products->map(fn ($product) => $this->attachHargaAcuan($product));
@@ -141,6 +186,7 @@ class ProductController extends Controller
             'komoditas_acuan' => 'nullable|string',
             'kategori' => 'nullable|string',
             'category_id' => 'nullable|integer|exists:categories,id',
+            'commodity_id' => 'nullable|integer|exists:commodities,id',
             'stok' => 'required|numeric',
             'harga_harapan' => 'required|numeric',
             'tanggal_panen' => 'required|date',
@@ -168,15 +214,16 @@ class ProductController extends Controller
         }
  
         $validated['category_id'] = $this->resolveCategoryId($validated);
+        $validated = $this->resolveCommodity($validated);
         $validated['status'] = 'Aktif'; // Default status
-        $validated['satuan'] = 'Kg';
+        $validated['satuan'] = $validated['satuan'] ?? 'Kg';
         unset($validated['pemilik_id'], $validated['kategori']);
- 
+
         $product = Product::create($validated);
- 
+
         return response()->json([
             'message' => 'Produk berhasil ditambahkan',
-            'product' => $this->attachHargaAcuan($product->load(['user', 'category']))
+            'product' => $this->attachHargaAcuan($product->load(['user', 'category', 'commodity']))
         ], 201);
     }
  
@@ -215,6 +262,7 @@ class ProductController extends Controller
             'komoditas_acuan' => 'nullable|string',
             'kategori' => 'nullable|string',
             'category_id' => 'nullable|integer|exists:categories,id',
+            'commodity_id' => 'nullable|integer|exists:commodities,id',
             'stok' => 'sometimes|required|numeric',
             'harga_harapan' => 'sometimes|required|numeric',
             'tanggal_panen' => 'sometimes|required|date',
@@ -236,12 +284,16 @@ class ProductController extends Controller
             $validated['category_id'] = $this->resolveCategoryId($validated);
         }
         unset($validated['kategori']);
- 
+
+        if ($request->filled('commodity_id')) {
+            $validated = $this->resolveCommodity($validated);
+        }
+
         $product->update($validated);
- 
+
         return response()->json([
             'message' => 'Produk berhasil diperbarui',
-            'product' => $this->attachHargaAcuan($product->load(['user', 'category']))
+            'product' => $this->attachHargaAcuan($product->load(['user', 'category', 'commodity']))
         ]);
     }
  

@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\KoperasiController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\API\ShippingController;
 use App\Http\Controllers\Api\BapanasPriceController;
+use App\Http\Controllers\Api\LogistikController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CommodityController;
 
 use App\Http\Controllers\Api\CartController;
 
@@ -24,6 +27,10 @@ Route::get('/products/{product}', [ProductController::class, 'show']);
 Route::get('/bapanas/commodities', [BapanasPriceController::class, 'commodities']);
 Route::get('/bapanas/latest-price', [BapanasPriceController::class, 'latestPrice']);
 
+// Kategori & komoditas (publik, untuk dropdown)
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{category}/commodities', [CommodityController::class, 'byCategory']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
@@ -33,6 +40,50 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/koperasi-list', [UserController::class, 'getKoperasiList']);
     Route::post('/user/change-password', [UserController::class, 'changePassword']);
 
+    // API Routes untuk Petani (Terlindungi oleh autentikasi)
+    Route::get('/dashboard/petani', [DashboardController::class, 'petani']);
+    Route::get('/dashboard/nelayan', [DashboardController::class, 'nelayan']);
+    Route::get('/dashboard/koperasi', [DashboardController::class, 'koperasi']);
+    Route::get('/dashboard/admin', [DashboardController::class, 'admin']);
+    
+    // CRUD product (hanya penjual yang bisa create, update, delete)
+    Route::get('/my-products', [ProductController::class, 'myProducts']);
+    Route::post('/products', [ProductController::class, 'store']);
+    Route::put('/products/{product}', [ProductController::class, 'update']);
+    Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+    
+    // Cart Routes
+    Route::apiResource('carts', CartController::class);
+    
+    Route::get('/my-offers', [OfferController::class, 'myOffers']); // List penawaran milik pembeli
+    Route::apiResource('orders', OrderController::class);
+    Route::apiResource('offers', OfferController::class);
+
+    // Routes khusus Koperasi (kelola binaan & produk/order agregasi)
+    Route::get('/koperasi/binaan', [KoperasiController::class, 'binaanIndex']);
+    Route::post('/koperasi/binaan', [KoperasiController::class, 'binaanStore']);
+    Route::get('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanShow']);
+    Route::put('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanUpdate']);
+    Route::delete('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanDestroy']);
+    Route::get('/koperasi/produk', [KoperasiController::class, 'produkIndex']);
+    Route::get('/koperasi/orders', [KoperasiController::class, 'orderIndex']);
+
+    // Routes khusus Admin (kelola logistik/kurir, kategori & komoditas)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/logistik', [LogistikController::class, 'index']);
+        Route::post('/logistik', [LogistikController::class, 'store']);
+        Route::put('/logistik/{id}', [LogistikController::class, 'update']);
+        Route::delete('/logistik/{id}', [LogistikController::class, 'destroy']);
+        Route::post('/logistik/check-area', [LogistikController::class, 'checkArea']);
+
+        Route::get('/admin/categories', [CategoryController::class, 'adminIndex']);
+        Route::post('/admin/categories', [CategoryController::class, 'store']);
+        Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
+        Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
+
+        Route::post('/admin/commodities', [CommodityController::class, 'store']);
+        Route::put('/admin/commodities/{id}', [CommodityController::class, 'update']);
+        Route::delete('/admin/commodities/{id}', [CommodityController::class, 'destroy']);
     // Cart Routes (pembeli)
     Route::middleware('role:pembeli')->group(function () {
         Route::apiResource('carts', CartController::class);
@@ -86,6 +137,7 @@ Route::get('/shipping/provinces', [ShippingController::class, 'getProvinces']);
 Route::get('/shipping/cities/{province_id}', [ShippingController::class, 'getCities']);
 Route::post('/shipping/cost', [ShippingController::class, 'checkCost']);
 Route::post('/shipping/track', [ShippingController::class, 'trackWaybill']);
+Route::get('/shipping/couriers', [ShippingController::class, 'getActiveCouriers']);
 
 // Midtrans Notification Webhook (Public)
 Route::post('/payment/notification', [OrderController::class, 'paymentNotification']);

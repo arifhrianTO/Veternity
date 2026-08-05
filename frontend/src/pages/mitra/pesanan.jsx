@@ -46,7 +46,7 @@ function getStatusBadge(status) {
   }
 }
 
-export default function PesananPage() {
+export default function MitraPesananPage() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,10 +55,6 @@ export default function PesananPage() {
     const fetchOrders = async () => {
       try {
         setIsLoading(true);
-        // Fallback token
-        const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
-        localStorage.setItem("token", testToken);
-
         const response = await api.get('/orders');
         // Transform data from backend to match UI structure
         const formattedOrders = response.data.map(order => ({

@@ -1,16 +1,19 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import api from "../../config/axios";
 import { Search, Plus, Eye, ChevronLeft, ChevronRight, X, Upload, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
 
-const ROLE = "nelayan_binaan";
-const LABEL = "Nelayan";
-const DETAIL_PATH = "/koperasi/nelayan-binaan/";
-
-export default function NelayanBinaan() {
+export default function MitraBinaanPage() {
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const isPetani = location.pathname.includes('petani-binaan');
+  const ROLE = isPetani ? "petani_binaan" : "nelayan_binaan";
+  const LABEL = isPetani ? "Petani" : "Nelayan";
+  const DETAIL_PATH = isPetani ? "/koperasi/petani-binaan/" : "/koperasi/nelayan-binaan/";
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const fileInputRef = useRef(null);
@@ -23,7 +26,7 @@ export default function NelayanBinaan() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const itemsPerPage = 5;
 
-  // Form State untuk Tambah Nelayan
+  // Form State untuk Tambah Petani
   const [formData, setFormData] = useState({
     nama_lengkap: "",
     nik: "",
@@ -37,7 +40,6 @@ export default function NelayanBinaan() {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
       setFetchError(null);
       const res = await api.get(`/koperasi/binaan?role=${ROLE}&search=${encodeURIComponent(search)}`);
       setList(res.data || []);
@@ -53,7 +55,7 @@ export default function NelayanBinaan() {
   useEffect(() => {
     Promise.resolve().then(() => fetchData());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, ROLE]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -260,7 +262,7 @@ export default function NelayanBinaan() {
         </div>
       </div>
 
-      {/* MODAL TAMBAH NELAYAN */}
+      {/* MODAL TAMBAH PETANI */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-[700px] rounded-[20px] p-8 shadow-2xl relative my-auto">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import StatCard from "../../components/common/StatCard";
 import api from "../../config/axios";
 import { Wheat, Fish, ShoppingBag, Wallet } from "lucide-react";
 import {
@@ -138,7 +139,7 @@ export default function KoperasiDashboard() {
                 {userName}!
               </h2>
               <p className="text-[14px] font-medium text-white/80 max-w-[420px]">
-                Kelola produk petani dan nelayan binaan bersama TaniNelayan.
+                Kelola produk petani dan nelayan binaan bersama JALA.
               </p>
             </div>
 
@@ -155,24 +156,12 @@ export default function KoperasiDashboard() {
             </div>
           </div>
 
-          {/* Stat Cards Grid (4 Cards) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {dashboardMetrics.map((m) => {
-              const Icon = m.icon;
-              return (
-                <div key={m.title} className="bg-white rounded-[16px] border border-slate-100 shadow-[0_0_4px_rgba(0,0,0,0.25)] p-4 flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-[12px] font-medium text-[#004734]/60">{m.title}</div>
-                    <div className="text-xl font-bold text-[#273B4A] my-0.5">{m.value}</div>
-                    <div className="text-[11px] font-medium text-[#004734]/60">{m.subtitle}</div>
-                  </div>
-                  <div className={`w-11 h-11 rounded-full bg-gradient-to-b ${m.accent} flex items-center justify-center text-white shadow-md flex-shrink-0`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            {/* Stat Cards Grid (4 Cards) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {dashboardMetrics.map((m) => (
+                <StatCard key={m.title} {...m} />
+              ))}
+            </div>
 
           {/* Section Bawah: Grafik & Penjualan Terbaik */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

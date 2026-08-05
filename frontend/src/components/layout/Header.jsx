@@ -6,7 +6,7 @@ export function Logo({ className = "w-8 h-8" }) {
   return (
     <img
       src={LOGO_SRC}
-      alt="TaniNelayan"
+      alt="JALA"
       className={`${className} object-contain shrink-0`}
     />
   );
@@ -51,8 +51,7 @@ export default function Header() {
         <a href="#" onClick={(e) => scrollToSection(e, "beranda")} className="flex items-center gap-2">
           <Logo />
           <span className="font-bold text-lg">
-            <span className="text-slate-900">Tani</span>
-            <span className="text-emerald-700">Nelayan</span>
+            <span className="text-emerald-700">JALA</span>
           </span>
         </a>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-700">

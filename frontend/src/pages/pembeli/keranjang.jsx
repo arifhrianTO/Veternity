@@ -26,6 +26,7 @@ export default function KeranjangPage() {
         unit: `/${item.product.satuan}`,
         image: item.product.gambar ? `http://localhost:8000/storage/${item.product.gambar}` : "/images/beras.png",
         koperasi: item.product.user?.name || "Koperasi",
+        petani_id: item.product.user_id,
         originCityId: item.product.user_id === 1 ? 78 : 54, // Mock city ID
         stock: `${item.product.stok} ${item.product.satuan}`
       }));

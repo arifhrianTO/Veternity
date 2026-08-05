@@ -1,6 +1,6 @@
-import PetaniStatusBadge from "./PetaniStatusBadge";
+import MitraStatusBadge from "./MitraStatusBadge";
 
-export default function PetaniOffers({ offers = [] }) {
+export default function MitraOffers({ offers = [] }) {
   return (
     <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-6 flex flex-col justify-between">
       <div>
@@ -22,7 +22,7 @@ export default function PetaniOffers({ offers = [] }) {
                 <div className="mt-0.5 font-bold text-[#273B4A]">{o.offerPrice || o.price}</div>
               </div>
               <div className="pl-2">
-                <PetaniStatusBadge variant={o.statusVariant || 'emerald'}>{o.status}</PetaniStatusBadge>
+                <MitraStatusBadge variant={o.statusVariant || 'emerald'}>{o.status}</MitraStatusBadge>
               </div>
             </div>
           ))}

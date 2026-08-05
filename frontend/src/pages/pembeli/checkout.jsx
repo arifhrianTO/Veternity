@@ -29,6 +29,8 @@ export default function CheckoutPage() {
   // State loading untuk masing-masing toko
   const [loadingCostByStore, setLoadingCostByStore] = useState({});
   const [shippingErrorByStore, setShippingErrorByStore] = useState({});
+  // State daftar kurir aktif (dari tabel couriers yang dikelola admin)
+  const [activeCouriers, setActiveCouriers] = useState([]);
 
   // --- Fungsi Interaksi API RajaOngkir ---
 
@@ -61,12 +63,17 @@ export default function CheckoutPage() {
 
       setCheckoutItems(items);
 
-      // Mengelompokkan items berdasarkan koperasi
+      // Mengelompokkan items berdasarkan penjual (petani_id) agar selaras dengan grouping order di backend
       if (items.length > 0) {
         const groups = items.reduce((acc, item) => {
-          const storeName = item.koperasi || "Toko Default";
-          if (!acc[storeName]) acc[storeName] = [];
-          acc[storeName].push(item);
+          const storeKey = item.petani_id || "Toko Default";
+          if (!acc[storeKey]) {
+            acc[storeKey] = {
+              storeName: item.koperasi || "Toko Default",
+              items: [],
+            };
+          }
+          acc[storeKey].items.push(item);
           return acc;
         }, {});
         setGroupedItems(groups);
@@ -74,6 +81,18 @@ export default function CheckoutPage() {
 
       // Ambil data provinsi saat pertama dimuat
       fetchProvinces();
+
+      // Ambil daftar kurir aktif yang dikelola admin
+      api
+        .get("/shipping/couriers")
+        .then((res) => {
+          if (res.data.success) {
+            setActiveCouriers(res.data.data);
+          }
+        })
+        .catch((error) => {
+          console.error("Gagal mengambil daftar kurir aktif", error);
+        });
 
       // Auto-fill alamat dari profil pembeli
       setFullAddress("poltek");
@@ -91,10 +110,10 @@ export default function CheckoutPage() {
   }, 0);
 
   // Menghitung total ongkos kirim dari semua toko
-  const totalShippingCost = Object.keys(groupedItems).reduce((acc, storeName) => {
-    const selectedService = shippingMethods[storeName];
-    if (selectedService && courierCostsByStore[storeName]) {
-      const selectedShipping = courierCostsByStore[storeName].find(c => c.service === selectedService);
+  const totalShippingCost = Object.keys(groupedItems).reduce((acc, storeKey) => {
+    const selectedService = shippingMethods[storeKey];
+    if (selectedService && courierCostsByStore[storeKey]) {
+      const selectedShipping = courierCostsByStore[storeKey].find(c => c.service === selectedService);
       return acc + (selectedShipping ? selectedShipping.cost : 0);
     }
     return acc;
@@ -135,17 +154,20 @@ export default function CheckoutPage() {
     if (!cityId) return;
 
     // Hitung ongkir otomatis saat kota dipilih untuk semua toko
-    Object.keys(groupedItems).forEach((storeName) => {
-      checkShippingCost(storeName, cityId, "jne");
+    // Kirim semua kode kurir aktif (kolon-separated) agar semua layanan tampil
+    const courierList = activeCouriers.map((c) => c.kode).join(":") || "jne";
+
+    Object.keys(groupedItems).forEach((storeKey) => {
+      checkShippingCost(storeKey, cityId, courierList);
     });
   };
 
-  const checkShippingCost = async (storeName, cityId, courier) => {
-    setLoadingCostByStore((prev) => ({ ...prev, [storeName]: true }));
-    setShippingErrorByStore((prev) => ({ ...prev, [storeName]: "" }));
+  const checkShippingCost = async (storeKey, cityId, courier) => {
+    setLoadingCostByStore((prev) => ({ ...prev, [storeKey]: true }));
+    setShippingErrorByStore((prev) => ({ ...prev, [storeKey]: "" }));
 
     // Ambil origin dari item pertama di toko tersebut (asumsi satu toko dari satu origin)
-    const itemsInStore = groupedItems[storeName];
+    const itemsInStore = groupedItems[storeKey].items;
     const originCityId = itemsInStore[0]?.originCityId || 153; // fallback 153 jika kosong
 
     const storeWeight = itemsInStore.reduce((acc, item) => {
@@ -164,27 +186,27 @@ export default function CheckoutPage() {
       if (res.data.success && res.data.data.length > 0) {
         setCourierCostsByStore((prev) => ({
           ...prev,
-          [storeName]: res.data.data,
+          [storeKey]: res.data.data,
         }));
         setShippingMethods((prev) => ({
           ...prev,
-          [storeName]: res.data.data[0].service, // Default ke service pertama
+          [storeKey]: res.data.data[0].service, // Default ke service pertama
         }));
       } else {
-        setCourierCostsByStore((prev) => ({ ...prev, [storeName]: [] }));
+        setCourierCostsByStore((prev) => ({ ...prev, [storeKey]: [] }));
         setShippingErrorByStore((prev) => ({
           ...prev,
-          [storeName]: "Kurir tidak tersedia.",
+          [storeKey]: "Kurir tidak tersedia.",
         }));
       }
     } catch (error) {
-      console.error(`Gagal menghitung ongkir untuk ${storeName}`, error);
+      console.error(`Gagal menghitung ongkir untuk ${storeKey}`, error);
       setShippingErrorByStore((prev) => ({
         ...prev,
-        [storeName]: "Gagal menghitung ongkos kirim.",
+        [storeKey]: "Gagal menghitung ongkos kirim.",
       }));
     } finally {
-      setLoadingCostByStore((prev) => ({ ...prev, [storeName]: false }));
+      setLoadingCostByStore((prev) => ({ ...prev, [storeKey]: false }));
     }
   };
 
@@ -207,14 +229,29 @@ export default function CheckoutPage() {
     // Cek apakah setiap toko sudah memiliki layanan pengiriman yang dipilih (jika ada ongkir)
     const stores = Object.keys(groupedItems);
     for (let i = 0; i < stores.length; i++) {
-      const storeName = stores[i];
-      if (courierCostsByStore[storeName] && courierCostsByStore[storeName].length > 0) {
-        if (!shippingMethods[storeName]) {
-          swalWarning("Layanan pengiriman belum dipilih", `Mohon pilih layanan pengiriman untuk toko ${storeName}!`);
+      const storeKey = stores[i];
+      if (courierCostsByStore[storeKey] && courierCostsByStore[storeKey].length > 0) {
+        if (!shippingMethods[storeKey]) {
+          swalWarning("Layanan pengiriman belum dipilih", `Mohon pilih layanan pengiriman untuk toko ${groupedItems[storeKey].storeName}!`);
           return;
         }
       }
     }
+
+    // Bangun detail pengiriman per penjual (petani_id) untuk disimpan ke order/shipment
+    const shippingDetails = {};
+    Object.keys(groupedItems).forEach((storeKey) => {
+      const selectedService = shippingMethods[storeKey];
+      const costs = courierCostsByStore[storeKey] || [];
+      const selected = costs.find((c) => c.service === selectedService);
+      if (selected) {
+        shippingDetails[storeKey] = {
+          kurir: selected.code || selected.name || "",
+          layanan: selected.service,
+          ongkos: selected.cost,
+        };
+      }
+    });
 
     try {
       const payload = {
@@ -224,8 +261,7 @@ export default function CheckoutPage() {
           kuantitas: item.quantity,
           harga: item.priceNum
         })),
-        groupedItems: groupedItems,
-        shippingMethods: shippingMethods,
+        shippingDetails: shippingDetails,
         fullAddress: fullAddress,
         provinsi_id: selectedProvince,
         kota_id: selectedCity,
@@ -426,14 +462,15 @@ export default function CheckoutPage() {
                   Silakan pilih Provinsi dan Kota pengiriman terlebih dahulu untuk melihat opsi ongkos kirim.
                 </div>
               ) : (
-                Object.keys(groupedItems).map((storeName) => {
-                  const isLoading = loadingCostByStore[storeName];
-                  const error = shippingErrorByStore[storeName];
-                  const costs = courierCostsByStore[storeName] || [];
-                  const selectedMethod = shippingMethods[storeName];
+                Object.keys(groupedItems).map((storeKey) => {
+                  const storeName = groupedItems[storeKey].storeName;
+                  const isLoading = loadingCostByStore[storeKey];
+                  const error = shippingErrorByStore[storeKey];
+                  const costs = courierCostsByStore[storeKey] || [];
+                  const selectedMethod = shippingMethods[storeKey];
 
                   return (
-                    <div key={storeName} className="border border-[#006638] rounded-[12px] p-4 bg-white">
+                    <div key={storeKey} className="border border-[#006638] rounded-[12px] p-4 bg-white">
                       <div className="flex items-center gap-2 mb-3">
                         <img src="/images/iconKoperasi.png" alt="Toko" className="w-5 h-5 opacity-80" />
                         <h4 className="font-semibold text-[14px] text-black">Dikirim dari {storeName}</h4>
@@ -458,8 +495,8 @@ export default function CheckoutPage() {
                             const isSelected = selectedMethod === cost.service;
                             return (
                               <button
-                                key={cost.service}
-                                onClick={() => setShippingMethods(prev => ({ ...prev, [storeName]: cost.service }))}
+                                key={`${cost.code}-${cost.service}`}
+                                onClick={() => setShippingMethods(prev => ({ ...prev, [storeKey]: cost.service }))}
                                 className={`w-full flex items-center justify-between rounded-[8px] px-3 py-2 border transition text-left ${
                                   isSelected
                                     ? "border-[#006638] bg-[rgba(2,145,84,0.03)]"
@@ -476,10 +513,10 @@ export default function CheckoutPage() {
                                   </div>
                                   <div>
                                     <p className="text-[12px] font-bold text-black uppercase">
-                                      JNE - {cost.service}
+                                      {cost.name || "Kurir"} - {cost.service}
                                     </p>
                                     <p className="text-[11px] font-medium text-black/50 mt-0.5">
-                                      Estimasi: {cost.etd} hari
+                                      {cost.description ? `${cost.description} • ` : ""}Estimasi: {cost.etd} hari
                                     </p>
                                   </div>
                                 </div>

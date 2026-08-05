@@ -1,16 +1,14 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Users, 
   ShoppingBag, 
   Tag, 
-  ClipboardList,
-  LogOut
+  ClipboardList
 } from "lucide-react";
 
 export default function Sidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const path = location.pathname;
 
   // Determine Actor based on URL path
@@ -32,7 +30,7 @@ export default function Sidebar() {
     ],
     Koperasi: [
       { to: "/koperasi/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/koperasi/PetaniBinaan", label: "Petani Binaan", icon: Users },
+      { to: "/koperasi/petani-binaan", label: "Petani Binaan", icon: Users },
       { to: "/koperasi/nelayan-binaan", label: "Nelayan Binaan", icon: Users },
       { to: "/koperasi/KelolaProduk", label: "Kelola Produk", icon: ShoppingBag },
       { to: "/koperasi/penawaran", label: "Penawaran", icon: Tag },
@@ -74,14 +72,6 @@ export default function Sidebar() {
   };
 
   const profile = profiles[actor];
-
-  const handleLogout = () => {
-    // Clear user data (customize as needed depending on where token is saved)
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    // Redirect to login
-    navigate("/login");
-  };
 
   return (
     <aside className="w-72 bg-white flex flex-col p-6 flex-shrink-0 shadow-[4px_0_10px_rgba(0,0,0,0.03)] fixed top-0 left-0 h-screen z-50 font-['Montserrat']">
@@ -156,19 +146,6 @@ export default function Sidebar() {
           );
         })}
       </nav>
-
-      {/* Bottom Action: Logout */}
-      <div className="mt-auto pt-6 border-t border-slate-100">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full text-left px-3.5 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 hover:text-red-600 rounded-[14px] transition-all duration-200 select-none group"
-        >
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-red-50 group-hover:bg-red-100 transition-colors duration-200">
-            <LogOut className="w-4 h-4" strokeWidth={2.5} />
-          </div>
-          <span>Keluar</span>
-        </button>
-      </div>
 
     </aside>
   );

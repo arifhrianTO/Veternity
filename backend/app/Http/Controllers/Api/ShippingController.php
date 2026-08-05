@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Courier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -108,9 +109,13 @@ class ShippingController extends Controller
                 ]);
             }
 
+            // Relay pesan error dari API (misal: kode kurir tidak valid)
+            $apiMessage = $response->json()['meta']['message'] ?? null;
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menghitung ongkos kirim dari RajaOngkir',
+                'message' => $apiMessage
+                    ? 'RajaOngkir: ' . $apiMessage
+                    : 'Gagal menghitung ongkos kirim dari RajaOngkir',
                 'error' => $response->json()
             ], 400);
 
@@ -120,6 +125,21 @@ class ShippingController extends Controller
                 'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Daftar kurir aktif dari tabel couriers (dipakai checkout frontend).
+     */
+    public function getActiveCouriers()
+    {
+        $couriers = Courier::where('status', 'Aktif')
+            ->orderBy('created_at', 'asc')
+            ->get(['kode', 'nama']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $couriers
+        ]);
     }
 
     public function trackWaybill(Request $request)
