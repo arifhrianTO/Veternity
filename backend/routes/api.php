@@ -70,6 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Routes khusus Admin (kelola logistik/kurir, kategori & komoditas)
     Route::middleware('role:admin')->group(function () {
+        Route::get('/dashboard/admin', [DashboardController::class, 'admin']);
         Route::get('/logistik', [LogistikController::class, 'index']);
         Route::post('/logistik', [LogistikController::class, 'store']);
         Route::put('/logistik/{id}', [LogistikController::class, 'update']);
@@ -112,11 +113,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/my-offers', [OfferController::class, 'myOffers']);
         Route::apiResource('orders', OrderController::class);
         Route::apiResource('offers', OfferController::class);
-    });
-
-    // Routes khusus Admin
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/dashboard/admin', [DashboardController::class, 'admin']);
     });
 
     // Routes khusus Koperasi
