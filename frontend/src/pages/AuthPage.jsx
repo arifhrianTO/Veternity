@@ -53,6 +53,16 @@ export default function AuthPage() {
 
       const { data, access_token } = response.data;
       
+      // Bersihkan semua cache user sebelumnya (mencegah data role lama nyangkut)
+      sessionStorage.removeItem("current_user");
+      sessionStorage.removeItem("guard_user");
+      sessionStorage.removeItem("admin_profile");
+      sessionStorage.removeItem("koperasi_profile");
+      sessionStorage.removeItem("petani_profile");
+      sessionStorage.removeItem("nelayan_profile");
+      sessionStorage.removeItem("pembeli_profile");
+      sessionStorage.removeItem("user_profile");
+
       // Simpan token & info user ke localStorage
       localStorage.setItem("token", access_token);
       localStorage.setItem("user", JSON.stringify(data));

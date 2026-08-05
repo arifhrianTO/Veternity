@@ -34,12 +34,22 @@ export default function ProfilPage() {
   }
 
   const [profile, setProfile] = useState(() => {
+    // Coba cache spesifik role dulu
     const cached = sessionStorage.getItem(CACHE_KEY);
     if (cached) {
       try {
         return JSON.parse(cached);
       } catch (error) {
         console.error("Gagal parse cache profil:", error);
+      }
+    }
+    // Fallback ke cache dari DashboardGuard
+    const guardCached = sessionStorage.getItem("guard_user");
+    if (guardCached) {
+      try {
+        return JSON.parse(guardCached);
+      } catch (error) {
+        console.error("Gagal parse guard cache:", error);
       }
     }
     return null;
@@ -163,7 +173,15 @@ export default function ProfilPage() {
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      sessionStorage.removeItem(CACHE_KEY);
+      // Bersihkan semua cache user
+      sessionStorage.removeItem("current_user");
+      sessionStorage.removeItem("guard_user");
+      sessionStorage.removeItem("admin_profile");
+      sessionStorage.removeItem("koperasi_profile");
+      sessionStorage.removeItem("petani_profile");
+      sessionStorage.removeItem("nelayan_profile");
+      sessionStorage.removeItem("pembeli_profile");
+      sessionStorage.removeItem("user_profile");
       navigate("/login");
     }
   };
