@@ -6,8 +6,13 @@ const CACHE_KEY = "current_user";
 export function useUser() {
   const [user, setUser] = useState(() => {
     try {
+      // Coba cache current_user dulu
       const cached = sessionStorage.getItem(CACHE_KEY);
-      return cached ? JSON.parse(cached) : null;
+      if (cached) return JSON.parse(cached);
+      // Fallback ke cache dari DashboardGuard
+      const guardCached = sessionStorage.getItem("guard_user");
+      if (guardCached) return JSON.parse(guardCached);
+      return null;
     } catch (error) {
       return null;
     }

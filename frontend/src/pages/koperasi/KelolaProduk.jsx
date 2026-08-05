@@ -26,6 +26,7 @@ export default function KoperasiKelolaProduk() {
   // Form Upload Image Reference
   const fileInputRef = useRef(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [hargaAcuanPreview, setHargaAcuanPreview] = useState(null);
 
   // Data dari server
   const [produkList, setProdukList] = useState([]);
@@ -115,16 +116,30 @@ export default function KoperasiKelolaProduk() {
       commodity_id: "",
       komoditas_acuan: "",
     }));
+    setHargaAcuanPreview(null);
   };
 
-  const handleAddCommodityChange = (e) => {
+  const handleAddCommodityChange = async (e) => {
     const commodityId = e.target.value;
     const commodity = addCommodityOptions.find((c) => c.id === Number(commodityId));
+    const bapanasMatch = commodity?.bapanas_match || "";
     setAddFormData((prev) => ({
       ...prev,
       commodity_id: commodityId,
-      komoditas_acuan: commodity?.bapanas_match || "",
+      komoditas_acuan: bapanasMatch,
     }));
+
+    if (!bapanasMatch) {
+      setHargaAcuanPreview(null);
+      return;
+    }
+    try {
+      const res = await api.get('/bapanas/latest-price', { params: { commodity: bapanasMatch } });
+      setHargaAcuanPreview(res.data.price);
+    } catch (error) {
+      console.error("Harga acuan tidak ditemukan", error);
+      setHargaAcuanPreview(null);
+    }
   };
 
   const handleSaveAddProduct = async (e) => {
@@ -172,7 +187,8 @@ export default function KoperasiKelolaProduk() {
       masa_layak: item.masa_layak,
       status: item.status,
     });
-    setPreviewImage(item.gambar ? `http://localhost:8000/storage/${item.gambar}` : null);
+    setPreviewImage(item.gambar ? storageUrl(item.gambar) : null);
+    setHargaAcuanPreview(item.harga_acuan || null);
   };
 
   const handleEditInputChange = (e) => {
@@ -187,16 +203,30 @@ export default function KoperasiKelolaProduk() {
       commodity_id: "",
       komoditas_acuan: "",
     }));
+    setHargaAcuanPreview(null);
   };
 
-  const handleEditCommodityChange = (e) => {
+  const handleEditCommodityChange = async (e) => {
     const commodityId = e.target.value;
     const commodity = editCommodityOptions.find((c) => c.id === Number(commodityId));
+    const bapanasMatch = commodity?.bapanas_match || "";
     setProductToEdit((prev) => ({
       ...prev,
       commodity_id: commodityId,
-      komoditas_acuan: commodity?.bapanas_match || "",
+      komoditas_acuan: bapanasMatch,
     }));
+
+    if (!bapanasMatch) {
+      setHargaAcuanPreview(null);
+      return;
+    }
+    try {
+      const res = await api.get('/bapanas/latest-price', { params: { commodity: bapanasMatch } });
+      setHargaAcuanPreview(res.data.price);
+    } catch (error) {
+      console.error("Harga acuan tidak ditemukan", error);
+      setHargaAcuanPreview(null);
+    }
   };
 
   const handleSaveEditProduct = async (e) => {
@@ -222,8 +252,7 @@ export default function KoperasiKelolaProduk() {
         headers: { "Content-Type": "multipart/form-data" }
       });
       await fetchProduk();
-      setProductToEdit(null);
-      setPreviewImage(null);
+      setProductToEdit(null); setPreviewImage(null); setHargaAcuanPreview(null);
     } catch (error) {
       console.error("Gagal mengupdate produk:", error);
       swalError("Gagal memperbarui produk", error.response?.data?.message || "Terjadi kesalahan saat menyimpan produk.");
@@ -425,7 +454,7 @@ export default function KoperasiKelolaProduk() {
           <div className="bg-white w-full max-w-[700px] rounded-[20px] p-8 shadow-2xl relative my-auto">
             <div className="flex items-center justify-between mb-6 border-b border-[#029154] pb-4">
               <h2 className="text-[22px] font-semibold text-[#005941]">Tambah Produk Baru</h2>
-              <button onClick={() => { setIsAddModalOpen(false); setPreviewImage(null); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+              <button onClick={() => { setIsAddModalOpen(false); setPreviewImage(null); setHargaAcuanPreview(null); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
                 <X className="w-6 h-6 text-slate-500" />
               </button>
             </div>
@@ -467,6 +496,11 @@ export default function KoperasiKelolaProduk() {
                       <option key={c.id} value={c.id}>{c.nama_komoditas}</option>
                     ))}
                   </select>
+                  {hargaAcuanPreview && (
+                    <p className="text-[12px] text-[#006638] font-medium mt-1">
+                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString("id-ID")} / kg
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Pemilik</label>
@@ -503,7 +537,7 @@ export default function KoperasiKelolaProduk() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
-                <button type="button" onClick={() => { setIsAddModalOpen(false); setPreviewImage(null); }} disabled={isSubmitting} className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
+                <button type="button" onClick={() => { setIsAddModalOpen(false); setPreviewImage(null); setHargaAcuanPreview(null); }} disabled={isSubmitting} className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-[#006638] text-white rounded-[8px] font-semibold hover:bg-emerald-800 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   Simpan Produk
@@ -522,7 +556,7 @@ export default function KoperasiKelolaProduk() {
           <div className="bg-white w-full max-w-[700px] rounded-[20px] p-8 shadow-2xl relative my-auto">
             <div className="flex items-center justify-between mb-6 border-b border-[#029154] pb-4">
               <h2 className="text-[22px] font-semibold text-[#005941]">Edit Produk</h2>
-              <button onClick={() => { setProductToEdit(null); setPreviewImage(null); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+              <button onClick={() => { setProductToEdit(null); setPreviewImage(null); setHargaAcuanPreview(null); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
                 <X className="w-6 h-6 text-slate-500" />
               </button>
             </div>
@@ -570,6 +604,11 @@ export default function KoperasiKelolaProduk() {
                       <option key={c.id} value={c.id}>{c.nama_komoditas}</option>
                     ))}
                   </select>
+                  {hargaAcuanPreview && (
+                    <p className="text-[12px] text-[#006638] font-medium mt-1">
+                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString("id-ID")} / kg
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Stok</label>
@@ -597,7 +636,7 @@ export default function KoperasiKelolaProduk() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
-                <button type="button" onClick={() => { setProductToEdit(null); setPreviewImage(null); }} disabled={isSubmitting} className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
+                <button type="button" onClick={() => { setProductToEdit(null); setPreviewImage(null); setHargaAcuanPreview(null); }} disabled={isSubmitting} className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-[#0004ED] text-white rounded-[8px] font-semibold hover:bg-blue-800 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   Simpan Perubahan
@@ -665,6 +704,12 @@ export default function KoperasiKelolaProduk() {
               <div>
                 <span className="block text-[12px] font-bold text-slate-400 mb-1">Harga Harapan</span>
                 <span className="text-[#006638] font-bold">{formatRupiah(selectedDetailItem.harga_harapan)}</span>
+              </div>
+              <div>
+                <span className="block text-[12px] font-bold text-slate-400 mb-1">Harga Acuan</span>
+                <span className="text-slate-700 font-bold">
+                  {selectedDetailItem.harga_acuan ? formatRupiah(selectedDetailItem.harga_acuan) + " / kg" : "-"}
+                </span>
               </div>
               <div>
                 <span className="block text-[12px] font-bold text-slate-400 mb-1">Tanggal Panen</span>

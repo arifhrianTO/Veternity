@@ -29,12 +29,30 @@ export default function Sidebar() {
   const path = location.pathname;
   const user = useUser();
 
-  // Determine Actor based on URL path
+  // Mapping role -> actor key
+  const roleToActor = {
+    admin: "Admin",
+    koperasi: "Koperasi",
+    petani: "Petani",
+    petani_binaan: "Petani",
+    nelayan: "Nelayan",
+    nelayan_binaan: "Nelayan",
+    pembeli: "Pembeli",
+  };
+
+  // Determine Actor: prioritas dari user role (API), fallback ke URL path
   let actor = "Petani"; // default fallback
-  if (path.startsWith("/admin")) actor = "Admin";
-  else if (path.startsWith("/koperasi")) actor = "Koperasi";
-  else if (path.startsWith("/pembeli")) actor = "Pembeli";
-  else if (path.startsWith("/nelayan")) actor = "Nelayan";
+  if (user?.role && roleToActor[user.role]) {
+    actor = roleToActor[user.role];
+  } else if (path.startsWith("/admin")) {
+    actor = "Admin";
+  } else if (path.startsWith("/koperasi")) {
+    actor = "Koperasi";
+  } else if (path.startsWith("/pembeli")) {
+    actor = "Pembeli";
+  } else if (path.startsWith("/nelayan")) {
+    actor = "Nelayan";
+  }
 
   // Navigation Data
   const navigations = {

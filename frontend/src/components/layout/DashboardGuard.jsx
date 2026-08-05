@@ -33,8 +33,23 @@ const ROLE_HOME = {
 };
 
 export default function DashboardGuard({ allowedRoles }) {
-  const [user, setUser] = useState(null);
-  const [status, setStatus] = useState("loading"); // loading | unauthenticated | unauthorized | incomplete | complete
+  const [user, setUser] = useState(() => {
+    // Coba ambil dari sessionStorage dulu supaya tidak loading setiap navigasi
+    try {
+      const cached = sessionStorage.getItem("guard_user");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [status, setStatus] = useState(() => {
+    // Kalau sudah ada cached user, langsung tentukan status tanpa loading
+    try {
+      const cached = sessionStorage.getItem("guard_user");
+      if (cached) return "__cached__"; // placeholder, akan di-resolve di useEffect sync
+    } catch {}
+    return "loading";
+  });
   const location = useLocation();
 
   const checkCompleteness = (userData) => {
@@ -51,18 +66,40 @@ export default function DashboardGuard({ allowedRoles }) {
     return true;
   };
 
+  // Resolve status dari cached user (sync, tanpa fetch)
   useEffect(() => {
+    if (status !== "__cached__" || !user) return;
+
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+      setStatus("unauthorized");
+    } else if (checkCompleteness(user)) {
+      setStatus("complete");
+    } else {
+      setStatus("incomplete");
+    }
+  }, [status, user, allowedRoles]);
+
+  // Fetch user dari API hanya sekali saat pertama kali (belum ada cache)
+  useEffect(() => {
+    // Kalau sudah ada user dari cache, skip fetch
+    if (user) return;
+
     const token = localStorage.getItem("token");
     if (!token) {
       setStatus("unauthenticated");
       return;
     }
 
+    let active = true;
     const fetchUser = async () => {
       try {
         const response = await api.get("/user");
         const userData = response.data;
+        
+        if (!active) return;
+
         setUser(userData);
+        sessionStorage.setItem("guard_user", JSON.stringify(userData));
 
         // Cek role dulu sebelum cek completeness
         if (allowedRoles && !allowedRoles.includes(userData.role)) {
@@ -77,15 +114,17 @@ export default function DashboardGuard({ allowedRoles }) {
         }
       } catch (err) {
         console.error("Gagal verifikasi auth user", err);
-        setStatus("unauthenticated");
+        if (active) setStatus("unauthenticated");
       }
     };
 
     fetchUser();
-  }, [location.pathname]);
+    return () => { active = false; };
+  }, [user]);
 
   const handleProfileComplete = (updatedUser) => {
     setUser(updatedUser);
+    sessionStorage.setItem("guard_user", JSON.stringify(updatedUser));
     setStatus("complete");
   };
 
