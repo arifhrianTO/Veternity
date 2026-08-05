@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import StatCard from "../../components/common/StatCard";
 import MitraOffers from "../../components/mitra/MitraOffers";
 import MitraOrders from "../../components/mitra/MitraOrders";
@@ -49,24 +50,7 @@ export default function MitraDashboardPage() {
 
         {/* Outer Container Wrapper */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
-          {/* Top Header */}
-          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-6">
-            <div>
-              <h2 className="text-[24px] font-semibold text-[#005941]">
-                Dashboard {RoleLabel}
-              </h2>
-              <p className="text-[14px] text-slate-500">
-                Ringkasan aktivitas dan performa penjualan Anda
-              </p>
-            </div>
-            <div className="flex items-center gap-4 translate-y-[4px]">
-              <img
-                src="/images/ikan1.png"
-                alt="avatar"
-                className="w-10 h-10 rounded-full border border-slate-100 object-cover"
-              />
-            </div>
-          </div>
+          <PageHeader title={`Dashboard ${RoleLabel}`} subtitle="Ringkasan aktivitas dan performa penjualan Anda" />
 
           {/* Banner Halo Selamat Datang */}
           <div className="mb-6 rounded-[20px] bg-gradient-to-r from-[#0B5F73] via-[#0A7B57] to-[#9BD63A] p-6 text-white flex items-center justify-between overflow-hidden relative shadow-sm">

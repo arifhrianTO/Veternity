@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import {
   Search,
   Plus,
@@ -299,26 +300,7 @@ export default function KategoriPage() {
         <Sidebar />
 
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
-          {/* Header Panel */}
-          <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#029154]">
-            <div>
-              <h1 className="text-[24px] font-semibold text-[#005941]">Kategori & Komoditas</h1>
-              <p className="text-[14px] text-slate-500">
-                Kelola kategori dan komoditas untuk produk petani dan nelayan
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100 flex items-center justify-center bg-[#C1E0FF]">
-              <img
-                src="/images/admin-avatar.png"
-                alt="Admin Avatar"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/images/user.png";
-                }}
-              />
-            </div>
-          </div>
+          <PageHeader title="Kategori & Komoditas" subtitle="Kelola kategori dan komoditas untuk produk petani dan nelayan" />
 
           {/* Control Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">

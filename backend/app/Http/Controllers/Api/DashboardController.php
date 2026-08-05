@@ -246,11 +246,66 @@ class DashboardController extends Controller
 
     public function admin(Request $request)
     {
-        // Untuk saat ini kita return mock/empty data
-        // Nantinya disesuaikan dengan logika rekap keseluruhan
+        // 1. Total pengguna (non-admin? termasuk semua; tampilkan keseluruhan)
+        $totalPengguna = User::count();
+
+        // 2. Total kategori
+        $totalKategori = \App\Models\Category::count();
+
+        // 3. Produk aktif
+        $produkAktif = Product::where('status', 'Aktif')->count();
+
+        // 4. Total penjualan bulan ini (order Selesai)
+        $totalPenjualan = Order::where('status', 'Selesai')
+            ->whereMonth('tanggal_pesanan', now()->month)
+            ->whereYear('tanggal_pesanan', now()->year)
+            ->sum('total_harga');
+
+        // 5. Grafik transaksi per bulan (7 bulan terakhir)
+        $grafikTransaksi = collect(range(6, 0))->map(function ($i) {
+            $month = now()->startOfMonth()->subMonths($i);
+            $sum = Order::where('status', 'Selesai')
+                ->whereYear('tanggal_pesanan', $month->year)
+                ->whereMonth('tanggal_pesanan', $month->month)
+                ->sum('total_harga');
+
+            return [
+                'bulan' => $month->format('M'),
+                'penjualan' => round($sum / 1000000, 2),
+            ];
+        })->values();
+
+        // 6. Kategori terlaris (top 5 berdasarkan jumlah produk terjual)
+        $topCategories = \App\Models\OrderItem::whereIn('order_id', function ($query) {
+            $query->select('id')->from('orders')->where('status', 'Selesai');
+        })
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->join('categories', 'categories.id', '=', 'products.category_id')
+            ->selectRaw('categories.id, categories.nama_kategori, SUM(order_items.jumlah_beli) as total_qty, COUNT(DISTINCT order_items.order_id) as total_transaksi')
+            ->groupBy('categories.id', 'categories.nama_kategori')
+            ->orderByDesc('total_qty')
+            ->limit(5)
+            ->get();
+
+        $maxQty = $topCategories->max('total_qty') ?: 1;
+        $kategoriTerlaris = $topCategories->map(function ($item) use ($maxQty) {
+            return [
+                'nama' => $item->nama_kategori,
+                'transaksi' => (int) $item->total_transaksi,
+                'jumlah' => (int) $item->total_qty,
+                'persentase' => round(((int) $item->total_qty / $maxQty) * 100),
+            ];
+        });
+
         return response()->json([
-            'message' => 'Dashboard Admin API reached',
-            'stats' => []
+            'stats' => [
+                'total_pengguna' => (string) $totalPengguna,
+                'total_kategori' => (string) $totalKategori,
+                'produk_aktif' => (string) $produkAktif,
+                'total_penjualan' => 'Rp ' . number_format($totalPenjualan, 0, ',', '.'),
+            ],
+            'grafik_transaksi' => $grafikTransaksi,
+            'kategori_terlaris' => $kategoriTerlaris,
         ]);
     }
 }

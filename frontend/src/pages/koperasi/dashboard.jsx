@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import StatCard from "../../components/common/StatCard";
 import api from "../../config/axios";
-import { Wheat, Fish, ShoppingBag, Wallet } from "lucide-react";
+import { Wheat, Fish, ShoppingBag, Wallet, Loader2 } from "lucide-react";
 import {
   AreaChart,
   Area,
@@ -12,24 +13,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const fallbackSales = [
-  { bulan: "Agu", penjualan: 1.8 },
-  { bulan: "Sep", penjualan: 2.4 },
-  { bulan: "Okt", penjualan: 2.1 },
-  { bulan: "Nov", penjualan: 3.2 },
-  { bulan: "Des", penjualan: 2.8 },
-  { bulan: "Jan", penjualan: 3.6 },
-  { bulan: "Feb", penjualan: 4.0 },
-];
-
-const fallbackBestSellers = [
-  { id: 1, nama: "Beras Premium", qty: 50, total: "Rp 2.500.000", image: "/images/beras.png" },
-  { id: 2, nama: "Ikan Tuna", qty: 25, total: "Rp 1.800.000", image: "/images/ikan.png" },
-  { id: 3, nama: "Cabai Rawit", qty: 10, total: "Rp 800.000", image: "/images/beras.png" },
-  { id: 4, nama: "Tomat Segar", qty: 30, total: "Rp 600.000", image: "/images/beras.png" },
-  { id: 5, nama: "Wortel", qty: 20, total: "Rp 400.000", image: "/images/beras.png" },
-];
 
 const avatarFallback = (e) => {
   e.target.onerror = null;
@@ -61,8 +44,9 @@ export default function KoperasiDashboard() {
     produkAktif: "0",
     totalPenjualan: "Rp 0",
   });
-  const [salesData, setSalesData] = useState(fallbackSales);
-  const [bestSellers, setBestSellers] = useState(fallbackBestSellers);
+  const [salesData, setSalesData] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -72,15 +56,18 @@ export default function KoperasiDashboard() {
         if (!active) return;
         const { stats, grafikPenjualan, penjualanTerbaik } = res.data || {};
         if (stats) setStats(stats);
-        if (Array.isArray(grafikPenjualan) && grafikPenjualan.length > 0) {
+        if (Array.isArray(grafikPenjualan)) {
           setSalesData(grafikPenjualan);
         }
-        if (Array.isArray(penjualanTerbaik) && penjualanTerbaik.length > 0) {
+        if (Array.isArray(penjualanTerbaik)) {
           setBestSellers(penjualanTerbaik);
         }
       })
       .catch(() => {
-        // Biarkan data fallback jika API gagal
+        // Biarkan kosong
+      })
+      .finally(() => {
+        if (active) setLoading(false);
       });
     return () => {
       active = false;
@@ -111,23 +98,7 @@ export default function KoperasiDashboard() {
         {/* Outer Main Container */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
 
-          {/* Header Panel */}
-          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-6">
-            <div>
-              <h1 className="text-[24px] font-semibold text-[#005941]">Dashboard</h1>
-              <p className="text-[14px] text-slate-500">
-                Ringkasan aktivitas dan performa koperasi Anda
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200 translate-y-[4px]">
-              <img
-                src="/images/user.png"
-                alt="Avatar"
-                className="w-full h-full object-cover"
-                onError={avatarFallback}
-              />
-            </div>
-          </div>
+          <PageHeader title="Dashboard" subtitle="Ringkasan aktivitas dan performa koperasi Anda" />
 
           {/* Banner Welcome Card */}
           <div className="relative w-full bg-gradient-to-r from-[#024D70] via-[#017B46] to-[#ABE147] rounded-[20px] p-6 text-white flex justify-between items-center overflow-hidden mb-6 shadow-sm">
@@ -156,15 +127,21 @@ export default function KoperasiDashboard() {
             </div>
           </div>
 
-            {/* Stat Cards Grid (4 Cards) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {dashboardMetrics.map((m) => (
-                <StatCard key={m.title} {...m} />
-              ))}
+          {loading ? (
+            <div className="flex justify-center items-center py-20 text-[#006638]">
+              <Loader2 className="w-8 h-8 animate-spin" />
             </div>
+          ) : (
+            <>
+              {/* Stat Cards Grid (4 Cards) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {dashboardMetrics.map((m) => (
+                  <StatCard key={m.title} {...m} />
+                ))}
+              </div>
 
-          {/* Section Bawah: Grafik & Penjualan Terbaik */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Section Bawah: Grafik & Penjualan Terbaik */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
             {/* Grafik Penjualan Panel */}
             <div className="lg:col-span-8 bg-white border border-[#029154] rounded-[20px] p-6 flex flex-col">
@@ -233,6 +210,8 @@ export default function KoperasiDashboard() {
             </div>
 
           </div>
+          </>
+          )}
 
         </div>
       </div>

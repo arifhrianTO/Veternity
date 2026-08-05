@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
 import { X, Upload, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
@@ -44,9 +45,11 @@ export default function ProfilPage() {
     return null;
   });
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [passwordForm, setPasswordForm] = useState({ password_lama: "", password_baru: "" });
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -127,6 +130,31 @@ export default function ProfilPage() {
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await api.post("/user/change-password", passwordForm);
+      import("../../utils/swal").then(({ swalSuccess }) => {
+        swalSuccess("Berhasil", "Password berhasil diubah. Silakan login kembali.");
+      });
+      setIsPasswordOpen(false);
+      setPasswordForm({ password_lama: "", password_baru: "" });
+      
+      // Auto logout and redirect
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("current_user");
+      sessionStorage.removeItem(CACHE_KEY);
+      navigate("/login");
+
+    } catch (error) {
+      swalError("Gagal ganti password", error.response?.data?.message || "Password lama salah atau terjadi kesalahan.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await api.post("/logout");
@@ -148,26 +176,14 @@ export default function ProfilPage() {
         {/* Outer Container Wrapper */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
-          {/* Top Header */}
-          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-8">
-            <h2 className="text-[24px] font-semibold text-[#005941]">{roleLabel}</h2>
-            <img 
-              src={storageUrl(profile?.foto_profil)} 
-              alt="avatar" 
-              className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/images/user.png";
-              }}
-            />
-          </div>
+          <PageHeader title={roleLabel} />
 
           {/* Inner Profile Card Container */}
           <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-8 relative">
             
             {/* Edit Icon Button (Top Right Inside Card) */}
-            <button onClick={handleOpenEdit} className="absolute top-6 right-6 text-[#005941] hover:opacity-80 transition">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onClick={handleOpenEdit} className="absolute top-6 right-6 z-20 p-2 bg-white/50 hover:bg-emerald-50 rounded-full text-[#005941] transition cursor-pointer shadow-sm border border-transparent hover:border-[#029154]/30">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </button>
@@ -215,9 +231,12 @@ export default function ProfilPage() {
                   </div>
                 </div>
 
-                {/* Logout Button (Bottom Right) */}
-                <div className="flex justify-end mt-8">
-                  <button onClick={handleLogout} className="flex items-center gap-2 bg-[#005941] hover:bg-[#004230] text-white px-6 py-2.5 rounded-[12px] font-semibold text-[15px] transition shadow-sm">
+                {/* Buttons (Bottom Right) */}
+                <div className="flex flex-wrap justify-end gap-3 mt-8">
+                  <button onClick={() => setIsPasswordOpen(true)} className="flex items-center gap-2 bg-white border border-[#005941] text-[#005941] hover:bg-emerald-50 px-6 py-2.5 rounded-[12px] font-semibold text-[15px] transition shadow-sm">
+                    <span>Ganti Password</span>
+                  </button>
+                  <button onClick={handleLogout} className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-6 py-2.5 rounded-[12px] font-semibold text-[15px] transition shadow-sm">
                     <span>Keluar</span>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -298,6 +317,53 @@ export default function ProfilPage() {
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-[#006638] text-white rounded-[8px] font-semibold hover:bg-emerald-800 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL GANTI PASSWORD */}
+      {isPasswordOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-[500px] rounded-[20px] p-8 shadow-2xl relative">
+            <div className="flex items-center justify-between mb-6 border-b border-[#029154] pb-4">
+              <h2 className="text-[22px] font-semibold text-[#005941]">Ganti Password</h2>
+              <button onClick={() => setIsPasswordOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+                <X className="w-6 h-6 text-slate-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Password Lama</label>
+                <input 
+                  type="password" 
+                  value={passwordForm.password_lama} 
+                  onChange={(e) => setPasswordForm(p => ({...p, password_lama: e.target.value}))} 
+                  className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Password Baru</label>
+                <input 
+                  type="password" 
+                  value={passwordForm.password_baru} 
+                  onChange={(e) => setPasswordForm(p => ({...p, password_baru: e.target.value}))} 
+                  className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" 
+                  required 
+                  minLength={8}
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Minimal 8 karakter.</p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                <button type="button" onClick={() => setIsPasswordOpen(false)} disabled={isSubmitting} className="px-6 py-2 border border-slate-300 text-slate-600 rounded-[8px] font-semibold hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-[#006638] text-white rounded-[8px] font-semibold hover:bg-emerald-800 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Simpan Password
                 </button>
               </div>
             </form>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import {
   ChevronRight,
   ChevronLeft,
@@ -195,20 +196,7 @@ export default function PenawaranPembeliPage() {
 
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative flex flex-col justify-between">
           <div>
-            {/* Header */}
-            <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
-              <div>
-                <h2 className="text-[24px] font-semibold text-[#005941]">Penawaran Saya</h2>
-                <p className="text-[14px] text-slate-500">
-                  Pantau status penawaran harga yang Anda ajukan ke penjual
-                </p>
-              </div>
-              <img
-                src="/images/ikan1.png"
-                alt="avatar"
-                className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]"
-              />
-            </div>
+            <PageHeader title="Penawaran Saya" subtitle="Pantau status penawaran harga yang Anda ajukan ke penjual" />
 
             {/* Tabs */}
             <div className="mb-6 flex flex-wrap gap-2">

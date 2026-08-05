@@ -6,10 +6,28 @@ import {
   Tag, 
   ClipboardList
 } from "lucide-react";
+import { useUser } from "../../hooks/useUser";
+
+const roleLabels = {
+  admin: "Admin",
+  koperasi: "Koperasi",
+  petani: "Petani",
+  petani_binaan: "Petani (Binaan)",
+  nelayan: "Nelayan",
+  nelayan_binaan: "Nelayan (Binaan)",
+  pembeli: "Pembeli",
+};
+
+const storageUrl = (path) => {
+  if (!path) return "/images/ikan1.png";
+  if (path.startsWith("http")) return path;
+  return `http://localhost:8000/storage/${path}`;
+};
 
 export default function Sidebar() {
   const location = useLocation();
   const path = location.pathname;
+  const user = useUser();
 
   // Determine Actor based on URL path
   let actor = "Petani"; // default fallback
@@ -60,9 +78,6 @@ export default function Sidebar() {
     ],
   };
 
-  const navList = navigations[actor];
-
-  // User Profile Data
   const profiles = {
     Admin: { name: "Admin", roleDisplay: "Admin", avatar: "/images/ikan1.png" },
     Koperasi: { name: "Koperasi Sejahtera", roleDisplay: "Koperasi", avatar: "/images/ikan1.png" },
@@ -71,7 +86,14 @@ export default function Sidebar() {
     Pembeli: { name: "PT Sejahtera", roleDisplay: "Pembeli", avatar: "/images/ikan1.png" },
   };
 
-  const profile = profiles[actor];
+  const navList = navigations[actor];
+
+  // Profil dari backend (fallback ke nilai lama)
+  const profile = {
+    name: user?.nama_lengkap || profiles[actor]?.name,
+    roleDisplay: roleLabels[user?.role] || profiles[actor]?.roleDisplay,
+    avatar: storageUrl(user?.foto_profil),
+  };
 
   return (
     <aside className="w-72 bg-white flex flex-col p-6 flex-shrink-0 shadow-[4px_0_10px_rgba(0,0,0,0.03)] fixed top-0 left-0 h-screen z-50 font-['Montserrat']">
@@ -84,7 +106,7 @@ export default function Sidebar() {
 
       {/* Profile Section */}
       <div className="mb-6 flex items-center gap-3">
-        <img src={profile.avatar} alt="avatar" className="w-12 h-12 rounded-full border border-slate-200 object-cover" />
+        <img src={profile.avatar} alt="avatar" className="w-12 h-12 rounded-full border border-slate-200 object-cover" onError={(e) => { e.target.onerror = null; e.target.src = "/images/ikan1.png"; }} />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-bold text-[#273B4A] truncate">{profile.name}</div>
           

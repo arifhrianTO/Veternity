@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
 import { Search, Plus, Eye, ChevronLeft, ChevronRight, X, Upload, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
@@ -112,21 +113,7 @@ export default function MitraBinaanPage() {
         {/* Outer Main Container */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
-          {/* Header Panel */}
-          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
-            <h1 className="text-[24px] font-semibold text-[#005941]">{LABEL} Binaan</h1>
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200 translate-y-[4px]">
-              <img
-                src="/images/user.png"
-                alt="Avatar"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/images/user.png";
-                }}
-              />
-            </div>
-          </div>
+          <PageHeader title={`${LABEL} Binaan`} />
 
           {/* Action Bar (Search & Tambah) */}
           <div className="flex items-center justify-between mb-6">

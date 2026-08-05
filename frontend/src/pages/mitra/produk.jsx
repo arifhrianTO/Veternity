@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import { ChevronRight, ChevronLeft, Edit3, Trash2, Eye, X, UploadCloud, Loader2 } from "lucide-react";
 import api from "../../config/axios"; // Import Axios Instance
 
@@ -262,11 +263,7 @@ export default function MitraProdukPage() {
         {/* Outer Container Wrapper */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
-          {/* Top Header */}
-          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-6">
-            <h2 className="text-[24px] font-semibold text-[#005941]">Produk saya</h2>
-            <img src="/images/ikan1.png" alt="avatar" className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]" />
-          </div>
+          <PageHeader title="Produk saya" />
 
           {/* Sub Header (Deskripsi & Tombol Tambah) */}
           <div className="flex items-center justify-between mb-4">

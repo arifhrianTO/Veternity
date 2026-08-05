@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
 import { Search, ChevronDown, ChevronLeft, ChevronRight, Pencil, X, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
@@ -107,23 +108,7 @@ export default function PengirimanPage() {
 
         {/* Main Content Area */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-6 flex flex-col h-[calc(100vh-32px)] overflow-hidden">
-          {/* Header Panel */}
-          <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-3 shrink-0">
-              <h1 className="text-[24px] font-semibold text-[#005941]">
-                Pengiriman
-              </h1>
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200 translate-y-[4px]">
-                <img
-                  src="/images/user.png"
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/user.png";
-                  }}
-                />
-              </div>
-            </div>
+          <PageHeader title="Pengiriman" />
 
           {/* Filter & Search Bar */}
           <div className="flex items-center justify-between mb-4 shrink-0">
