@@ -1,14 +1,24 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import { ChevronRight, ChevronLeft, Edit3, Trash2, Eye, X, UploadCloud, Loader2 } from "lucide-react";
 import api from "../../config/axios"; // Import Axios Instance
 
-export default function ProdukPage() {
+export default function MitraProdukPage() {
+  const location = useLocation();
+  const role = location.pathname.startsWith('/nelayan') ? 'nelayan' : 'petani';
+  const roleKategori = role === 'nelayan' ? 'perikanan' : 'pertanian';
+
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [page, setPage] = useState(1);
+
+  // Kategori (dari API) & komoditas turunannya untuk dropdown cascade
+  const [categories, setCategories] = useState([]);
+  // Preview harga acuan realtime saat komoditas dipilih di form
+  const [hargaAcuanPreview, setHargaAcuanPreview] = useState(null);
   
   const itemsPerPage = 4;
   const safeProducts = Array.isArray(products) ? products : [];
@@ -27,7 +37,9 @@ export default function ProdukPage() {
   
   const initialFormState = {
     nama_produk: "",
-    kategori: "",
+    category_id: "",
+    commodity_id: "",
+    komoditas_acuan: "",
     stok: "",
     harga_harapan: "",
     tanggal_panen: "",
@@ -42,10 +54,6 @@ export default function ProdukPage() {
     try {
       setIsLoading(true);
       setFetchError(null);
-      // HARDCODE TOKEN SEMENTARA UNTUK TESTING JIKA LOGIN BELUM JALAN
-      const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
-      localStorage.setItem("token", testToken);
-
       const response = await api.get('/my-products');
       setProducts(response.data);
     } catch (error) {
@@ -57,9 +65,31 @@ export default function ProdukPage() {
     }
   };
 
+  // Fetch daftar kategori beserta komoditasnya
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get("/categories", {
+        params: { tipe: roleKategori, with_commodities: 1 },
+      });
+      setCategories(response.data.data || []);
+    } catch (error) {
+      console.error("Gagal mengambil daftar kategori", error);
+      setCategories([]);
+    }
+  };
+
   useEffect(() => {
-    Promise.resolve().then(() => fetchProducts());
+    Promise.resolve().then(() => {
+      fetchProducts();
+      fetchCategories();
+    });
   }, []);
+
+  // Kategori & komoditas terpilih saat ini (untuk dropdown cascade)
+  const selectedCategoryObj = categories.find(
+    (c) => c.id === Number(formData.category_id)
+  );
+  const commodityOptions = selectedCategoryObj?.commodities || [];
 
   // Helper functions to open modals
   const openDetailModal = (product) => {
@@ -77,7 +107,9 @@ export default function ProdukPage() {
     setSelectedProduct(product);
     setFormData({
       nama_produk: product.nama_produk,
-      kategori: product.kategori,
+      category_id: product.category_id || "",
+      commodity_id: product.commodity_id || "",
+      komoditas_acuan: product.komoditas_acuan || "",
       stok: product.stok,
       harga_harapan: product.harga_harapan,
       tanggal_panen: product.tanggal_panen,
@@ -85,6 +117,7 @@ export default function ProdukPage() {
       gambar: null // File direset, preview pakai path dari server
     });
     setImagePreview(product.gambar ? `http://localhost:8000/storage/${product.gambar}` : null);
+    setHargaAcuanPreview(product.harga_acuan || null);
     setIsEditModalOpen(true);
   };
 
@@ -106,6 +139,44 @@ export default function ProdukPage() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handler dropdown Kategori: reset komoditas & preview harga
+  const handleCategoryChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      category_id: e.target.value,
+      commodity_id: "",
+      komoditas_acuan: "",
+    }));
+    setHargaAcuanPreview(null);
+  };
+
+  // Handler dropdown Komoditas: update form + fetch preview harga Bapanas
+  const handleCommodityChange = async (e) => {
+    const commodityId = e.target.value;
+    const commodity = commodityOptions.find(
+      (c) => c.id === Number(commodityId)
+    );
+    const bapanasMatch = commodity?.bapanas_match || "";
+    setFormData(prev => ({
+      ...prev,
+      commodity_id: commodityId,
+      komoditas_acuan: bapanasMatch,
+    }));
+
+    if (!bapanasMatch) {
+      setHargaAcuanPreview(null);
+      return;
+    }
+
+    try {
+      const res = await api.get('/bapanas/latest-price', { params: { commodity: bapanasMatch } });
+      setHargaAcuanPreview(res.data.price);
+    } catch (error) {
+      console.error("Harga acuan tidak ditemukan untuk komoditas ini", error);
+      setHargaAcuanPreview(null);
+    }
   };
 
   const handleImageChange = (e) => {
@@ -250,8 +321,13 @@ export default function ProdukPage() {
                       <tr key={p.id} className="border-b border-black/[0.13] last:border-b-0 hover:bg-slate-50/50 transition">
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">
                           <div className="flex items-center gap-3">
-                            <img src={p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/placeholder.png"} alt={p.kategori} className="w-[50px] h-[50px] object-cover rounded-[5px] border border-slate-200" />
-                            {p.kategori}
+                            <img src={p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/placeholder.png"} alt={p.category?.nama_kategori || p.nama_produk} className="w-[50px] h-[50px] object-cover rounded-[5px] border border-slate-200" />
+                            <div>
+                              <div>{p.category?.nama_kategori || "Tanpa kategori"}</div>
+                              {p.commodity?.nama_komoditas && (
+                                <div className="text-[11px] font-medium text-slate-400">{p.commodity?.nama_komoditas}</div>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{p.stok} {p.satuan}</td>
@@ -375,13 +451,27 @@ export default function ProdukPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="font-semibold text-[#273B4A] text-[13px]">Kategori Produk</label>
-                  <select name="kategori" value={formData.kategori} onChange={handleInputChange} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white">
+                  <select name="category_id" value={formData.category_id} onChange={handleCategoryChange} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white">
                     <option value="">Pilih Kategori...</option>
-                    <option value="Beras Premium">Beras Premium</option>
-                    <option value="Beras Organik">Beras Organik</option>
-                    <option value="Beras Merah">Beras Merah</option>
-                    <option value="Ikan Nila Fresh">Ikan Nila Fresh</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nama_kategori}</option>
+                    ))}
                   </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#273B4A] text-[13px]">Komoditas</label>
+                  <select name="commodity_id" value={formData.commodity_id} onChange={handleCommodityChange} disabled={!formData.category_id} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white disabled:bg-slate-50 disabled:text-slate-400">
+                    <option value="">Pilih Komoditas...</option>
+                    {commodityOptions.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nama_komoditas}</option>
+                    ))}
+                  </select>
+                  {hargaAcuanPreview && (
+                    <p className="text-[12px] text-[#006638] font-medium">
+                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString('id-ID')} / kg
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -465,13 +555,27 @@ export default function ProdukPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="font-semibold text-[#273B4A] text-[13px]">Kategori Produk</label>
-                  <select name="kategori" value={formData.kategori} onChange={handleInputChange} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white">
+                  <select name="category_id" value={formData.category_id} onChange={handleCategoryChange} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white">
                     <option value="">Pilih Kategori...</option>
-                    <option value="Beras Premium">Beras Premium</option>
-                    <option value="Beras Organik">Beras Organik</option>
-                    <option value="Beras Merah">Beras Merah</option>
-                    <option value="Ikan Nila Fresh">Ikan Nila Fresh</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nama_kategori}</option>
+                    ))}
                   </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#273B4A] text-[13px]">Komoditas</label>
+                  <select name="commodity_id" value={formData.commodity_id} onChange={handleCommodityChange} disabled={!formData.category_id} className="w-full border border-slate-300 rounded-[10px] px-3 py-2 text-slate-700 focus:outline-none focus:border-[#006638] bg-white disabled:bg-slate-50 disabled:text-slate-400">
+                    <option value="">Pilih Komoditas...</option>
+                    {commodityOptions.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nama_komoditas}</option>
+                    ))}
+                  </select>
+                  {hargaAcuanPreview && (
+                    <p className="text-[12px] text-[#006638] font-medium">
+                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString('id-ID')} / kg
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -529,7 +633,7 @@ export default function ProdukPage() {
             </div>
             <h3 className="text-[20px] font-bold text-[#273B4A] mb-2">Hapus Produk?</h3>
             <p className="text-[14px] text-slate-500 mb-8 leading-relaxed">
-              Apakah Anda yakin ingin menghapus produk <strong>{selectedProduct.kategori}</strong>? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus produk <strong>{selectedProduct.category?.nama_kategori || selectedProduct.nama_produk}</strong>? Tindakan ini tidak dapat dibatalkan.
             </p>
             
             <div className="flex justify-center gap-3">
@@ -559,15 +663,21 @@ export default function ProdukPage() {
             <div className="p-6 flex flex-col sm:flex-row gap-6">
               {/* Image Section (Left) */}
               <div className="rounded-[12px] border border-slate-200 p-2 bg-slate-50 shrink-0 w-full sm:w-[250px] h-fit flex items-center justify-center">
-                 <img src={selectedProduct.gambar ? `http://localhost:8000/storage/${selectedProduct.gambar}` : "/images/placeholder.png"} alt={selectedProduct.kategori} className="w-full h-[200px] object-cover rounded-[8px]" />
+                 <img src={selectedProduct.gambar ? `http://localhost:8000/storage/${selectedProduct.gambar}` : "/images/placeholder.png"} alt={selectedProduct.category?.nama_kategori || selectedProduct.nama_produk} className="w-full h-[200px] object-cover rounded-[8px]" />
               </div>
               
               {/* Details Section (Right) */}
               <div className="flex-1 space-y-3">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-[14px]">Kategori</span>
-                  <span className="font-bold text-[#273B4A]">{selectedProduct.kategori}</span>
+                  <span className="font-bold text-[#273B4A]">{selectedProduct.category?.nama_kategori || "-"}</span>
                 </div>
+                {selectedProduct.commodity?.nama_komoditas && (
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500 text-[14px]">Komoditas</span>
+                    <span className="font-semibold text-[#273B4A]">{selectedProduct.commodity.nama_komoditas}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-[14px]">Stok Tersedia</span>
                   <span className="font-semibold text-[#273B4A]">{selectedProduct.stok} {selectedProduct.satuan}</span>

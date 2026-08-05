@@ -256,7 +256,7 @@ export default function AuthPage() {
               Buat Akun Baru
             </h1>
             <p className="mt-1 mb-4 text-[#5C8A73] text-sm text-center">
-              Daftar untuk mulai menggunakan TaniNelayan
+              Daftar untuk mulai menggunakan JALA
             </p>
 
             {/* Stepper */}

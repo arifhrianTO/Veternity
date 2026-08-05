@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\KoperasiController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\API\ShippingController;
 use App\Http\Controllers\Api\BapanasPriceController;
+use App\Http\Controllers\Api\LogistikController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CommodityController;
 
 use App\Http\Controllers\Api\CartController;
 
@@ -23,6 +26,10 @@ Route::get('/products/{product}', [ProductController::class, 'show']);
 
 Route::get('/bapanas/commodities', [BapanasPriceController::class, 'commodities']);
 Route::get('/bapanas/latest-price', [BapanasPriceController::class, 'latestPrice']);
+
+// Kategori & komoditas (publik, untuk dropdown)
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{category}/commodities', [CommodityController::class, 'byCategory']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -59,6 +66,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/koperasi/binaan/{id}', [KoperasiController::class, 'binaanDestroy']);
     Route::get('/koperasi/produk', [KoperasiController::class, 'produkIndex']);
     Route::get('/koperasi/orders', [KoperasiController::class, 'orderIndex']);
+
+    // Routes khusus Admin (kelola logistik/kurir, kategori & komoditas)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/logistik', [LogistikController::class, 'index']);
+        Route::post('/logistik', [LogistikController::class, 'store']);
+        Route::put('/logistik/{id}', [LogistikController::class, 'update']);
+        Route::delete('/logistik/{id}', [LogistikController::class, 'destroy']);
+        Route::post('/logistik/check-area', [LogistikController::class, 'checkArea']);
+
+        Route::get('/admin/categories', [CategoryController::class, 'adminIndex']);
+        Route::post('/admin/categories', [CategoryController::class, 'store']);
+        Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
+        Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
+
+        Route::post('/admin/commodities', [CommodityController::class, 'store']);
+        Route::put('/admin/commodities/{id}', [CommodityController::class, 'update']);
+        Route::delete('/admin/commodities/{id}', [CommodityController::class, 'destroy']);
+    });
 });
 
 // RajaOngkir Shipping Routes (Public - Tidak memerlukan token Sanctum)
@@ -66,6 +91,7 @@ Route::get('/shipping/provinces', [ShippingController::class, 'getProvinces']);
 Route::get('/shipping/cities/{province_id}', [ShippingController::class, 'getCities']);
 Route::post('/shipping/cost', [ShippingController::class, 'checkCost']);
 Route::post('/shipping/track', [ShippingController::class, 'trackWaybill']);
+Route::get('/shipping/couriers', [ShippingController::class, 'getActiveCouriers']);
 
 // Midtrans Notification Webhook (Public)
 Route::post('/payment/notification', [OrderController::class, 'paymentNotification']);

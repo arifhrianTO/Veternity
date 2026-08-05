@@ -84,7 +84,7 @@ export default function KoperasiSection() {
               Ingin Koperasi Anda Bergabung?
             </h3>
             <p className="text-sm text-[#006638] mb-4 max-w-xl">
-              Bersama TaniNelayan, bantu anggota menjangkau pasar yang lebih
+              Bersama JALA, bantu anggota menjangkau pasar yang lebih
               luas melalui platform digital yang mudah, aman, dan terpercaya.
             </p>
             <button className="px-5 py-2.5 rounded-lg bg-[#005FA4] text-white text-sm font-semibold hover:bg-emerald-900 transition-colors">

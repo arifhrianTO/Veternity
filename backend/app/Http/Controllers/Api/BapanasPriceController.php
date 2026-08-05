@@ -8,15 +8,20 @@ use Illuminate\Http\Request;
 
 class BapanasPriceController extends Controller
 {
-    // Untuk dropdown pilihan komoditas saat tambah produk
+    // Untuk dropdown pilihan komoditas saat tambah produk (menghilangkan
+    // duplikat akibat whitespace di awal nama dari data scrap Bapanas)
     public function commodities()
     {
-        return response()->json(
-            BapanasPrice::select('commodity_name')
-                ->distinct()
-                ->orderBy('commodity_name')
-                ->pluck('commodity_name')
-        );
+        $names = BapanasPrice::selectRaw('TRIM(commodity_name) AS name')
+            ->whereNotNull('commodity_name')
+            ->where('commodity_name', '!=', '')
+            ->distinct()
+            ->orderBy('name')
+            ->pluck('name')
+            ->unique()
+            ->values();
+
+        return response()->json($names);
     }
 
     // Untuk preview harga acuan realtime saat petani pilih komoditas

@@ -106,22 +106,34 @@ class OrderController extends Controller
 
             // Buat order untuk masing-masing penjual
             foreach ($groupedProducts as $petaniId => $group) {
-                
-                // Ambil ongkos kirim untuk toko (petani) ini dari request jika dikirim terpisah
-                // (Sementara untuk penyederhanaan, jika ada ongkir kita asumsikan disimpan per order)
-                
+
+                // Ambil detail pengiriman untuk toko (petani) ini dari request (keyed by petani_id)
+                $shipping = $request->shippingDetails[$petaniId] ?? null;
+
                 $order = Order::create([
                     'kode_pesanan' => 'TRX-' . strtoupper(Str::random(6)),
                     'pembeli_id' => $user->id,
                     'petani_id' => $petaniId,
-                    'total_harga' => $group['total_harga'], // Harga barang saja (tambahkan logic ongkir jika diperlukan detail)
+                    'total_harga' => $group['total_harga'], // Harga barang saja
                     'status' => 'Menunggu Pembayaran',
                     'tanggal_pesanan' => now(),
                     'alamat_pengiriman' => $request->fullAddress,
                     'kota_id' => $request->kota_id,
                     'provinsi_id' => $request->provinsi_id,
+                    'total_berat_gram' => $request->total_berat_gram ?? 0,
+                    'ongkos_kirim' => $shipping['ongkos'] ?? 0,
                     'payment_type' => $request->paymentMethod,
                 ]);
+
+                // Simpan pilihan kurir & layanan yang dipilih pembeli
+                if (!empty($shipping['kurir']) || !empty($shipping['layanan'])) {
+                    Shipment::create([
+                        'order_id' => $order->id,
+                        'kurir' => $shipping['kurir'] ?? null,
+                        'layanan' => $shipping['layanan'] ?? null,
+                        'status_pengiriman' => 'menunggu_penjemputan',
+                    ]);
+                }
 
                 foreach ($group['items'] as $item) {
                     OrderItem::create([

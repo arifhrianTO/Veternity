@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import api from "../../config/axios";
 import { ArrowLeft, Edit3, Trash2, X, Upload, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
 
 const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/user.png");
 
-export default function DetailNelayan() {
+export default function DetailMitraBinaan() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const isPetani = location.pathname.includes('petani-binaan');
+  const LABEL = isPetani ? "Petani" : "Nelayan";
+
   const [activeTab, setActiveTab] = useState("produk");
   const [isEditProfilOpen, setIsEditProfilOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
@@ -193,7 +198,7 @@ export default function DetailNelayan() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h2 className="text-[24px] font-semibold text-[#005941]">
-            Detail Nelayan Binaan
+            Detail {LABEL} Binaan
           </h2>
         </div>
 
@@ -371,7 +376,7 @@ export default function DetailNelayan() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-[700px] rounded-[20px] p-8 shadow-2xl relative my-auto">
             <div className="flex items-center justify-between mb-6 border-b border-[#029154] pb-4">
-              <h2 className="text-[22px] font-semibold text-[#005941]">Edit Profil Nelayan</h2>
+              <h2 className="text-[22px] font-semibold text-[#005941]">Edit Profil {LABEL}</h2>
               <button onClick={() => setIsEditProfilOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
                 <X className="w-6 h-6 text-slate-500" />
               </button>

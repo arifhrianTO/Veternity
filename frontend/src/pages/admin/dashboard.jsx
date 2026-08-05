@@ -1,35 +1,35 @@
 import Sidebar from "../../components/layout/Sidebar";
-import PetaniStatCard from "../../components/petani/PetaniStatCard";
+import StatCard from "../../components/common/StatCard";
+import { Users, Tag, ShoppingBag, Briefcase } from "lucide-react";
 
-// Data statistik khusus Admin (path icon disesuaikan langsung ke /images/)
 const adminMetrics = [
   {
     title: "Total Pengguna",
     value: "56",
     subtitle: "Pengguna aktif",
     accent: "from-[#029154] to-[#00B467]",
-    iconSrc: "/images/user.png",
+    icon: Users,
   },
   {
     title: "Total Kategori",
     value: "24",
     subtitle: "Kategori produk",
     accent: "from-[#028391] to-[#00B1B4]",
-    iconSrc: "/images/categories.png",
+    icon: Tag,
   },
   {
     title: "Produk Aktif",
     value: "5",
     subtitle: "Produk",
     accent: "from-[#FF7700] to-[#FFB619]",
-    iconSrc: "/images/products.png",
+    icon: ShoppingBag,
   },
   {
     title: "Total Penjualan",
     value: "Rp 4.000.000",
     subtitle: "Total bulan ini",
     accent: "from-[#0646C7] to-[#001FEC]",
-    iconSrc: "/images/sales.png",
+    icon: Briefcase,
   },
 ];
 
@@ -71,18 +71,28 @@ export default function AdminDashboardPage() {
               <p className="text-[15px] font-medium opacity-90">Halo, Selamat Datang</p>
               <h1 className="text-[28px] font-bold mt-1 mb-2 leading-tight">Admin</h1>
               <p className="text-[14px] opacity-80 leading-relaxed">
-                Kelola produk petani dan nelayan binaan bersama TaniNelayan.
+                Kelola produk petani dan nelayan binaan bersama JALA.
               </p>
+            </div>
+
+            {/* Karakter / Ilustrasi Admin */}
+            <div className="absolute right-4 bottom-0 h-full flex items-end pointer-events-none drop-shadow-xl">
+              <img
+                src="/images/admin.png"
+                alt="Admin Banner"
+                className="h-[90%] md:h-[100%] object-contain object-bottom"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
+              />
             </div>
           </div>
 
           {/* Stat Cards Container */}
-          <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-6 mb-6">
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-              {adminMetrics.map((m) => (
-                <PetaniStatCard key={m.title} {...m} />
-              ))}
-            </div>
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+            {adminMetrics.map((m) => (
+              <StatCard key={m.title} {...m} />
+            ))}
           </div>
 
           {/* Section Charts & Tables */}

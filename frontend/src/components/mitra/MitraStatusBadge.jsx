@@ -6,6 +6,6 @@ const variantStyles = {
   red: "bg-red-100 text-red-700 border border-red-200",
 };
 
-export default function PetaniStatusBadge({ children, variant = "emerald" }) {
+export default function MitraStatusBadge({ children, variant = "emerald" }) {
   return <span className={`inline-flex items-center rounded px-3 py-1 text-xs font-semibold ${variantStyles[variant] || variantStyles.emerald}`}>{children}</span>;
 }

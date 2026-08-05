@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="sm:pr-10">
           <div className="flex items-center gap-2 mb-3">
             <Logo className="w-9 h-9" />
-            <span className="font-bold text-lg text-white">TaniNelayan</span>
+            <span className="font-bold text-lg text-white">JALA</span>
           </div>
           <p className="text-sm text-white/80 max-w-xs">
             Platform digital untuk distribusi dan pendampingan petani serta
@@ -42,7 +42,7 @@ export default function Footer() {
               <Phone className="w-4 h-4" /> 0852-7414-2805
             </li>
             <li className="flex items-center gap-2">
-              <Mail className="w-4 h-4" /> TaniNelayan@gmail.com
+              <Mail className="w-4 h-4" /> JALA@gmail.com
             </li>
             <li className="flex items-start gap-2">
               <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
@@ -55,7 +55,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-white/20 py-4 text-center text-xs text-white/70 bg-[#00378A]">
-        ©2026 TaniNelayan. All Right Reserve
+        ©2026 JALA. All Right Reserve
       </div>
     </footer>
   );

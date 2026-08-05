@@ -29,11 +29,33 @@ export default function KoperasiKelolaProduk() {
   // Data dari server
   const [produkList, setProdukList] = useState([]);
   const [binaanList, setBinaanList] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   // Form State untuk Tambah
   const [addFormData, setAddFormData] = useState({
-    nama: "", pemilik_id: "", stok: "", harga_harapan: "", tanggal_panen: "", masa_layak: "", status: "Aktif"
+    nama: "", pemilik_id: "", category_id: "", commodity_id: "", komoditas_acuan: "", stok: "", harga_harapan: "", tanggal_panen: "", masa_layak: "", status: "Aktif"
   });
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get("/categories", { params: { with_commodities: 1 } });
+      setCategories(res.data.data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]);
+    }
+  };
+
+  // Kategori & komoditas terpilih (untuk dropdown cascade di form tambah/edit)
+  const selectedCategoryObj = categories.find(
+    (c) => c.id === Number(addFormData.category_id)
+  );
+  const addCommodityOptions = selectedCategoryObj?.commodities || [];
+
+  const editCategoryObj = categories.find(
+    (c) => c.id === Number(productToEdit?.category_id)
+  );
+  const editCommodityOptions = editCategoryObj?.commodities || [];
 
   const fetchProduk = async () => {
     try {
@@ -64,6 +86,7 @@ export default function KoperasiKelolaProduk() {
     Promise.resolve().then(() => {
       fetchProduk();
       fetchBinaan();
+      fetchCategories();
     });
   }, []);
 
@@ -84,11 +107,33 @@ export default function KoperasiKelolaProduk() {
     setAddFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleAddCategoryChange = (e) => {
+    setAddFormData((prev) => ({
+      ...prev,
+      category_id: e.target.value,
+      commodity_id: "",
+      komoditas_acuan: "",
+    }));
+  };
+
+  const handleAddCommodityChange = (e) => {
+    const commodityId = e.target.value;
+    const commodity = addCommodityOptions.find((c) => c.id === Number(commodityId));
+    setAddFormData((prev) => ({
+      ...prev,
+      commodity_id: commodityId,
+      komoditas_acuan: commodity?.bapanas_match || "",
+    }));
+  };
+
   const handleSaveAddProduct = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     const payload = new FormData();
-    payload.append("kategori", addFormData.nama);
+    payload.append("nama_produk", addFormData.nama);
+    if (addFormData.category_id) payload.append("category_id", addFormData.category_id);
+    if (addFormData.commodity_id) payload.append("commodity_id", addFormData.commodity_id);
+    if (addFormData.komoditas_acuan) payload.append("komoditas_acuan", addFormData.komoditas_acuan);
     if (addFormData.pemilik_id) payload.append("pemilik_id", addFormData.pemilik_id);
     payload.append("stok", addFormData.stok);
     payload.append("harga_harapan", addFormData.harga_harapan);
@@ -101,7 +146,7 @@ export default function KoperasiKelolaProduk() {
       await api.post("/products", payload, { headers: { "Content-Type": "multipart/form-data" } });
       await fetchProduk();
       setIsAddModalOpen(false);
-      setAddFormData({ nama: "", pemilik_id: "", stok: "", harga_harapan: "", tanggal_panen: "", masa_layak: "", status: "Aktif" });
+      setAddFormData({ nama: "", pemilik_id: "", category_id: "", commodity_id: "", komoditas_acuan: "", stok: "", harga_harapan: "", tanggal_panen: "", masa_layak: "", status: "Aktif" });
       setPreviewImage(null);
     } catch (error) {
       console.error("Gagal menambah produk:", error);
@@ -117,6 +162,9 @@ export default function KoperasiKelolaProduk() {
       id: item.id,
       nama: productName(item),
       pemilik_id: item.user_id,
+      category_id: item.category_id || "",
+      commodity_id: item.commodity_id || "",
+      komoditas_acuan: item.komoditas_acuan || "",
       stok: item.stok,
       harga_harapan: item.harga_harapan,
       tanggal_panen: item.tanggal_panen,
@@ -131,11 +179,33 @@ export default function KoperasiKelolaProduk() {
     setProductToEdit((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleEditCategoryChange = (e) => {
+    setProductToEdit((prev) => ({
+      ...prev,
+      category_id: e.target.value,
+      commodity_id: "",
+      komoditas_acuan: "",
+    }));
+  };
+
+  const handleEditCommodityChange = (e) => {
+    const commodityId = e.target.value;
+    const commodity = editCommodityOptions.find((c) => c.id === Number(commodityId));
+    setProductToEdit((prev) => ({
+      ...prev,
+      commodity_id: commodityId,
+      komoditas_acuan: commodity?.bapanas_match || "",
+    }));
+  };
+
   const handleSaveEditProduct = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     const payload = new FormData();
-    payload.append("kategori", productToEdit.nama);
+    payload.append("nama_produk", productToEdit.nama);
+    if (productToEdit.category_id) payload.append("category_id", productToEdit.category_id);
+    if (productToEdit.commodity_id) payload.append("commodity_id", productToEdit.commodity_id);
+    if (productToEdit.komoditas_acuan) payload.append("komoditas_acuan", productToEdit.komoditas_acuan);
     payload.append("stok", productToEdit.stok);
     payload.append("harga_harapan", productToEdit.harga_harapan);
     payload.append("tanggal_panen", productToEdit.tanggal_panen);
@@ -396,6 +466,24 @@ export default function KoperasiKelolaProduk() {
                   <input type="text" name="nama" value={addFormData.nama} onChange={handleAddInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
                 </div>
                 <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Kategori</label>
+                  <select name="category_id" value={addFormData.category_id} onChange={handleAddCategoryChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white">
+                    <option value="">Pilih Kategori...</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nama_kategori}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Komoditas</label>
+                  <select name="commodity_id" value={addFormData.commodity_id} onChange={handleAddCommodityChange} disabled={!addFormData.category_id} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white disabled:bg-slate-50 disabled:text-slate-400">
+                    <option value="">Pilih Komoditas...</option>
+                    {addCommodityOptions.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nama_komoditas}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Pemilik</label>
                   <select name="pemilik_id" value={addFormData.pemilik_id} onChange={handleAddInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white">
                     <option value="">Koperasi sendiri</option>
@@ -479,6 +567,24 @@ export default function KoperasiKelolaProduk() {
                 <div>
                   <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Nama Produk</label>
                   <input type="text" name="nama" value={productToEdit.nama} onChange={handleEditInputChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638]" required />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Kategori</label>
+                  <select name="category_id" value={productToEdit.category_id} onChange={handleEditCategoryChange} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white">
+                    <option value="">Pilih Kategori...</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nama_kategori}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Komoditas</label>
+                  <select name="commodity_id" value={productToEdit.commodity_id} onChange={handleEditCommodityChange} disabled={!productToEdit.category_id} className="w-full border border-gray-300 rounded-[8px] p-2.5 text-[14px] font-medium outline-none focus:border-[#006638] bg-white disabled:bg-slate-50 disabled:text-slate-400">
+                    <option value="">Pilih Komoditas...</option>
+                    {editCommodityOptions.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nama_komoditas}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[14px] font-bold text-[#273B4A] mb-1.5">Stok</label>

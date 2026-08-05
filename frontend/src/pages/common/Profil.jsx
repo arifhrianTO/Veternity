@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import api from "../../config/axios";
 import { X, Upload, Loader2 } from "lucide-react";
@@ -7,10 +7,42 @@ import { swalError } from "../../utils/swal";
 
 const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/user.png");
 
-export default function KoperasiProfilPage() {
+export default function ProfilPage() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+  const path = location.pathname;
+
+  let roleLabel = "Profil";
+  let CACHE_KEY = "user_profile";
+  
+  if (path.startsWith("/admin")) {
+    roleLabel = "Profil Admin";
+    CACHE_KEY = "admin_profile";
+  } else if (path.startsWith("/koperasi")) {
+    roleLabel = "Profil Koperasi";
+    CACHE_KEY = "koperasi_profile";
+  } else if (path.startsWith("/petani")) {
+    roleLabel = "Profil Petani";
+    CACHE_KEY = "petani_profile";
+  } else if (path.startsWith("/nelayan")) {
+    roleLabel = "Profil Nelayan";
+    CACHE_KEY = "nelayan_profile";
+  } else if (path.startsWith("/pembeli")) {
+    roleLabel = "Profil Pembeli";
+    CACHE_KEY = "pembeli_profile";
+  }
+
+  const [profile, setProfile] = useState(() => {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (error) {
+        console.error("Gagal parse cache profil:", error);
+      }
+    }
+    return null;
+  });
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
@@ -18,23 +50,25 @@ export default function KoperasiProfilPage() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    if (profile) return;
+
     let active = true;
     api
       .get("/user")
       .then((response) => {
-        if (active) setProfile(response.data);
+        if (active) {
+          setProfile(response.data);
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(response.data));
+        }
       })
       .catch((error) => {
         console.error("Gagal mengambil profil", error);
         if (active) setProfile(null);
-      })
-      .finally(() => {
-        if (active) setIsLoading(false);
       });
     return () => {
       active = false;
     };
-  }, []);
+  }, [profile]);
 
   const handleOpenEdit = () => {
     if (!profile) return;
@@ -83,6 +117,7 @@ export default function KoperasiProfilPage() {
       });
       const response = await api.get("/user");
       setProfile(response.data);
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(response.data));
       setIsEditOpen(false);
     } catch (error) {
       console.error("Gagal update profil:", error);
@@ -100,25 +135,10 @@ export default function KoperasiProfilPage() {
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      sessionStorage.removeItem(CACHE_KEY);
       navigate("/login");
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#006638]" />
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center text-slate-500">
-        Gagal memuat profil.
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
@@ -130,9 +150,9 @@ export default function KoperasiProfilPage() {
           
           {/* Top Header */}
           <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-8">
-            <h2 className="text-[24px] font-semibold text-[#005941]">Profil Koperasi</h2>
+            <h2 className="text-[24px] font-semibold text-[#005941]">{roleLabel}</h2>
             <img 
-              src={storageUrl(profile.foto_profil)} 
+              src={storageUrl(profile?.foto_profil)} 
               alt="avatar" 
               className="w-10 h-10 rounded-full border border-slate-100 object-cover translate-y-[4px]"
               onError={(e) => {
@@ -156,8 +176,8 @@ export default function KoperasiProfilPage() {
               {/* Profile Image */}
               <div className="flex-shrink-0">
                 <img
-                  src={storageUrl(profile.foto_profil)}
-                  alt={profile.nama_lengkap}
+                  src={storageUrl(profile?.foto_profil)}
+                  alt={profile?.nama_lengkap || "Profil"}
                   className="w-44 h-44 rounded-full object-cover border-2 border-emerald-100"
                   onError={(e) => {
                     e.target.onerror = null;
@@ -169,29 +189,29 @@ export default function KoperasiProfilPage() {
               {/* Profile Info Details */}
               <div className="flex-1 w-full relative pt-2">
                 <h2 className="text-[28px] font-bold text-[#005941] mb-6">
-                  {profile.nama_lengkap}
+                  {profile?.nama_lengkap || "-"}
                 </h2>
 
                 <div className="space-y-3 text-[16px] text-[#273B4A]">
                   <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
                     <span className="font-semibold sm:col-span-4">Nik :</span>
-                    <span className="sm:col-span-8 font-medium">{profile.nik || "Tidak ada NIK"}</span>
+                    <span className="sm:col-span-8 font-medium">{profile?.nik || "Tidak ada NIK"}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
                     <span className="font-semibold sm:col-span-4">No Hp :</span>
-                    <span className="sm:col-span-8 font-medium">{profile.no_hp}</span>
+                    <span className="sm:col-span-8 font-medium">{profile?.no_hp || "-"}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
                     <span className="font-semibold sm:col-span-4">Alamat :</span>
-                    <span className="sm:col-span-8 font-medium">{profile.alamat || "-"}</span>
+                    <span className="sm:col-span-8 font-medium">{profile?.alamat || "-"}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
                     <span className="font-semibold sm:col-span-4">Tanggal Lahir :</span>
-                    <span className="sm:col-span-8 font-medium">{profile.tanggal_lahir || "-"}</span>
+                    <span className="sm:col-span-8 font-medium">{profile?.tanggal_lahir || "-"}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
                     <span className="font-semibold sm:col-span-4">Rekening :</span>
-                    <span className="sm:col-span-8 font-medium">{profile.rekening || "Tidak ada rekening"}</span>
+                    <span className="sm:col-span-8 font-medium">{profile?.rekening || "Tidak ada rekening"}</span>
                   </div>
                 </div>
 
@@ -218,7 +238,7 @@ export default function KoperasiProfilPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-[700px] rounded-[20px] p-8 shadow-2xl relative my-auto">
             <div className="flex items-center justify-between mb-6 border-b border-[#029154] pb-4">
-              <h2 className="text-[22px] font-semibold text-[#005941]">Edit Profil Koperasi</h2>
+              <h2 className="text-[22px] font-semibold text-[#005941]">Edit {roleLabel}</h2>
               <button onClick={() => setIsEditOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
                 <X className="w-6 h-6 text-slate-500" />
               </button>

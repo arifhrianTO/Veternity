@@ -15,4 +15,9 @@ class Category extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public function commodities()
+    {
+        return $this->hasMany(Commodity::class)->orderBy('nama_komoditas');
+    }
 }

@@ -32,12 +32,13 @@ export default function MarketplacePage() {
           unit: `/${p.satuan}`,
           rating: 4.8,
           koperasi: p.user?.name || "Petani", 
+          petani_id: p.user_id,
           image: p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/beras.png",
           stock: `${p.stok}${p.satuan}`,
           harvestDate: new Date(p.tanggal_panen).toLocaleDateString(),
           shelfLife: `${p.masa_layak} hari`,
           originCityId: p.user_id === 1 ? 78 : 54,
-          kategori: p.kategori
+          kategori: p.category?.nama_kategori || p.kategori || "-"
         }));
         setProducts(formattedProducts);
       } catch (error) {

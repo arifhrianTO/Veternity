@@ -15,11 +15,11 @@ class BapanasPrice extends Model
     ];
     public static function latestFor(string $commodityName)
     {
-    return static::where('commodity_name', $commodityName)
-        ->whereNull('province_id')
-        ->whereNull('city_id')
-        ->orderBy('date', 'desc')
-        ->first();
+        return static::whereRaw('LOWER(TRIM(commodity_name)) = ?', [strtolower(trim($commodityName))])
+            ->whereNull('province_id')
+            ->whereNull('city_id')
+            ->orderBy('date', 'desc')
+            ->first();
     }
     /**
      * Mapping kategori umum ke commodity_name Bapanas.
@@ -27,6 +27,8 @@ class BapanasPrice extends Model
      */
     private static array $categoryMap = [
         // Pertanian
+        'padi'     => ['Beras Medium', 'Beras Premium', 'Beras SPHP'],
+        'serealia' => ['Jagung Tk. Peternak', 'Beras Medium', 'Beras Premium'],
         'beras'    => ['Beras Medium', 'Beras Premium', 'Beras SPHP'],
         'sayur'    => ['Cabai Merah Besar', 'Cabai Merah Keriting', 'Cabai Rawit Merah', 'Bawang Merah'],
         'buah'     => ['Gula Pasir Lokal/Curah'],   // tidak ada buah eksplisit di Bapanas
@@ -59,7 +61,7 @@ class BapanasPrice extends Model
         $nameLower = strtolower(trim($categoryName));
 
         // Prioritas 1: exact match (nama kategori persis sama dengan commodity_name)
-        $exact = static::whereRaw('LOWER(commodity_name) = ?', [$nameLower])
+        $exact = static::whereRaw('LOWER(TRIM(commodity_name)) = ?', [trim($nameLower)])
             ->whereNull('province_id')
             ->whereNull('city_id')
             ->orderBy('date', 'desc')

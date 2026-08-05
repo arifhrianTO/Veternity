@@ -1,11 +1,11 @@
 
-export default function PetaniHeader() {
+export default function MitraHeader() {
   return (
     <header className="bg-gradient-to-r from-[#024D70] to-[#ABE147] rounded-2xl p-6 text-white flex items-center justify-between">
       <div>
         <p className="text-sm font-medium opacity-90">Halo, Selamat Datang</p>
         <h1 className="text-2xl font-bold">Budi Santoso!</h1>
-        <p className="text-sm opacity-90">Kelola hasil panen dan tingkatkan pendapatan anda bersama TaniNelayan.</p>
+        <p className="text-sm opacity-90">Kelola hasil panen dan tingkatkan pendapatan anda bersama JALA.</p>
       </div>
 
       <div className="flex items-center gap-4">

@@ -1,5 +1,5 @@
 
-export default function PetaniStatCard({ title, value, subtitle, icon: Icon, accent }) {
+export default function StatCard({ title, value, subtitle, icon: Icon, accent }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-4 flex items-center justify-between gap-4 shadow-sm hover:border-emerald-100 transition-colors">
       <div>

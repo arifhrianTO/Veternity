@@ -12,7 +12,7 @@ export default function Hero() {
           <span className="text-[#0A2A6B]">Langsung Ketangan Konsumen.</span>
         </h1>
         <p className="mt-5 text-[#000000] font-normal leading-relaxed max-w-md">
-          TaniNelayan adalah jembatan digital bagi petani dan nelayan Indonesia.
+          JALA adalah jembatan digital bagi petani dan nelayan Indonesia.
           Kelola hasil panen, pantau logistik, dan perluas jangkauan pasar
           dengan satu platform yang mudah digunakan.
         </p>

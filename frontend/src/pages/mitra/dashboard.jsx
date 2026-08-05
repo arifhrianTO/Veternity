@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
-import PetaniStatCard from "../../components/petani/PetaniStatCard";
-import PetaniOffers from "../../components/petani/PetaniOffers";
-import PetaniOrders from "../../components/petani/PetaniOrders";
+import StatCard from "../../components/common/StatCard";
+import MitraOffers from "../../components/mitra/MitraOffers";
+import MitraOrders from "../../components/mitra/MitraOrders";
 import { Wheat, Briefcase, ShoppingBag, Clock } from "lucide-react";
 import api from "../../config/axios";
 
-export default function DashboardPage() {
+export default function MitraDashboardPage() {
+  const location = useLocation();
+  const role = location.pathname.startsWith('/nelayan') ? 'nelayan' : 'petani';
+  const RoleLabel = role === 'nelayan' ? 'Nelayan' : 'Petani';
+
   const [stats, setStats] = useState({
     totalHasilPanen: "0 KG",
     pendapatan: "Rp 0",
@@ -19,11 +24,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Set hardcode token just in case
-        const testToken = localStorage.getItem("token") || "11|bRDttRF4eF1WuflHocapjNqoF26hfU4a2AusID1E7a2abeb3";
-        localStorage.setItem("token", testToken);
-
-        const response = await api.get('/dashboard/petani');
+        const response = await api.get(`/dashboard/${role}`);
         setStats(response.data.stats);
         setLatestOffers(response.data.latestOffers);
         setLatestOrders(response.data.latestOrders);
@@ -52,7 +53,7 @@ export default function DashboardPage() {
           <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-6">
             <div>
               <h2 className="text-[24px] font-semibold text-[#005941]">
-                Dashboard Petani
+                Dashboard {RoleLabel}
               </h2>
               <p className="text-[14px] text-slate-500">
                 Ringkasan aktivitas dan performa penjualan Anda
@@ -78,15 +79,15 @@ export default function DashboardPage() {
               </h1>
               <p className="text-[14px] opacity-80 leading-relaxed">
                 Kelola hasil panen dan tingkatkan pendapatan anda bersama
-                TaniNelayan.
+                JALA.
               </p>
             </div>
 
-            {/* Karakter / Ilustrasi Petani */}
+            {/* Karakter / Ilustrasi Mitra */}
             <div className="absolute right-4 bottom-0 h-full flex items-end pointer-events-none drop-shadow-xl">
               <img
-                src="/images/petani-banner.png"
-                alt="Petani Banner"
+                src={`/images/${role}-banner.png`}
+                alt={`${RoleLabel} Banner`}
                 className="h-[90%] md:h-[100%] object-contain object-bottom"
                 onError={(e) => {
                   // Fallback jika file gambar belum ada
@@ -99,14 +100,14 @@ export default function DashboardPage() {
           {/* Stat Cards Container */}
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
             {dashboardMetrics.map((m) => (
-              <PetaniStatCard key={m.title} {...m} />
+              <StatCard key={m.title} {...m} />
             ))}
           </div>
 
           {/* Offers & Orders Grid Section */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <PetaniOffers offers={latestOffers} />
-            <PetaniOrders orders={latestOrders} />
+            <MitraOffers offers={latestOffers} />
+            <MitraOrders orders={latestOrders} />
           </div>
         </div>
       </div>
