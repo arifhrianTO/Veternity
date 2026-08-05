@@ -141,4 +141,3 @@ Route::get('/shipping/couriers', [ShippingController::class, 'getActiveCouriers'
 
 // Midtrans Notification Webhook (Public)
 Route::post('/payment/notification', [OrderController::class, 'paymentNotification']);
-
