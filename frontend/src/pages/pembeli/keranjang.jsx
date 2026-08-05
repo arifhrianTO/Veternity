@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import { Trash2, Check, Loader2 } from "lucide-react";
 import api from "../../config/axios";
 import { swalWarning } from "../../utils/swal";
@@ -117,17 +118,7 @@ export default function KeranjangPage() {
 
         {/* Main content area - matches marketplace wrapper */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[16px] p-6 relative">
-          {/* Header - reduced from 24px to 18px */}
-          <div className="flex items-start justify-between border-b border-[#029154] pb-3 mb-3">
-            <h2 className="text-[18px] font-semibold text-[#005941]">
-              Keranjang
-            </h2>
-            <img
-              src="/images/ikan1.png"
-              alt="avatar"
-              className="w-8 h-8 rounded-full border border-slate-100"
-            />
-          </div>
+          <PageHeader title="Keranjang" />
 
           {isLoading ? (
             <div className="flex justify-center items-center py-20 text-[#006638]">

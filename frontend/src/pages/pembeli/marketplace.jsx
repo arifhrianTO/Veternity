@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
 import ProductDetailModal from "../../components/pembeli/ProductDetailModal";
 import { Star, Search } from "lucide-react";
@@ -115,15 +116,7 @@ export default function MarketplacePage() {
         {/* Rectangle 4166 / Wrapper utama */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
-          {/* Header & Judul */}
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-[#029154] pb-4 mb-4">
-            <h2 className="text-2xl font-semibold text-[#005941]">Katalog Produk</h2>
-            
-            {/* Profil avatar kecil kanan atas */}
-            <div className="flex items-center gap-4">
-              <img src="/images/ikan1.png" alt="avatar" className="w-10 h-10 rounded-full border border-slate-100" />
-            </div>
-          </div>
+          <PageHeader title="Katalog Produk" />
 
           {/* Group 36 & Filter Controls */}
           <div className="flex items-center justify-between gap-4 mb-8">

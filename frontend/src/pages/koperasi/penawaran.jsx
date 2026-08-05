@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
 import { X, MapPin, Phone, MessageCircle, Mail, Check, XCircle, Send, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
@@ -154,23 +155,7 @@ export default function PenawaranPage() {
         {/* Main Content Container */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 flex flex-col justify-between">
           <div>
-            {/* Header Panel */}
-            <div className="flex items-end justify-between border-b border-[#029154] pb-2 mb-4">
-              <h1 className="text-[24px] font-semibold text-[#005941]">
-                Penawaran
-              </h1>
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden border border-red-200 translate-y-[4px]">
-                <img
-                  src="/images/user.png"
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/user.png";
-                  }}
-                />
-              </div>
-            </div>
+            <PageHeader title="Penawaran" />
 
             {/* Filter Status Tabs */}
             <div className="bg-white rounded-[10px] shadow-[0_0_5px_rgba(0,0,0,0.25)] mb-6 max-w-[600px]">

@@ -29,6 +29,27 @@ class OrderController extends Controller
     }
 
     /**
+     * Listing order untuk halaman monitoring admin (semua order, semua role).
+     */
+    public function adminIndex(Request $request)
+    {
+        $query = Order::with(['items', 'pembeli', 'penjual', 'shipment']);
+
+        if ($search = $request->input('search')) {
+            $query->where('kode_pesanan', 'like', "%{$search}%");
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')
+            ->paginate($request->input('per_page', 5));
+
+        return response()->json($orders);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)

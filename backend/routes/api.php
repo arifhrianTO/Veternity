@@ -56,6 +56,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/admin/commodities', [CommodityController::class, 'store']);
         Route::put('/admin/commodities/{id}', [CommodityController::class, 'update']);
         Route::delete('/admin/commodities/{id}', [CommodityController::class, 'destroy']);
+
+        // Kelola pengguna (admin)
+        Route::get('/admin/users', [UserController::class, 'adminIndex']);
+        Route::post('/admin/users', [UserController::class, 'adminStore']);
+        Route::put('/admin/users/{id}', [UserController::class, 'adminUpdate']);
+        Route::delete('/admin/users/{id}', [UserController::class, 'adminDestroy']);
+
+        // Monitoring admin (semua produk & order)
+        Route::get('/admin/products', [ProductController::class, 'adminIndex']);
+        Route::get('/admin/orders', [OrderController::class, 'adminIndex']);
     });
 
     // Cart Routes (pembeli)

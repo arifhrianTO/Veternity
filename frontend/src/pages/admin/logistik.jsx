@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
 import {
   Search,
   Plus,
@@ -301,13 +302,7 @@ export default function LogistikPage() {
 
         {/* Area Konten Utama */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
-          {/* Header Panel */}
-          <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#029154]">
-            <h1 className="text-[24px] font-semibold text-[#005941]">Logistik</h1>
-            <div className="w-10 h-10 rounded-full bg-[#C1E0FF] flex items-center justify-center text-[#0184FE]">
-              <span className="font-bold">A</span>
-            </div>
-          </div>
+          <PageHeader title="Logistik" />
 
           {/* Control Bar (Search & Tambah) */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">

@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
+import PageHeader from "../../components/layout/PageHeader";
+import api from "../../config/axios";
+import { swalSuccess, swalError } from "../../utils/swal";
 
 import {
   Search,
@@ -13,37 +16,61 @@ import {
   Loader2
 } from "lucide-react";
 
-export default function PenggunaPage() {
-  const [users, setUsers] = useState([
-    { id: 1, no: 1, nama: "Budi santoso", role: "Petani", noHp: "081234567890", status: "Aktif" },
-    { id: 2, no: 2, nama: "Budi santoso", role: "Petani", noHp: "081234567890", status: "Aktif" },
-    { id: 3, no: 3, nama: "Budi santoso", role: "Petani", noHp: "081234567890", status: "Aktif" },
-    { id: 4, no: 4, nama: "Budi santoso", role: "Petani", noHp: "081234567890", status: "Aktif" },
-    { id: 5, no: 5, nama: "Budi santoso", role: "Petani", noHp: "081234567890", status: "Aktif" },
-    { id: 6, no: 6, nama: "Budi santoso", role: "Petani", noHp: "081234567890", status: "Aktif" },
-  ]);
+const roleLabels = {
+  admin: "Admin",
+  koperasi: "Koperasi",
+  petani: "Petani",
+  petani_binaan: "Petani (Binaan)",
+  nelayan: "Nelayan",
+  nelayan_binaan: "Nelayan (Binaan)",
+  pembeli: "Pembeli",
+};
 
+export default function PenggunaPage() {
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedRoleFilter, setSelectedRoleFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   // States for Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
-  // State for Selected User & Form Data
   const [selectedUser, setSelectedUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const initialFormState = {
-    nama: "",
-    role: "Petani",
-    noHp: "",
+    nama_lengkap: "",
+    email: "",
+    no_hp: "",
+    password: "",
+    role: "petani",
     status: "Aktif"
   };
   const [formData, setFormData] = useState(initialFormState);
 
-  // Helper functions to open modals
+  const fetchUsers = () => {
+    setLoading(true);
+    const params = { page, search, role: selectedRoleFilter };
+    api.get("/admin/users", { params })
+      .then(res => {
+        setUsers(res.data.data);
+        setLastPage(res.data.last_page);
+        setTotal(res.data.total);
+      })
+      .catch(err => console.error("Gagal load users", err))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    const t = setTimeout(fetchUsers, 300);
+    return () => clearTimeout(t);
+  }, [page, search, selectedRoleFilter]);
+
   const openAddModal = () => {
     setFormData(initialFormState);
     setIsAddModalOpen(true);
@@ -52,9 +79,11 @@ export default function PenggunaPage() {
   const openEditModal = (user) => {
     setSelectedUser(user);
     setFormData({
-      nama: user.nama,
+      nama_lengkap: user.nama_lengkap,
+      email: user.email,
+      no_hp: user.no_hp,
+      password: "",
       role: user.role,
-      noHp: user.noHp,
       status: user.status
     });
     setIsEditModalOpen(true);
@@ -78,60 +107,60 @@ export default function PenggunaPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API Call
-    setTimeout(() => {
-      const newUser = {
-        id: users.length + 1,
-        no: users.length + 1,
-        ...formData
-      };
-      setUsers([...users, newUser]);
-      setIsSubmitting(false);
+    try {
+      await api.post("/admin/users", formData);
+      swalSuccess("Berhasil", "Pengguna berhasil ditambahkan");
       closeAllModals();
-    }, 500);
+      fetchUsers();
+    } catch (err) {
+      swalError("Gagal", err.response?.data?.message || "Terjadi kesalahan saat menambah pengguna");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API Call
-    setTimeout(() => {
-      setUsers(users.map(u => u.id === selectedUser.id ? { ...u, ...formData } : u));
-      setIsSubmitting(false);
+    try {
+      const payload = { ...formData };
+      if (!payload.password) delete payload.password;
+      await api.put(`/admin/users/${selectedUser.id}`, payload);
+      swalSuccess("Berhasil", "Pengguna berhasil diperbarui");
       closeAllModals();
-    }, 500);
+      fetchUsers();
+    } catch (err) {
+      swalError("Gagal", err.response?.data?.message || "Terjadi kesalahan saat memperbarui pengguna");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteSubmit = () => {
+  const handleDeleteSubmit = async () => {
     setIsSubmitting(true);
-    // Simulate API Call
-    setTimeout(() => {
-      setUsers(users.filter((user) => user.id !== selectedUser.id));
-      setIsSubmitting(false);
+    try {
+      await api.delete(`/admin/users/${selectedUser.id}`);
+      swalSuccess("Berhasil", "Pengguna berhasil dihapus");
       closeAllModals();
-    }, 500);
+      fetchUsers();
+    } catch (err) {
+      swalError("Gagal", err.response?.data?.message || "Terjadi kesalahan saat menghapus pengguna");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
       <div className="flex w-full min-h-screen p-4 pl-[304px]">
-        
-        {/* Memanggil Komponen AdminSidebar */}
         <Sidebar />
 
-        {/* Main Content Area */}
         <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
           
-          {/* Header Panel */}
-          <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#029154]">
-            <h1 className="text-[24px] font-semibold text-[#005941]">Pengguna</h1>
-            <div className="w-10 h-10 rounded-full bg-[#C1E0FF] flex items-center justify-center text-[#0184FE]">
-              <span className="font-bold">A</span>
-            </div>
-          </div>
+          <PageHeader title="Pengguna" />
 
           {/* Control Bar (Search, Filter, Tambah) */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
@@ -141,7 +170,7 @@ export default function PenggunaPage() {
                 type="text"
                 placeholder="Cari Pengguna..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 className="w-full pl-12 pr-4 py-2.5 rounded-full border border-[#006638] text-sm text-[#006638] placeholder-[#006638] focus:outline-none bg-white"
               />
             </div>
@@ -150,13 +179,17 @@ export default function PenggunaPage() {
               <div className="relative">
                 <select
                   value={selectedRoleFilter}
-                  onChange={(e) => setSelectedRoleFilter(e.target.value)}
+                  onChange={(e) => { setSelectedRoleFilter(e.target.value); setPage(1); }}
                   className="appearance-none bg-white border border-[#024D70] text-[#00378A] text-sm font-medium px-4 py-2 pr-10 rounded-lg focus:outline-none cursor-pointer"
                 >
-                  <option value="">Role</option>
-                  <option value="Petani">Petani</option>
-                  <option value="Nelayan">Nelayan</option>
-                  <option value="Pembeli">Pembeli</option>
+                  <option value="">Semua Role</option>
+                  <option value="admin">Admin</option>
+                  <option value="koperasi">Koperasi</option>
+                  <option value="petani">Petani</option>
+                  <option value="petani_binaan">Petani Binaan</option>
+                  <option value="nelayan">Nelayan</option>
+                  <option value="nelayan_binaan">Nelayan Binaan</option>
+                  <option value="pembeli">Pembeli</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#00378A] pointer-events-none" />
               </div>
@@ -176,6 +209,7 @@ export default function PenggunaPage() {
                   <tr className="text-[#273B4A] font-bold text-base border-b-2 border-black/10">
                     <th className="pb-3 px-4 w-16">No</th>
                     <th className="pb-3 px-4">Nama</th>
+                    <th className="pb-3 px-4">Email</th>
                     <th className="pb-3 px-4 text-center">Role</th>
                     <th className="pb-3 px-4">No HP</th>
                     <th className="pb-3 px-4 text-center">Status</th>
@@ -183,18 +217,23 @@ export default function PenggunaPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((item) => (
+                  {loading ? (
+                    <tr><td colSpan={7} className="py-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-[#006638]" /></td></tr>
+                  ) : users.length === 0 ? (
+                    <tr><td colSpan={7} className="py-8 text-center text-slate-500">Tidak ada pengguna ditemukan</td></tr>
+                  ) : users.map((item, i) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition border-b border-black/10 last:border-0">
-                      <td className="py-2 px-4 font-semibold text-[#273B4A]">{item.no}</td>
-                      <td className="py-2 px-4 font-semibold text-[#273B4A]">{item.nama}</td>
-                      <td className="py-2 px-4 text-center font-medium text-black">{item.role}</td>
-                      <td className="py-2 px-4 font-semibold text-[#273B4A]">{item.noHp}</td>
-                      <td className="py-2 px-4 text-center">
-                        <span className="inline-block bg-[#00AE2B]/20 text-[#006638] text-xs font-medium px-3 py-1 rounded border border-[#006638]">
+                      <td className="py-3 px-4 font-semibold text-[#273B4A]">{(page - 1) * 5 + i + 1}</td>
+                      <td className="py-3 px-4 font-semibold text-[#273B4A]">{item.nama_lengkap}</td>
+                      <td className="py-3 px-4 font-medium text-slate-600">{item.email}</td>
+                      <td className="py-3 px-4 text-center font-medium text-black">{roleLabels[item.role] || item.role}</td>
+                      <td className="py-3 px-4 font-semibold text-[#273B4A]">{item.no_hp}</td>
+                      <td className="py-3 px-4 text-center">
+                        <span className={`inline-block border text-xs font-medium px-3 py-1 rounded ${item.status === 'Aktif' ? 'bg-[#00AE2B]/20 text-[#006638] border-[#006638]' : 'bg-red-50 text-red-600 border-red-300'}`}>
                           {item.status}
                         </span>
                       </td>
-                      <td className="py-2 px-4">
+                      <td className="py-3 px-4">
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => openEditModal(item)} title="Edit" className="w-9 h-9 rounded-md bg-white border border-[#0220E1] text-[#0004ED] flex items-center justify-center shadow-sm hover:bg-blue-50 transition">
                             <Edit3 className="w-4 h-4" />
@@ -210,26 +249,25 @@ export default function PenggunaPage() {
               </table>
             </div>
 
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 text-sm text-black/50 font-semibold">
-              <div>Menampilkan 1-6 dari 8 produk</div>
-              <div className="flex items-center gap-2">
-                <button className="p-2 text-black/40 hover:text-black transition">
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button className="w-9 h-9 rounded-md bg-[#006638] text-white font-semibold flex items-center justify-center">1</button>
-                <button className="w-9 h-9 rounded-md bg-white border border-[#006638] text-[#006638] font-semibold flex items-center justify-center hover:bg-slate-50">2</button>
-                <button className="p-2 text-black/40 hover:text-black transition">
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+            {total > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 text-sm text-black/50 font-semibold">
+                <div>Total {total} pengguna</div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-2 text-black/40 hover:text-black transition disabled:opacity-30">
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button className="w-9 h-9 rounded-md bg-[#006638] text-white font-semibold flex items-center justify-center">{page}</button>
+                  <button onClick={() => setPage(p => Math.min(lastPage, p + 1))} disabled={page === lastPage} className="p-2 text-black/40 hover:text-black transition disabled:opacity-30">
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
-
         </div>
       </div>
 
-      {/* ======================= MODAL TAMBAH PENGGUNA ======================= */}
+      {/* MODAL TAMBAH */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-[20px] w-full max-w-[500px] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
@@ -239,24 +277,31 @@ export default function PenggunaPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
             <div className="p-6 text-[14px]">
               <form onSubmit={handleAddSubmit} className="space-y-4">
                 <div>
                   <label className="block text-[#273B4A] font-semibold mb-1">Nama Lengkap</label>
-                  <input type="text" name="nama" value={formData.nama} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" placeholder="Masukkan nama" />
+                  <input type="text" name="nama_lengkap" value={formData.nama_lengkap} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
+                </div>
+                <div>
+                  <label className="block text-[#273B4A] font-semibold mb-1">Email</label>
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
+                </div>
+                <div>
+                  <label className="block text-[#273B4A] font-semibold mb-1">Nomor HP</label>
+                  <input type="text" name="no_hp" value={formData.no_hp} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
+                </div>
+                <div>
+                  <label className="block text-[#273B4A] font-semibold mb-1">Password</label>
+                  <input type="password" name="password" value={formData.password} onChange={handleInputChange} required minLength={8} className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
                 </div>
                 <div>
                   <label className="block text-[#273B4A] font-semibold mb-1">Role</label>
                   <select name="role" value={formData.role} onChange={handleInputChange} className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]">
-                    <option value="Petani">Petani</option>
-                    <option value="Nelayan">Nelayan</option>
-                    <option value="Pembeli">Pembeli</option>
+                    {Object.entries(roleLabels).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
                   </select>
-                </div>
-                <div>
-                  <label className="block text-[#273B4A] font-semibold mb-1">Nomor HP</label>
-                  <input type="text" name="noHp" value={formData.noHp} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" placeholder="Masukkan nomor HP" />
                 </div>
                 <div>
                   <label className="block text-[#273B4A] font-semibold mb-1">Status</label>
@@ -265,14 +310,10 @@ export default function PenggunaPage() {
                     <option value="Tidak Aktif">Tidak Aktif</option>
                   </select>
                 </div>
-                
                 <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={closeAllModals} disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] border border-slate-300 font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50">
-                    Batal
-                  </button>
+                  <button type="button" onClick={closeAllModals} disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] border border-slate-300 font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50">Batal</button>
                   <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] bg-[#006638] font-semibold text-white hover:bg-[#00522d] transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2">
-                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Simpan
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />} Simpan
                   </button>
                 </div>
               </form>
@@ -281,7 +322,7 @@ export default function PenggunaPage() {
         </div>
       )}
 
-      {/* ======================= MODAL EDIT PENGGUNA ======================= */}
+      {/* MODAL EDIT */}
       {isEditModalOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-[20px] w-full max-w-[500px] overflow-hidden shadow-2xl border border-slate-200 flex flex-col">
@@ -291,24 +332,31 @@ export default function PenggunaPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
             <div className="p-6 text-[14px]">
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
                   <label className="block text-[#273B4A] font-semibold mb-1">Nama Lengkap</label>
-                  <input type="text" name="nama" value={formData.nama} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
+                  <input type="text" name="nama_lengkap" value={formData.nama_lengkap} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
+                </div>
+                <div>
+                  <label className="block text-[#273B4A] font-semibold mb-1">Email</label>
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
+                </div>
+                <div>
+                  <label className="block text-[#273B4A] font-semibold mb-1">Nomor HP</label>
+                  <input type="text" name="no_hp" value={formData.no_hp} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
+                </div>
+                <div>
+                  <label className="block text-[#273B4A] font-semibold mb-1">Password Baru (Opsional)</label>
+                  <input type="password" name="password" value={formData.password} onChange={handleInputChange} minLength={8} className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" placeholder="Kosongkan jika tidak ingin ganti" />
                 </div>
                 <div>
                   <label className="block text-[#273B4A] font-semibold mb-1">Role</label>
                   <select name="role" value={formData.role} onChange={handleInputChange} className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]">
-                    <option value="Petani">Petani</option>
-                    <option value="Nelayan">Nelayan</option>
-                    <option value="Pembeli">Pembeli</option>
+                    {Object.entries(roleLabels).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
                   </select>
-                </div>
-                <div>
-                  <label className="block text-[#273B4A] font-semibold mb-1">Nomor HP</label>
-                  <input type="text" name="noHp" value={formData.noHp} onChange={handleInputChange} required className="w-full px-4 py-2 border border-slate-300 rounded-[10px] focus:outline-none focus:border-[#006638]" />
                 </div>
                 <div>
                   <label className="block text-[#273B4A] font-semibold mb-1">Status</label>
@@ -317,14 +365,10 @@ export default function PenggunaPage() {
                     <option value="Tidak Aktif">Tidak Aktif</option>
                   </select>
                 </div>
-                
                 <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={closeAllModals} disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] border border-slate-300 font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50">
-                    Batal
-                  </button>
+                  <button type="button" onClick={closeAllModals} disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] border border-slate-300 font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50">Batal</button>
                   <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] bg-[#006638] font-semibold text-white hover:bg-[#00522d] transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2">
-                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Simpan Perubahan
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />} Simpan
                   </button>
                 </div>
               </form>
@@ -333,7 +377,7 @@ export default function PenggunaPage() {
         </div>
       )}
 
-      {/* ======================= MODAL HAPUS PENGGUNA ======================= */}
+      {/* MODAL HAPUS */}
       {isDeleteModalOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-[20px] w-full max-w-[400px] overflow-hidden shadow-2xl border border-slate-200 text-center p-8">
@@ -342,16 +386,12 @@ export default function PenggunaPage() {
             </div>
             <h3 className="text-[20px] font-bold text-[#273B4A] mb-2">Hapus Pengguna?</h3>
             <p className="text-[14px] text-slate-500 mb-8 leading-relaxed">
-              Apakah Anda yakin ingin menghapus pengguna <strong>{selectedUser.nama}</strong>? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus pengguna <strong>{selectedUser.nama_lengkap}</strong>?
             </p>
-            
             <div className="flex justify-center gap-3">
-              <button onClick={closeAllModals} disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] border border-slate-300 font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50">
-                Batal
-              </button>
+              <button onClick={closeAllModals} disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] border border-slate-300 font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50">Batal</button>
               <button onClick={handleDeleteSubmit} disabled={isSubmitting} className="flex-1 py-2.5 rounded-[10px] bg-red-500 font-semibold text-white hover:bg-red-600 transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2">
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Ya, Hapus
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />} Hapus
               </button>
             </div>
           </div>

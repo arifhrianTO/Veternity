@@ -156,6 +156,31 @@ class ProductController extends Controller
     }
  
     /**
+     * Listing produk untuk halaman monitoring admin (semua produk, semua status).
+     */
+    public function adminIndex(Request $request)
+    {
+        $query = Product::with(['user', 'category', 'commodity']);
+
+        if ($search = $request->input('search')) {
+            $query->where('nama_produk', 'like', "%{$search}%");
+        }
+
+        if ($categoryId = $request->input('category_id')) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $products = $query->orderBy('created_at', 'desc')
+            ->paginate($request->input('per_page', 5));
+
+        return response()->json($products);
+    }
+
+    /**
      * Display a listing of the resource for the logged in user (Petani)
      */
     public function myProducts(Request $request)
