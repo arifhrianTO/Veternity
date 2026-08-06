@@ -5,14 +5,100 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BapanasPrice;
+use App\Models\Cart;
+use App\Models\Notification;
 use App\Models\Offer;
 use App\Models\OfferHistory;
 use App\Models\Product;
+use App\Models\User;
 use App\Traits\KoperasiScope;
+use Illuminate\Support\Facades\DB;
 
 class OfferController extends Controller
 {
     use KoperasiScope;
+
+    /**
+     * Tentukan halaman penawaran yang sesuai untuk role user (link notifikasi).
+     */
+    private function offerPageLinkFor(User $user): string
+    {
+        return match ($user->role) {
+            'koperasi' => '/koperasi/penawaran',
+            'nelayan', 'nelayan_binaan' => '/nelayan/penawaran',
+            'petani', 'petani_binaan' => '/petani/penawaran',
+            default => '/pembeli/penawaran',
+        };
+    }
+
+    /**
+     * Buat notifikasi untuk satu user.
+     */
+    private function createNotification(int $userId, string $judul, string $pesan, ?string $link = null): void
+    {
+        Notification::create([
+            'user_id' => $userId,
+            'judul'   => $judul,
+            'pesan'   => $pesan,
+            'link'    => $link,
+        ]);
+    }
+
+    /**
+     * Saat penawaran disetujui: masukkan produk ke keranjang pembeli
+     * dengan harga kesepakatan, lalu kirim notifikasi ke kedua pihak.
+     */
+    private function handleOfferAccepted(Offer $offer, User $actor): void
+    {
+        // Produk masuk keranjang pembeli (harga = harga kesepakatan)
+        $cart = Cart::where('user_id', $offer->pembeli_id)
+            ->where('product_id', $offer->product_id)
+            ->first();
+
+        if ($cart) {
+            $cart->kuantitas += $offer->jumlah_diminta;
+            $cart->harga = $offer->harga_tawaran;
+            $cart->save();
+        } else {
+            Cart::create([
+                'user_id'    => $offer->pembeli_id,
+                'product_id' => $offer->product_id,
+                'kuantitas'  => $offer->jumlah_diminta,
+                'harga'      => $offer->harga_tawaran,
+            ]);
+        }
+
+        $actorName = $actor->nama_lengkap ?: ($actor->role === 'pembeli' ? 'Pembeli' : 'Penjual');
+        $isActorBuyer = $actor->id === $offer->pembeli_id;
+        $otherPartyId = $isActorBuyer ? $offer->petani_id : $offer->pembeli_id;
+
+        // Notifikasi ke pihak yang bertindak
+        $this->createNotification(
+            $actor->id,
+            'Penawaran Disetujui',
+            "Anda telah menyetujui penawaran {$offer->kode_penawaran}.",
+            $this->offerPageLinkFor($actor),
+        );
+
+        // Notifikasi ke pihak lainnya
+        if ($isActorBuyer) {
+            $otherParty = $offer->petani;
+            $this->createNotification(
+                $otherPartyId,
+                'Penawaran Disetujui',
+                "{$actorName} telah menyetujui penawaran {$offer->kode_penawaran}.",
+                $this->offerPageLinkFor($otherParty),
+            );
+        } else {
+            $this->createNotification(
+                $otherPartyId,
+                'Penawaran Disetujui',
+                "{$actorName} telah menyetujui penawaran {$offer->kode_penawaran}. " .
+                    "Produk otomatis masuk ke keranjang Anda, silakan lanjutkan ke checkout.",
+                '/pembeli/keranjang',
+            );
+        }
+    }
 
     /**
      * Ambil nama kategori produk untuk dicocokkan ke commodity_name Bapanas.
@@ -143,6 +229,7 @@ class OfferController extends Controller
             'aktor_id'       => $user->id,
             'aksi'           => 'Penawaran diajukan',
             'harga_terkait'  => $validated['harga_tawaran'],
+            'komentar'       => $validated['pesan_pembeli'] ?? null,
         ]);
 
         return response()->json([
@@ -190,22 +277,32 @@ class OfferController extends Controller
             'status'        => 'required|string|in:Menunggu,Diterima,Ditolak,Counter',
             'harga_tawaran' => 'sometimes|numeric',
             'aksi_label'    => 'required|string',
+            'komentar'      => 'nullable|string|max:1000',
         ]);
 
-        $updateData = ['status' => $validated['status']];
-        if (isset($validated['harga_tawaran'])) {
-            $updateData['harga_tawaran'] = $validated['harga_tawaran'];
-        }
-        $offer->update($updateData);
+        $isNewAcceptance = $validated['status'] === 'Diterima' && $offer->status !== 'Diterima';
 
-        OfferHistory::create([
-            'offer_id'      => $offer->id,
-            'aktor_id'      => $user->id,
-            'aksi'          => $validated['aksi_label'],
-            'harga_terkait' => $validated['harga_tawaran'] ?? null,
-        ]);
+        DB::transaction(function () use ($offer, $user, $validated, $isNewAcceptance) {
+            $updateData = ['status' => $validated['status']];
+            if (isset($validated['harga_tawaran'])) {
+                $updateData['harga_tawaran'] = $validated['harga_tawaran'];
+            }
+            $offer->update($updateData);
 
-        $offer = $offer->load(['pembeli', 'product', 'histories']);
+            OfferHistory::create([
+                'offer_id'      => $offer->id,
+                'aktor_id'      => $user->id,
+                'aksi'          => $validated['aksi_label'],
+                'harga_terkait' => $validated['harga_tawaran'] ?? null,
+                'komentar'      => $validated['komentar'] ?? null,
+            ]);
+
+            if ($isNewAcceptance) {
+                $this->handleOfferAccepted($offer, $user);
+            }
+        });
+
+        $offer = $offer->load(['pembeli', 'petani', 'product', 'histories']);
         $this->attachHargaAcuan($offer);
 
         return response()->json([

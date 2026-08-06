@@ -337,8 +337,6 @@ export default function KoperasiKelolaProduk() {
                       <th className="pb-2 px-4 text-center">Pemilik</th>
                       <th className="pb-2 px-4 text-center">Stok</th>
                       <th className="pb-2 px-4 text-center leading-tight">Harga<br />Harapan</th>
-                      <th className="pb-2 px-4 text-center leading-tight">Tanggal<br />Panen</th>
-                      <th className="pb-2 px-4 text-center leading-tight">Masa<br />Layak</th>
                       <th className="pb-2 px-4 text-center">Status</th>
                       <th className="pb-2 px-4 text-center">Aksi</th>
                     </tr>
@@ -346,7 +344,7 @@ export default function KoperasiKelolaProduk() {
                   <tbody className="w-full">
                     {loading ? (
                       <tr className="table w-full table-fixed">
-                        <td colSpan={8} className="text-center py-10">
+                        <td colSpan={6} className="text-center py-10">
                           <div className="flex items-center justify-center gap-2 text-[#006638]">
                             <Loader2 className="w-6 h-6 animate-spin" />
                             <span className="font-semibold">Memuat produk...</span>
@@ -355,11 +353,11 @@ export default function KoperasiKelolaProduk() {
                       </tr>
                     ) : fetchError ? (
                       <tr className="table w-full table-fixed">
-                        <td colSpan={8} className="text-center py-10 text-red-500 font-semibold bg-red-50">{fetchError}</td>
+                        <td colSpan={6} className="text-center py-10 text-red-500 font-semibold bg-red-50">{fetchError}</td>
                       </tr>
                     ) : currentData.length === 0 ? (
                       <tr className="table w-full table-fixed">
-                        <td colSpan={8} className="text-center py-10 text-slate-500 font-medium">Belum ada produk yang ditambahkan.</td>
+                        <td colSpan={6} className="text-center py-10 text-slate-500 font-medium">Belum ada produk yang ditambahkan.</td>
                       </tr>
                     ) : (
                       currentData.map((item) => (
@@ -373,8 +371,6 @@ export default function KoperasiKelolaProduk() {
                           <td className="py-2 px-4 font-semibold text-[#273B4A] text-center text-[13px]">{ownerName(item)}</td>
                           <td className="py-2 px-4 font-semibold text-[#273B4A] text-center text-[13px]">{item.stok} {item.satuan || "Kg"}</td>
                           <td className="py-2 px-4 font-medium text-black/60 text-center text-[13px]">{formatRupiah(item.harga_harapan)}</td>
-                          <td className="py-2 px-4 font-medium text-black/60 text-center text-[13px]">{item.tanggal_panen}</td>
-                          <td className="py-2 px-4 font-medium text-black/60 text-center text-[13px]">{item.masa_layak} Hari</td>
                           <td className="py-2 px-4 text-center">
                             {item.status === "Aktif" ? (
                               <span className="bg-[rgba(0,174,43,0.19)] border border-[#006638] text-[#006638] px-2 py-0.5 rounded-[3px] text-[12px] font-semibold inline-block">Aktif</span>
@@ -692,7 +688,7 @@ export default function KoperasiKelolaProduk() {
                 className="w-[180px] h-[120px] object-cover rounded-lg border border-slate-200 mb-4"
                 onError={(e) => { e.target.onerror = null; e.target.src = "/images/beras.png"; }}
               />
-              <h3 className="text-[24px] font-bold text-[#273B4A]">{productName(selectedDetailItem)}</h3>
+              <h3 className="text-[24px] font-bold text-[#273B4A]">{selectedDetailItem.nama_produk || productName(selectedDetailItem)}</h3>
               <p className="text-[16px] font-medium text-slate-500">{ownerName(selectedDetailItem)}</p>
             </div>
 
@@ -704,6 +700,10 @@ export default function KoperasiKelolaProduk() {
               <div>
                 <span className="block text-[12px] font-bold text-slate-400 mb-1">Harga Harapan</span>
                 <span className="text-[#006638] font-bold">{formatRupiah(selectedDetailItem.harga_harapan)}</span>
+              </div>
+              <div>
+                <span className="block text-[12px] font-bold text-slate-400 mb-1">Komoditas</span>
+                {selectedDetailItem.commodity?.nama_komoditas || selectedDetailItem.komoditas_acuan || "-"}
               </div>
               <div>
                 <span className="block text-[12px] font-bold text-slate-400 mb-1">Harga Acuan</span>

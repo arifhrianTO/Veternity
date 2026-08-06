@@ -282,11 +282,9 @@ export default function MitraProdukPage() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="text-[15px] font-bold text-[#273B4A] border-b-2 border-black/[0.13]">
-                    <th className="pb-4 px-2">Kategori</th>
+                    <th className="pb-4 px-2">Produk</th>
                     <th className="pb-4 px-2">Stok</th>
                     <th className="pb-4 px-2">Harga Harapan</th>
-                    <th className="pb-4 px-2">Tanggal Panen</th>
-                    <th className="pb-4 px-2">Masa Layak</th>
                     <th className="pb-4 px-2">Status</th>
                     <th className="pb-4 px-2 text-center">Aksi</th>
                   </tr>
@@ -294,7 +292,7 @@ export default function MitraProdukPage() {
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-10">
+                      <td colSpan="5" className="text-center py-10">
                         <div className="flex items-center justify-center gap-2 text-[#006638]">
                            <Loader2 className="w-6 h-6 animate-spin" />
                            <span className="font-semibold">Memuat produk...</span>
@@ -303,13 +301,13 @@ export default function MitraProdukPage() {
                     </tr>
                   ) : fetchError ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-10 text-red-500 font-semibold bg-red-50">
+                      <td colSpan="5" className="text-center py-10 text-red-500 font-semibold bg-red-50">
                         {fetchError}
                       </td>
                     </tr>
                   ) : currentProducts.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-10 text-slate-500 font-medium">
+                      <td colSpan="5" className="text-center py-10 text-slate-500 font-medium">
                         Belum ada produk yang ditambahkan.
                       </td>
                     </tr>
@@ -329,8 +327,6 @@ export default function MitraProdukPage() {
                         </td>
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{p.stok} {p.satuan}</td>
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">Rp {Number(p.harga_harapan).toLocaleString('id-ID')}</td>
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{p.tanggal_panen}</td>
-                        <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">{p.masa_layak} Hari</td>
                         <td className="py-4 px-2">
                           <span className="inline-flex items-center justify-center px-3 py-1 rounded-[12px] bg-[rgba(105,255,120,0.19)] border border-[#008A1E] text-[13px] font-semibold text-[#006638]">
                             {p.status}
@@ -466,7 +462,7 @@ export default function MitraProdukPage() {
                   </select>
                   {hargaAcuanPreview && (
                     <p className="text-[12px] text-[#006638] font-medium">
-                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString('id-ID')} / kg
+                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString('id-ID')} / {commodityOptions.find((c) => c.id === Number(formData.commodity_id))?.satuan || "kg"}
                     </p>
                   )}
                 </div>
@@ -570,7 +566,7 @@ export default function MitraProdukPage() {
                   </select>
                   {hargaAcuanPreview && (
                     <p className="text-[12px] text-[#006638] font-medium">
-                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString('id-ID')} / kg
+                      Harga acuan Bapanas: Rp {Number(hargaAcuanPreview).toLocaleString('id-ID')} / {commodityOptions.find((c) => c.id === Number(formData.commodity_id))?.satuan || "kg"}
                     </p>
                   )}
                 </div>
@@ -665,6 +661,9 @@ export default function MitraProdukPage() {
               
               {/* Details Section (Right) */}
               <div className="flex-1 space-y-3">
+                <h4 className="text-[18px] font-bold text-[#273B4A] leading-snug">
+                  {selectedProduct.nama_produk}
+                </h4>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-[14px]">Kategori</span>
                   <span className="font-bold text-[#273B4A]">{selectedProduct.category?.nama_kategori || "-"}</span>
@@ -681,8 +680,21 @@ export default function MitraProdukPage() {
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-[14px]">Harga Harapan</span>
-                  <span className="font-bold text-[#006638]">Rp {Number(selectedProduct.harga_harapan).toLocaleString('id-ID')}</span>
+                  <span className="font-bold text-[#006638]">Rp {Number(selectedProduct.harga_harapan).toLocaleString('id-ID')} / {selectedProduct.satuan || "kg"}</span>
                 </div>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 text-[14px]">Harga Acuan (Bapanas)</span>
+                  <span className="font-bold text-[#006638]">
+                    {selectedProduct.harga_acuan
+                      ? `Rp ${Number(selectedProduct.harga_acuan).toLocaleString('id-ID')} / kg`
+                      : "-"}
+                  </span>
+                </div>
+                {selectedProduct.harga_acuan_tanggal && (
+                  <div className="flex justify-end -mt-1 text-[11px] text-slate-400">
+                    Update: {new Date(selectedProduct.harga_acuan_tanggal).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                  </div>
+                )}
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-[14px]">Tanggal Panen</span>
                   <span className="font-semibold text-[#273B4A]">{selectedProduct.tanggal_panen}</span>

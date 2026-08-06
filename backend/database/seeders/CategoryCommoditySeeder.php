@@ -87,7 +87,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Kacang-kacangan',
             'tipe' => 'pertanian',
-            'gambar' => '/images/kacang.png',
+            'gambar' => '/images/kacang.jpg',
             'commodities' => [
                 ['nama' => 'Kedelai', 'bapanas' => 'Kedelai Biji Kering'],
                 ['nama' => 'Kacang Tanah', 'bapanas' => null],
@@ -98,7 +98,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Peternakan',
             'tipe' => 'pertanian',
-            'gambar' => '/images/peternakan.png',
+            'gambar' => '/images/peternakan.jpg',
             'commodities' => [
                 ['nama' => 'Daging Sapi', 'bapanas' => 'Daging Sapi Murni'],
                 ['nama' => 'Daging Ayam', 'bapanas' => 'Daging Ayam Ras'],
@@ -111,7 +111,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Bahan Pokok & Olahan',
             'tipe' => 'pertanian',
-            'gambar' => '/images/bahan_pokok.png',
+            'gambar' => '/images/bahan_pokok.jpg',
             'commodities' => [
                 ['nama' => 'Gula Pasir', 'bapanas' => 'Gula Pasir Lokal/Curah'],
                 ['nama' => 'Minyak Goreng Curah', 'bapanas' => 'Minyak Goreng Curah'],
@@ -125,7 +125,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Ikan Air Laut',
             'tipe' => 'perikanan',
-            'gambar' => '/images/ikan.png',
+            'gambar' => '/images/ikan_laut.jpg',
             'commodities' => [
                 ['nama' => 'Ikan Kembung', 'bapanas' => 'Ikan Kembung'],
                 ['nama' => 'Ikan Tongkol', 'bapanas' => 'Ikan Tongkol'],
@@ -144,7 +144,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Ikan Air Tawar',
             'tipe' => 'perikanan',
-            'gambar' => '/images/ikan_tawar.png',
+            'gambar' => '/images/ikan.png',
             'commodities' => [
                 ['nama' => 'Ikan Nila', 'bapanas' => null],
                 ['nama' => 'Ikan Lele', 'bapanas' => null],
@@ -158,7 +158,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Udang & Krustasea',
             'tipe' => 'perikanan',
-            'gambar' => '/images/udang.png',
+            'gambar' => '/images/udang.jpg',
             'commodities' => [
                 ['nama' => 'Udang Vaname', 'bapanas' => null],
                 ['nama' => 'Udang Windu', 'bapanas' => null],
@@ -193,14 +193,6 @@ class CategoryCommoditySeeder extends Seeder
         ],
     ];
 
-    /**
-     * Pemetaan kategori lama -> kategori baru untuk migrasi produk existing.
-     */
-    private array $categoryMigrateMap = [
-        'Beras' => 'Padi & Serealia',
-        'Ikan' => 'Ikan Air Laut',
-    ];
-
     public function run(): void
     {
         // 1. Pastikan kategori & komoditas baru sudah ada lebih dulu
@@ -221,36 +213,8 @@ class CategoryCommoditySeeder extends Seeder
             }
         }
 
-        // 2. Migrasi kategori lama (produk) ke kategori baru
-        $this->migrateOldCategories();
-
-        // 3. Perbaiki produk orphan (category_id null) berdasarkan nama produk
+        // 2. Perbaiki produk orphan (category_id null) berdasarkan nama produk
         $this->assignOrphanProducts();
-    }
-
-    /**
-     * Migrasi produk yang masih menunjuk kategori lama (Beras, Ikan)
-     * ke kategori baru, lalu hapus kategori lama.
-     */
-    private function migrateOldCategories(): void
-    {
-        foreach ($this->categoryMigrateMap as $oldName => $newName) {
-            $oldCategory = Category::where('nama_kategori', $oldName)->first();
-            if (! $oldCategory) {
-                continue;
-            }
-
-            $newCategory = Category::where('nama_kategori', $newName)->first();
-
-            if ($newCategory) {
-                Product::where('category_id', $oldCategory->id)
-                    ->update(['category_id' => $newCategory->id]);
-            }
-
-            // Hapus komoditas lama yang menempel (jika ada)
-            Commodity::where('category_id', $oldCategory->id)->delete();
-            $oldCategory->delete();
-        }
     }
 
     /**

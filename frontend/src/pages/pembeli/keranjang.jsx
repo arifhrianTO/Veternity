@@ -21,8 +21,8 @@ export default function KeranjangPage() {
         cart_id: item.id,
         id: item.product_id, // Untuk checkout
         name: item.product.nama_produk,
-        price: `Rp ${Number(item.product.harga_harapan).toLocaleString('id-ID')}`,
-        priceNum: Number(item.product.harga_harapan),
+        price: `Rp ${Number(item.harga ?? item.product.harga_harapan).toLocaleString('id-ID')}`,
+        priceNum: Number(item.harga ?? item.product.harga_harapan),
         quantity: Number(item.kuantitas),
         unit: `/${item.product.satuan}`,
         image: item.product.gambar ? `http://localhost:8000/storage/${item.product.gambar}` : "/images/beras.png",

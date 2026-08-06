@@ -33,11 +33,6 @@ export default function ProductDetailModal({ product, onClose, onAddToCart, onSu
     onClose();
   };
 
-  const handleBuyNow = () => {
-    onAddToCart(product, quantity);
-    window.location.href = "/pembeli/keranjang";
-  };
-
   const handleSubmitOfferClick = async () => {
     if (!offerPrice || Number(offerPrice) <= 0) {
       alert("Masukkan harga tawaran yang valid.");
@@ -47,7 +42,7 @@ export default function ProductDetailModal({ product, onClose, onAddToCart, onSu
     try {
       await onSubmitOffer(product, quantity, Number(offerPrice), offerMessage);
       onClose();
-    } catch (err) {
+    } catch {
       // error sudah ditangani di parent (swal), cukup stop loading di sini
     } finally {
       setIsSubmittingOffer(false);
@@ -120,8 +115,24 @@ export default function ProductDetailModal({ product, onClose, onAddToCart, onSu
                   className="w-[18px] h-[17px] md:w-[20px] md:h-[19px] object-contain shrink-0 opacity-80"
                 />
                 <span className="text-[12px] md:text-[13px] leading-[16px] text-black/[0.43] font-medium">
-                  {product.koperasi}
+                  {product.koperasi}{" "}
+                  {product.sellerRole && (
+                    <span className="text-[11px]">• {product.sellerRole}</span>
+                  )}
                 </span>
+              </div>
+
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                {product.kategori && product.kategori !== "-" && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#006638]/10 text-[#006638] border border-[#006638]/20">
+                    {product.kategori}
+                  </span>
+                )}
+                {product.komoditas && product.komoditas !== "-" && (
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                    {product.komoditas}
+                  </span>
+                )}
               </div>
 
               <p className="font-bold text-[18px] md:text-[22px] leading-[28px] text-[#006638] mt-3">
@@ -181,20 +192,13 @@ export default function ProductDetailModal({ product, onClose, onAddToCart, onSu
               </button>
 
               <button
-                onClick={handleBuyNow}
-                className="flex-1 h-[46px] md:h-[52px] bg-[#029154] rounded-[8px] text-white font-bold text-[14px] md:text-[16px] leading-[22px] hover:bg-[#027a47] transition-colors"
+                onClick={() => setShowOfferForm((v) => !v)}
+                className="flex-1 h-[46px] md:h-[52px] bg-[#029154] rounded-[8px] text-white font-bold text-[14px] md:text-[16px] leading-[22px] hover:bg-[#027a47] transition-colors flex items-center justify-center gap-2"
               >
-                Beli Sekarang
+                <Send className="w-4 h-4" />
+                {showOfferForm ? "Batal Ajukan Penawaran" : "Ajukan Penawaran"}
               </button>
             </div>
-
-            <button
-              onClick={() => setShowOfferForm((v) => !v)}
-              className="w-full h-[44px] md:h-[48px] mt-3 border-2 border-[#00378A] rounded-[8px] text-[#00378A] font-bold text-[14px] md:text-[15px] hover:bg-[#00378A]/5 transition-colors flex items-center justify-center gap-2"
-            >
-              <Send className="w-4 h-4" />
-              {showOfferForm ? "Batal Ajukan Penawaran" : "Ajukan Penawaran Harga"}
-            </button>
 
             {showOfferForm && (
               <div className="mt-4 p-4 bg-[#00378A]/5 border border-[#00378A]/20 rounded-[10px] space-y-3">
