@@ -95,7 +95,6 @@ export default function KoperasiKelolaProduk() {
   const productName = (p) => p?.category?.nama_kategori || p?.kategori || "Produk";
   const ownerName = (p) => p?.user?.nama_lengkap || "Koperasi";
 
-  // ==================== HANDLER TAMBAH PRODUK ====================
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -172,7 +171,6 @@ export default function KoperasiKelolaProduk() {
     }
   };
 
-  // ==================== HANDLER EDIT PRODUK ====================
   const openEditModal = (item) => {
     setProductToEdit({
       id: item.id,
