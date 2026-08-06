@@ -128,7 +128,7 @@ class UserSeeder extends Seeder
             [
                 'user' => $petaniBinaan,
                 'items' => [
-                    ['nama_produk' => 'Beras Pandan Wangi', 'kategori' => 'Beras', 'gambar' => 'products/beras.png', 'stok' => 500, 'harga' => 13500, 'masa_layak' => 180],
+                    ['nama_produk' => 'Beras Pandan Wangi', 'kategori' => 'Padi & Serealia', 'gambar' => 'products/beras.png', 'stok' => 500, 'harga' => 13500, 'masa_layak' => 180],
                     ['nama_produk' => 'Cabai Merah Keriting', 'kategori' => 'Sayur', 'gambar' => 'products/sayur.png', 'stok' => 200, 'harga' => 35000, 'masa_layak' => 14],
                     ['nama_produk' => 'Kentang Manado', 'kategori' => 'Umbi', 'gambar' => 'products/umbi.png', 'stok' => 300, 'harga' => 15000, 'masa_layak' => 30],
                     ['nama_produk' => 'Mangga Manalagi', 'kategori' => 'Buah', 'gambar' => 'products/buah.png', 'stok' => 150, 'harga' => 20000, 'masa_layak' => 10],
@@ -137,7 +137,7 @@ class UserSeeder extends Seeder
             [
                 'user' => $petaniMandiri,
                 'items' => [
-                    ['nama_produk' => 'Beras Merah Organik', 'kategori' => 'Beras', 'gambar' => 'products/beras1.png', 'stok' => 250, 'harga' => 18500, 'masa_layak' => 180],
+                    ['nama_produk' => 'Beras Merah Organik', 'kategori' => 'Padi & Serealia', 'gambar' => 'products/beras1.png', 'stok' => 250, 'harga' => 18500, 'masa_layak' => 180],
                     ['nama_produk' => 'Bayam Hijau', 'kategori' => 'Sayur', 'gambar' => 'products/sayur.png', 'stok' => 100, 'harga' => 5000, 'masa_layak' => 5],
                     ['nama_produk' => 'Ubi Jalar Cilembu', 'kategori' => 'Umbi', 'gambar' => 'products/umbi.png', 'stok' => 400, 'harga' => 9000, 'masa_layak' => 45],
                     ['nama_produk' => 'Pisang Ambon', 'kategori' => 'Buah', 'gambar' => 'products/buah.png', 'stok' => 120, 'harga' => 12000, 'masa_layak' => 7],
@@ -146,19 +146,19 @@ class UserSeeder extends Seeder
             [
                 'user' => $nelayanBinaan,
                 'items' => [
-                    ['nama_produk' => 'Ikan Tuna Segar', 'kategori' => 'Ikan', 'gambar' => 'products/ikan.png', 'stok' => 80, 'harga' => 55000, 'masa_layak' => 3],
-                    ['nama_produk' => 'Udang Vaname', 'kategori' => 'Ikan', 'gambar' => 'products/udang.png', 'stok' => 100, 'harga' => 75000, 'masa_layak' => 3],
-                    ['nama_produk' => 'Ikan Bandeng', 'kategori' => 'Ikan', 'gambar' => 'products/ikan1.png', 'stok' => 120, 'harga' => 28000, 'masa_layak' => 3],
-                    ['nama_produk' => 'Ikan Kembung', 'kategori' => 'Ikan', 'gambar' => 'products/ikan.png', 'stok' => 90, 'harga' => 25000, 'masa_layak' => 3],
+                    ['nama_produk' => 'Ikan Tuna Segar', 'kategori' => 'Ikan Air Laut', 'gambar' => 'products/ikan.png', 'stok' => 80, 'harga' => 55000, 'masa_layak' => 3],
+                    ['nama_produk' => 'Udang Vaname', 'kategori' => 'Udang & Krustasea', 'gambar' => 'products/udang.png', 'stok' => 100, 'harga' => 75000, 'masa_layak' => 3],
+                    ['nama_produk' => 'Ikan Bandeng', 'kategori' => 'Ikan Air Laut', 'gambar' => 'products/ikan1.png', 'stok' => 120, 'harga' => 28000, 'masa_layak' => 3],
+                    ['nama_produk' => 'Ikan Kembung', 'kategori' => 'Ikan Air Laut', 'gambar' => 'products/ikan.png', 'stok' => 90, 'harga' => 25000, 'masa_layak' => 3],
                 ],
             ],
             [
                 'user' => $nelayanMandiri,
                 'items' => [
-                    ['nama_produk' => 'Ikan Tongkol', 'kategori' => 'Ikan', 'gambar' => 'products/ikan1.png', 'stok' => 110, 'harga' => 30000, 'masa_layak' => 3],
-                    ['nama_produk' => 'Cumi-Cumi Segar', 'kategori' => 'Ikan', 'gambar' => 'products/ikan.png', 'stok' => 70, 'harga' => 65000, 'masa_layak' => 3],
-                    ['nama_produk' => 'Ikan Lele', 'kategori' => 'Ikan', 'gambar' => 'products/ikan.png', 'stok' => 200, 'harga' => 18000, 'masa_layak' => 3],
-                    ['nama_produk' => 'Udang Windu', 'kategori' => 'Ikan', 'gambar' => 'products/udang.png', 'stok' => 85, 'harga' => 80000, 'masa_layak' => 3],
+                    ['nama_produk' => 'Ikan Tongkol', 'kategori' => 'Ikan Air Laut', 'gambar' => 'products/ikan1.png', 'stok' => 110, 'harga' => 30000, 'masa_layak' => 3],
+                    ['nama_produk' => 'Cumi-Cumi Segar', 'kategori' => 'Cumi & Moluska', 'gambar' => 'products/ikan.png', 'stok' => 70, 'harga' => 65000, 'masa_layak' => 3],
+                    ['nama_produk' => 'Ikan Lele', 'kategori' => 'Ikan Air Tawar', 'gambar' => 'products/ikan.png', 'stok' => 200, 'harga' => 18000, 'masa_layak' => 3],
+                    ['nama_produk' => 'Udang Windu', 'kategori' => 'Udang & Krustasea', 'gambar' => 'products/udang.png', 'stok' => 85, 'harga' => 80000, 'masa_layak' => 3],
                 ],
             ],
         ];
