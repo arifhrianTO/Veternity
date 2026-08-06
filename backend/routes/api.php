@@ -15,12 +15,15 @@ use App\Http\Controllers\Api\LogistikController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CommodityController;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\HomeController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // ... API Routes untuk produk (public)
 Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/featured', [ProductController::class, 'featured']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
 
 Route::get('/bapanas/commodities', [BapanasPriceController::class, 'commodities']);
@@ -30,6 +33,10 @@ Route::get('/bapanas/latest-price', [BapanasPriceController::class, 'latestPrice
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{category}/commodities', [CommodityController::class, 'byCategory']);
 
+// Data halaman utama (publik)
+Route::get('/home/stats', [HomeController::class, 'stats']);
+Route::get('/home/koperasi', [HomeController::class, 'koperasi']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
@@ -38,6 +45,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user', [UserController::class, 'update']);
     Route::get('/koperasi-list', [UserController::class, 'getKoperasiList']);
     Route::post('/user/change-password', [UserController::class, 'changePassword']);
+
+    // Notifikasi (semua role yang login)
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::put('/notifications/read-all', [NotificationController::class, 'markAllRead']);
 
     // Dashboard khusus Admin (kelola logistik/kurir, kategori & komoditas)
     Route::middleware('role:admin')->group(function () {

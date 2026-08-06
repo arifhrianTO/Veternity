@@ -76,7 +76,8 @@ export default function MitraPenawaranPage() {
         history: offer.histories ? offer.histories.map(h => ({
           time: new Date(h.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
           label: h.aksi,
-          value: h.harga_terkait ? `Rp ${Number(h.harga_terkait).toLocaleString('id-ID')}` : '-'
+          value: h.harga_terkait ? `Rp ${Number(h.harga_terkait).toLocaleString('id-ID')}` : '-',
+          komentar: h.komentar || null
         })) : []
       }));
       setOffers(formattedOffers);
@@ -89,12 +90,13 @@ export default function MitraPenawaranPage() {
   };
 
   useEffect(() => {
-    fetchOffers();
+    Promise.resolve().then(fetchOffers);
   }, []);
 
   const [activeTab, setActiveTab] = useState("semua");
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [counterPrice, setCounterPrice] = useState("");
+  const [offerComment, setOfferComment] = useState("");
   const [page, setPage] = useState(1);
   const itemsPerPage = 4;
 
@@ -116,7 +118,7 @@ export default function MitraPenawaranPage() {
   };
 
   // Handler generik untuk update status penawaran (Terima / Tolak / Counter)
-  const handleUpdateOfferStatus = async (status, aksiLabel, hargaTawaranOverride = null) => {
+  const handleUpdateOfferStatus = async (status, aksiLabel, hargaTawaranOverride = null, komentar = "") => {
     if (!selectedOffer) return;
     setIsActionSubmitting(true);
     try {
@@ -124,10 +126,14 @@ export default function MitraPenawaranPage() {
       if (hargaTawaranOverride !== null) {
         payload.harga_tawaran = hargaTawaranOverride;
       }
+      if (komentar) {
+        payload.komentar = komentar;
+      }
       await api.put(`/offers/${selectedOffer.offerId}`, payload);
       await fetchOffers();
       setSelectedOffer(null);
       setCounterPrice("");
+      setOfferComment("");
     } catch (err) {
       console.error("Gagal memperbarui penawaran", err);
       alert(err.response?.data?.message || "Gagal memperbarui penawaran.");
@@ -137,11 +143,11 @@ export default function MitraPenawaranPage() {
   };
 
   const handleTerima = () => {
-    handleUpdateOfferStatus("Diterima", "Penawaran diterima");
+    handleUpdateOfferStatus("Diterima", "Penawaran diterima", null, offerComment);
   };
 
   const handleTolak = () => {
-    handleUpdateOfferStatus("Ditolak", "Penawaran ditolak");
+    handleUpdateOfferStatus("Ditolak", "Penawaran ditolak", null, offerComment);
   };
 
   const handleKirimCounter = () => {
@@ -149,7 +155,7 @@ export default function MitraPenawaranPage() {
       alert("Masukkan harga counter yang valid.");
       return;
     }
-    handleUpdateOfferStatus("Counter", "Penawaran counter diajukan", Number(counterPrice));
+    handleUpdateOfferStatus("Counter", "Penawaran counter diajukan", Number(counterPrice), offerComment);
   };
 
   return (
@@ -236,7 +242,7 @@ export default function MitraPenawaranPage() {
                           </td>
                           <td className="py-4 px-2 text-center">
                             <button
-                              onClick={() => setSelectedOffer(offer)}
+                              onClick={() => { setSelectedOffer(offer); setOfferComment(""); }}
                               className="rounded-full bg-[#006638] px-6 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-[#00522d] transition"
                             >
                               Detail
@@ -301,7 +307,7 @@ export default function MitraPenawaranPage() {
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 shrink-0">
               <h3 className="text-[18px] font-bold text-[#005941]">Detail Penawaran</h3>
               <button
-                onClick={() => { setSelectedOffer(null); setCounterPrice(""); }}
+                onClick={() => { setSelectedOffer(null); setCounterPrice(""); setOfferComment(""); }}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
               >
                 <X className="w-5 h-5" />
@@ -378,12 +384,19 @@ export default function MitraPenawaranPage() {
                 <div className="font-semibold text-[#273B4A] text-[13px] mb-2">Riwayat Penawaran</div>
                 <div className="space-y-1.5">
                   {selectedOffer.history.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between rounded-[8px] bg-white px-3 py-1.5 border border-slate-200 text-[12px]">
-                      <div className="flex items-center gap-3">
-                        <div className="text-[11px] text-slate-400 font-medium w-[35px]">{item.time}</div>
-                        <div className="font-medium text-[#273B4A]">{item.label}</div>
+                    <div key={index} className="rounded-[8px] bg-white px-3 py-1.5 border border-slate-200 text-[12px]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="text-[11px] text-slate-400 font-medium w-[35px]">{item.time}</div>
+                          <div className="font-medium text-[#273B4A]">{item.label}</div>
+                        </div>
+                        <div className="font-bold text-[#006638]">{item.value}</div>
                       </div>
-                      <div className="font-bold text-[#006638]">{item.value}</div>
+                      {item.komentar && (
+                        <div className="mt-1.5 ml-[47px] text-slate-600 italic border-l-2 border-emerald-300 pl-2">
+                          "{item.komentar}"
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -393,44 +406,78 @@ export default function MitraPenawaranPage() {
 
             {/* Action Buttons - Fixed at Bottom */}
             <div className="border-t border-slate-200 p-4 shrink-0 bg-slate-50">
-               <div className="flex flex-col sm:flex-row gap-3">
-                  {/* Left: Terima / Tolak */}
-                  <div className="flex gap-2 sm:w-[40%]">
-                    <button
-                      onClick={handleTerima}
-                      disabled={isActionSubmitting}
-                      className="flex-1 rounded-[10px] bg-[#006638] py-2.5 font-semibold text-white hover:bg-[#00522d] transition text-[13px] disabled:opacity-50"
-                    >
-                      Terima
-                    </button>
-                    <button
-                      onClick={handleTolak}
-                      disabled={isActionSubmitting}
-                      className="flex-1 rounded-[10px] border-2 border-red-500 bg-white py-2 font-semibold text-red-500 hover:bg-red-50 transition text-[13px] disabled:opacity-50"
-                    >
-                      Tolak
-                    </button>
-                  </div>
-                  
-                  {/* Right: Counter Offer */}
-                  <div className="flex gap-2 flex-1 items-center bg-white border border-slate-300 rounded-[10px] overflow-hidden pl-3 focus-within:border-[#006638]">
-                    <span className="text-[13px] font-semibold text-slate-400">Rp</span>
-                    <input
-                      type="text"
-                      value={counterPrice}
-                      onChange={(e) => setCounterPrice(e.target.value)}
-                      placeholder="Harga counter..."
-                      className="flex-1 bg-transparent py-2.5 text-[13px] text-slate-900 outline-none font-semibold"
-                    />
-                    <button
-                      onClick={handleKirimCounter}
-                      disabled={isActionSubmitting}
-                      className="bg-[#273B4A] h-full px-4 font-semibold text-white hover:bg-[#1f2f3b] transition text-[13px] disabled:opacity-50"
-                    >
-                      Kirim
-                    </button>
-                  </div>
-               </div>
+               {selectedOffer.status === "Menunggu" || selectedOffer.status === "Counter" ? (
+                 <>
+                   <div className="mb-3">
+                     <label className="text-[12px] font-semibold text-slate-600 block mb-1">
+                       Komentar (opsional)
+                     </label>
+                     <textarea
+                       value={offerComment}
+                       onChange={(e) => setOfferComment(e.target.value)}
+                       placeholder="Contoh: Bisa kirim minggu depan ya..."
+                       rows={2}
+                       className="w-full border border-slate-300 rounded-[8px] px-3 py-2 text-[13px] outline-none resize-none"
+                     />
+                   </div>
+                   <div className="flex flex-col sm:flex-row gap-3">
+                      {/* Left: Terima / Tolak */}
+                      <div className="flex gap-2 sm:w-[40%]">
+                        <button
+                          onClick={handleTerima}
+                          disabled={isActionSubmitting}
+                          className="flex-1 rounded-[10px] bg-[#006638] py-2.5 font-semibold text-white hover:bg-[#00522d] transition text-[13px] disabled:opacity-50"
+                        >
+                          Terima
+                        </button>
+                        <button
+                          onClick={handleTolak}
+                          disabled={isActionSubmitting}
+                          className="flex-1 rounded-[10px] border-2 border-red-500 bg-white py-2 font-semibold text-red-500 hover:bg-red-50 transition text-[13px] disabled:opacity-50"
+                        >
+                          Tolak
+                        </button>
+                      </div>
+
+                      {/* Right: Counter Offer */}
+                      <div className="flex gap-2 flex-1 items-center bg-white border border-slate-300 rounded-[10px] overflow-hidden pl-3 focus-within:border-[#006638]">
+                        <span className="text-[13px] font-semibold text-slate-400">Rp</span>
+                        <input
+                          type="text"
+                          value={counterPrice}
+                          onChange={(e) => setCounterPrice(e.target.value)}
+                          placeholder="Harga counter..."
+                          className="flex-1 bg-transparent py-2.5 text-[13px] text-slate-900 outline-none font-semibold"
+                        />
+                        <button
+                          onClick={handleKirimCounter}
+                          disabled={isActionSubmitting}
+                          className="bg-[#273B4A] h-full px-4 font-semibold text-white hover:bg-[#1f2f3b] transition text-[13px] disabled:opacity-50"
+                        >
+                          Kirim
+                        </button>
+                      </div>
+                   </div>
+                 </>
+               ) : (
+                 <div className="flex flex-col gap-2">
+                   {selectedOffer.status === "Diterima" && (
+                     <div className="rounded-[8px] border border-emerald-300 bg-emerald-50 px-3 py-2 text-[12px] font-semibold text-[#006638]">
+                       ✓ Penawaran telah disepakati. Produk otomatis masuk ke keranjang pembeli.
+                     </div>
+                   )}
+                   {selectedOffer.status === "Ditolak" && (
+                     <div className="rounded-[8px] border border-red-300 bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-600">
+                       ✗ Penawaran ini ditolak.
+                     </div>
+                   )}
+                   <div className="flex justify-end">
+                     <span className="text-[13px] font-semibold text-slate-500">
+                       Status: {selectedOffer.status}
+                     </span>
+                   </div>
+                 </div>
+               )}
             </div>
 
           </div>

@@ -144,6 +144,38 @@ class ProductController extends Controller
     }
  
     /**
+     * Produk unggulan untuk halaman utama (public).
+     * 8 produk aktif terlaris berdasarkan total terjual (order_items),
+     * fallback ke produk terbaru jika belum ada penjualan.
+     */
+    public function featured(Request $request)
+    {
+        $limit = (int) $request->input('limit', 8);
+
+        $topSold = \App\Models\OrderItem::query()
+            ->whereIn('order_id', function ($q) {
+                $q->select('id')->from('orders')->where('status', 'Selesai');
+            })
+            ->selectRaw('product_id, SUM(jumlah_beli) as total_terjual')
+            ->groupBy('product_id')
+            ->orderByDesc('total_terjual');
+
+        $products = Product::with(['user.city', 'category', 'commodity'])
+            ->where('status', 'Aktif')
+            ->leftJoinSub($topSold, 'terlaris', function ($join) {
+                $join->on('products.id', '=', 'terlaris.product_id');
+            })
+            ->select('products.*')
+            ->orderByRaw('COALESCE(terlaris.total_terjual, 0) DESC')
+            ->orderBy('products.created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($product) => $this->attachHargaAcuan($product));
+
+        return response()->json($products);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)

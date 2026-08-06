@@ -70,6 +70,7 @@ export default function PenawaranPembeliPage() {
   const [activeTab, setActiveTab] = useState("semua");
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [counterPrice, setCounterPrice] = useState("");
+  const [offerComment, setOfferComment] = useState("");
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
   const [page, setPage] = useState(1);
   const itemsPerPage = 5;
@@ -114,6 +115,7 @@ export default function PenawaranPembeliPage() {
           value: h.harga_terkait
             ? `Rp ${Number(h.harga_terkait).toLocaleString("id-ID")}`
             : "-",
+          komentar: h.komentar || null,
         })),
       }));
       setOffers(formatted);
@@ -126,7 +128,7 @@ export default function PenawaranPembeliPage() {
   };
 
   useEffect(() => {
-    fetchOffers();
+    Promise.resolve().then(fetchOffers);
   }, []);
 
   const filteredOffers = offers.filter((o) => {
@@ -147,7 +149,7 @@ export default function PenawaranPembeliPage() {
     setPage(1);
   };
 
-  const handleUpdateOffer = async (status, aksiLabel, hargaTawaranOverride = null) => {
+  const handleUpdateOffer = async (status, aksiLabel, hargaTawaranOverride = null, komentar = "") => {
     if (!selectedOffer) return;
     setIsActionSubmitting(true);
     try {
@@ -155,11 +157,14 @@ export default function PenawaranPembeliPage() {
       if (hargaTawaranOverride !== null) {
         payload.harga_tawaran = hargaTawaranOverride;
       }
+      if (komentar) {
+        payload.komentar = komentar;
+      }
       await api.put(`/offers/${selectedOffer.offerId}`, payload);
       await swalSuccess(
         status === "Diterima" ? "Penawaran Diterima!" : status === "Ditolak" ? "Penawaran Ditolak" : "Counter Terkirim",
         status === "Diterima"
-          ? "Anda telah menerima tawaran dari penjual."
+          ? "Anda telah menerima tawaran dari penjual. Produk otomatis masuk ke keranjang Anda."
           : status === "Ditolak"
           ? "Penawaran telah Anda tolak."
           : "Counter harga Anda telah dikirim ke penjual."
@@ -167,6 +172,7 @@ export default function PenawaranPembeliPage() {
       await fetchOffers();
       setSelectedOffer(null);
       setCounterPrice("");
+      setOfferComment("");
     } catch (err) {
       console.error("Gagal update penawaran:", err);
       await swalError(
@@ -178,15 +184,15 @@ export default function PenawaranPembeliPage() {
     }
   };
 
-  const handleTerima = () => handleUpdateOffer("Diterima", "Pembeli menerima penawaran counter");
-  const handleTolak = () => handleUpdateOffer("Ditolak", "Pembeli menolak penawaran counter");
+  const handleTerima = () => handleUpdateOffer("Diterima", "Pembeli menerima penawaran counter", null, offerComment);
+  const handleTolak = () => handleUpdateOffer("Ditolak", "Pembeli menolak penawaran counter", null, offerComment);
   const handleKirimCounter = () => {
     const val = Number(counterPrice);
     if (!counterPrice || val <= 0) {
       swalError("Harga tidak valid", "Masukkan harga counter yang valid.");
       return;
     }
-    handleUpdateOffer("Counter", "Pembeli mengajukan counter balik", val);
+    handleUpdateOffer("Counter", "Pembeli mengajukan counter balik", val, offerComment);
   };
 
   return (
@@ -325,6 +331,7 @@ export default function PenawaranPembeliPage() {
                               onClick={() => {
                                 setSelectedOffer(offer);
                                 setCounterPrice("");
+                                setOfferComment("");
                               }}
                               className="rounded-full bg-[#006638] px-5 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-[#00522d] transition"
                             >
@@ -394,6 +401,7 @@ export default function PenawaranPembeliPage() {
                 onClick={() => {
                   setSelectedOffer(null);
                   setCounterPrice("");
+                  setOfferComment("");
                 }}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
               >
@@ -491,13 +499,20 @@ export default function PenawaranPembeliPage() {
                     selectedOffer.history.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between rounded-[8px] bg-white px-3 py-1.5 border border-slate-200 text-[12px]"
+                        className="rounded-[8px] bg-white px-3 py-1.5 border border-slate-200 text-[12px]"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="text-[11px] text-slate-400 font-medium w-[32px]">{item.time}</div>
-                          <div className="font-medium text-[#273B4A]">{item.label}</div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="text-[11px] text-slate-400 font-medium w-[32px]">{item.time}</div>
+                            <div className="font-medium text-[#273B4A]">{item.label}</div>
+                          </div>
+                          <div className="font-bold text-[#006638]">{item.value}</div>
                         </div>
-                        <div className="font-bold text-[#006638]">{item.value}</div>
+                        {item.komentar && (
+                          <div className="mt-1.5 ml-[44px] text-slate-600 italic border-l-2 border-emerald-300 pl-2">
+                            "{item.komentar}"
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
@@ -511,6 +526,18 @@ export default function PenawaranPembeliPage() {
                 <p className="text-[12px] text-sky-700 font-semibold mb-3">
                   Penjual mengajukan counter harga. Apa respons Anda?
                 </p>
+                <div className="mb-3">
+                  <label className="text-[12px] font-semibold text-slate-600 block mb-1">
+                    Komentar (opsional)
+                  </label>
+                  <textarea
+                    value={offerComment}
+                    onChange={(e) => setOfferComment(e.target.value)}
+                    placeholder="Contoh: Setuju, lanjut proses..."
+                    rows={2}
+                    className="w-full border border-slate-300 rounded-[8px] px-3 py-2 text-[13px] outline-none resize-none"
+                  />
+                </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   {/* Terima / Tolak */}
                   <div className="flex gap-2 sm:w-[42%]">
@@ -563,8 +590,20 @@ export default function PenawaranPembeliPage() {
                 }`}
               >
                 {selectedOffer.status === "Diterima"
-                  ? "✓ Penawaran telah disepakati."
+                  ? "✓ Penawaran telah disepakati. Produk otomatis masuk ke keranjang Anda."
                   : "✗ Penawaran tidak berhasil disepakati."}
+              </div>
+            )}
+
+            {/* CTA Lanjut ke Keranjang saat disetujui */}
+            {selectedOffer.status === "Diterima" && (
+              <div className="border-t border-slate-200 p-4 shrink-0 bg-white">
+                <button
+                  onClick={() => (window.location.href = "/pembeli/keranjang")}
+                  className="w-full h-[46px] rounded-[10px] bg-[#006638] hover:bg-[#00522d] text-white font-bold text-[14px] transition shadow-sm"
+                >
+                  Lanjut ke Keranjang
+                </button>
               </div>
             )}
           </div>

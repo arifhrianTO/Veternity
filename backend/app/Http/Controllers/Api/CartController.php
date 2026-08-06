@@ -24,7 +24,8 @@ class CartController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'kuantitas' => 'required|numeric|min:1'
+            'kuantitas' => 'required|numeric|min:1',
+            'harga' => 'nullable|numeric|min:0'
         ]);
 
         // Cek jika produk sudah ada di keranjang user
@@ -34,12 +35,16 @@ class CartController extends Controller
 
         if ($cart) {
             $cart->kuantitas += $request->kuantitas;
+            if ($request->filled('harga')) {
+                $cart->harga = $request->harga;
+            }
             $cart->save();
         } else {
             $cart = Cart::create([
                 'user_id' => $request->user()->id,
                 'product_id' => $request->product_id,
-                'kuantitas' => $request->kuantitas
+                'kuantitas' => $request->kuantitas,
+                'harga' => $request->filled('harga') ? $request->harga : null,
             ]);
         }
 

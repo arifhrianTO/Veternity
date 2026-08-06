@@ -12,6 +12,7 @@ class OfferHistory extends Model
         'aktor_id',
         'aksi',
         'harga_terkait',
+        'komentar',
     ];
 
     public function offer(): BelongsTo

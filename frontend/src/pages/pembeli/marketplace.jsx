@@ -6,6 +6,16 @@ import ProductDetailModal from "../../components/pembeli/ProductDetailModal";
 import { Star, Search } from "lucide-react";
 import { swalSuccess, swalError } from "../../utils/swal";
 
+const sellerRoleLabels = {
+  petani: "Petani",
+  petani_binaan: "Petani",
+  nelayan: "Nelayan",
+  nelayan_binaan: "Nelayan",
+  koperasi: "Koperasi",
+  pembeli: "Pembeli",
+  admin: "Admin",
+};
+
 export default function MarketplacePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Semua");
@@ -23,7 +33,7 @@ export default function MarketplacePage() {
       try {
         const response = await api.get('/products');
         // Transform mapping dari DB ke format yang dibutuhkan UI (mockData format)
-         const formattedProducts = response.data.map(p => ({
+        const formattedProducts = response.data.map(p => ({
           id: p.id,
           name: p.nama_produk,
           location: "Indonesia",
@@ -32,14 +42,16 @@ export default function MarketplacePage() {
           harga_acuan: p.harga_acuan ? Number(p.harga_acuan) : null,   // ← tambahkan baris ini
           unit: `/${p.satuan}`,
           rating: 4.8,
-          koperasi: p.user?.name || "Petani", 
+          koperasi: p.user?.nama_lengkap || "Petani",
+          sellerRole: p.user?.role ? sellerRoleLabels[p.user.role] || "Penjual" : "Penjual",
           petani_id: p.user_id,
           image: p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/beras.png",
           stock: `${p.stok}${p.satuan}`,
           harvestDate: new Date(p.tanggal_panen).toLocaleDateString(),
           shelfLife: `${p.masa_layak} hari`,
           originCityId: p.user_id === 1 ? 78 : 54,
-          kategori: p.category?.nama_kategori || p.kategori || "-"
+          kategori: p.category?.nama_kategori || p.kategori || "-",
+          komoditas: p.commodity?.nama_komoditas || p.komoditas_acuan || "-"
         }));
         setProducts(formattedProducts);
       } catch (error) {
@@ -84,6 +96,9 @@ export default function MarketplacePage() {
   }
 };
 
+  // Opsi kategori dinamis dari data produk asli
+  const categoryOptions = ["Semua", ...new Set(products.map((p) => p.kategori).filter((k) => k && k !== "-"))];
+
   const filteredProducts = products.filter((p) => {
     // Tambahkan pengaman agar tidak crash jika p.name atau p.koperasi undefined/null
     const safeName = p.name || "";
@@ -91,16 +106,8 @@ export default function MarketplacePage() {
 
     const matchesSearch = safeName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           safeKoperasi.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    let productCategory = "Semua";
-    const nameLower = safeName.toLowerCase();
-    if (nameLower.includes("beras")) productCategory = "Beras";
-    else if (nameLower.includes("ikan") || nameLower.includes("tongkol") || nameLower.includes("udang")) productCategory = "Ikan";
-    else if (nameLower.includes("sayur")) productCategory = "Sayur";
-    else if (nameLower.includes("buah")) productCategory = "Buah";
-    else if (nameLower.includes("telur")) productCategory = "Telur";
 
-    const matchesCategory = selectedCategory === "Semua" || productCategory === selectedCategory;
+    const matchesCategory = selectedCategory === "Semua" || p.kategori === selectedCategory;
     
     const safeLocation = p.location || "";
     const matchesLocation = selectedLocation === "Semua" || safeLocation.includes(selectedLocation);
@@ -150,12 +157,9 @@ export default function MarketplacePage() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="h-[42px] w-[153px] px-3 bg-white border border-[#024D70] rounded-[5px] text-sm text-[#00378A] font-medium outline-none cursor-pointer"
               >
-                <option value="Semua">Kategori</option>
-                <option value="Beras">Beras</option>
-                <option value="Ikan">Ikan</option>
-                <option value="Telur">Telur</option>
-                <option value="Sayur">Sayur</option>
-                <option value="Buah">Buah</option>
+                {categoryOptions.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
 
               {/* Filter Harga */}
@@ -211,7 +215,18 @@ export default function MarketplacePage() {
                   {/* Body Content */}
                   <div className="p-4 relative">
                     <h4 className="font-bold text-[18px] leading-[22px] text-[#273B4A] line-clamp-1">{p.name}</h4>
-                    
+
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#006638]/10 text-[#006638] border border-[#006638]/20">
+                        {p.kategori}
+                      </span>
+                      {p.komoditas && p.komoditas !== "-" && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                          {p.komoditas}
+                        </span>
+                      )}
+                    </div>
+
                     <p className="text-[14px] leading-[18px] text-[rgba(0,0,0,0.43)] font-medium mt-1">
                       {p.location}
                     </p>
@@ -229,7 +244,9 @@ export default function MarketplacePage() {
 
                     <div className="flex items-center gap-2 mt-[14px]">
                       <img src="/images/iconKoperasi.png" alt="koperasi icon" className="w-[20px] h-[20px] object-contain shrink-0 opacity-80" />
-                      <span className="text-[14px] text-[rgba(0,0,0,0.43)] font-medium">{p.koperasi}</span>
+                      <span className="text-[14px] text-[rgba(0,0,0,0.43)] font-medium">
+                        {p.koperasi} <span className="text-[12px]">• {p.sellerRole}</span>
+                      </span>
                     </div>
                   </div>
                 </div>

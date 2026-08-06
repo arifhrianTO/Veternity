@@ -1,4 +1,5 @@
 import { useUser } from "../../hooks/useUser";
+import NotificationBell from "../common/NotificationBell";
 
 const storageUrl = (path) => {
   if (!path) return "/images/user.png";
@@ -17,16 +18,19 @@ export default function PageHeader({ title, subtitle }) {
           <p className="text-[14px] text-slate-500 truncate">{subtitle}</p>
         )}
       </div>
-      <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100 flex-shrink-0">
-        <img
-          src={storageUrl(user?.foto_profil)}
-          alt="avatar"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "/images/user.png";
-          }}
-        />
+      <div className="flex items-center gap-3">
+        <NotificationBell />
+        <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100 flex-shrink-0">
+          <img
+            src={storageUrl(user?.foto_profil)}
+            alt="avatar"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "/images/user.png";
+            }}
+          />
+        </div>
       </div>
     </div>
   );

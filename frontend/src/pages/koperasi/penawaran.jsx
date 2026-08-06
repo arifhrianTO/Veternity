@@ -12,6 +12,7 @@ export default function PenawaranPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showCounter, setShowCounter] = useState(false);
   const [counterPrice, setCounterPrice] = useState("");
+  const [comment, setComment] = useState("");
 
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +61,7 @@ export default function PenawaranPage() {
       tanggal: h.created_at?.split("T")[0] || "-",
       keterangan: h.aksi || "-",
       harga: h.harga_terkait ? formatRupiah(h.harga_terkait) : null,
+      komentar: h.komentar || null,
     })),
   }));
 
@@ -104,11 +106,13 @@ export default function PenawaranPage() {
   const handleOpenModal = (item) => {
     setSelectedItem(item);
     setShowCounter(false);
+    setComment("");
   };
 
   const handleCloseModal = () => {
     setSelectedItem(null);
     setShowCounter(false);
+    setComment("");
   };
 
   const sendAction = async (status, harga) => {
@@ -124,11 +128,13 @@ export default function PenawaranPage() {
         status,
         harga_tawaran: harga || undefined,
         aksi_label: labels[status] || status,
+        komentar: comment || undefined,
       });
       await fetchOffers();
       setSelectedItem((prev) => ({ ...prev, status }));
       setShowCounter(false);
       setCounterPrice("");
+      setComment("");
     } catch (error) {
       console.error("Gagal update penawaran:", error);
       swalError("Gagal memperbarui penawaran", error.response?.data?.message || "Terjadi kesalahan saat menyimpan penawaran.");
@@ -398,6 +404,11 @@ export default function PenawaranPage() {
                         <div>
                           <p className="text-gray-400 font-medium">{rw.tanggal}</p>
                           <p className="text-slate-800 font-semibold">{rw.keterangan}</p>
+                          {rw.komentar && (
+                            <p className="text-slate-600 italic mt-0.5 border-l-2 border-emerald-300 pl-2">
+                              "{rw.komentar}"
+                            </p>
+                          )}
                         </div>
                         {rw.harga && (
                           <span className="font-bold text-[#029154]">{rw.harga}</span>
@@ -415,6 +426,18 @@ export default function PenawaranPage() {
             {(statusActionMap[selectedItem.status]?.dapatTindakan ?? false) ? (
               <div className="border-t pt-4">
                 <h4 className="text-[14px] font-bold text-[#273B4A] mb-3">Aksi</h4>
+                <div className="mb-3">
+                  <label className="text-[12px] font-semibold text-slate-600 block mb-1">
+                    Komentar (opsional)
+                  </label>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Contoh: Siap, akan segera kami proses..."
+                    rows={2}
+                    className="w-full border border-slate-300 rounded-[8px] px-3 py-2 text-[13px] outline-none resize-none"
+                  />
+                </div>
                 <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={() => sendAction("Diterima")}
@@ -473,8 +496,15 @@ export default function PenawaranPage() {
                 )}
               </div>
             ) : (
-              <div className="border-t pt-4 flex justify-end">
-                <span className="text-[13px] font-semibold text-slate-500">Status: {selectedItem.status}</span>
+              <div className="border-t pt-4 flex flex-col gap-2">
+                {selectedItem.status === "Diterima" && (
+                  <div className="rounded-[8px] border border-emerald-300 bg-emerald-50 px-3 py-2 text-[12px] font-semibold text-[#006638]">
+                    ✓ Penawaran telah disepakati. Produk otomatis masuk ke keranjang pembeli.
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <span className="text-[13px] font-semibold text-slate-500">Status: {selectedItem.status}</span>
+                </div>
               </div>
             )}
 

@@ -1,9 +1,41 @@
-import { useState } from "react";
-import { Search, ChevronDown, Store, Users, ArrowRight } from "lucide-react";
-import { koperasiList, filters } from "../../data/mockData";
+import { useState, useEffect } from "react";
+import { Search, ChevronDown, Store, Users, ArrowRight, Loader2 } from "lucide-react";
+import api from "../../config/axios";
+
+const filters = ["Semua", "Pertanian", "Perikanan"];
+
+const logoUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `http://localhost:8000/storage/${path}`;
+};
 
 export default function KoperasiSection() {
   const [activeFilter, setActiveFilter] = useState("Semua");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [koperasiList, setKoperasiList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get("/home/koperasi")
+      .then((res) => {
+        const list = res.data?.data || [];
+        setKoperasiList(list);
+      })
+      .catch((err) => console.error("Gagal mengambil data koperasi:", err))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const filteredList = koperasiList.filter((k) => {
+    const matchesFilter =
+      activeFilter === "Semua" || (k.tipe || "").toLowerCase() === activeFilter.toLowerCase();
+    const matchesSearch =
+      !searchTerm ||
+      (k.nama || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (k.kota || "").toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   return (
     <section id="koperasi" className="max-w-7xl mx-auto px-20 pt-16 pb-20">
@@ -17,6 +49,8 @@ export default function KoperasiSection() {
           <input
             type="text"
             placeholder="Cari Koperasi..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-full border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
@@ -40,33 +74,58 @@ export default function KoperasiSection() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-        {koperasiList.map((k, i) => (
-          <div
-            key={i}
-            className="rounded-2xl border border-[#029154]/50 bg-[#00FF40]/[0.03] p-6 flex flex-col items-center text-center hover:shadow-sm transition-shadow"
-          >
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-2 text-[#006638] py-16">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="font-semibold">Memuat koperasi...</span>
+        </div>
+      ) : filteredList.length === 0 ? (
+        <div className="text-center py-16 text-slate-400 font-medium">
+          Tidak ada koperasi ditemukan.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+          {filteredList.map((k, i) => (
             <div
-              className={`w-16 h-16 rounded-full ${k.avatar} flex items-center justify-center mb-3`}
+              key={k.id ?? i}
+              className="rounded-2xl border border-[#029154]/50 bg-[#00FF40]/[0.03] p-6 flex flex-col items-center text-center hover:shadow-sm transition-shadow"
             >
-              <Store className="w-7 h-7 text-slate-500" />
+              <div className="w-16 h-16 rounded-full bg-white border border-slate-100 flex items-center justify-center mb-3 overflow-hidden">
+                {logoUrl(k.logo) ? (
+                  <img
+                    src={logoUrl(k.logo)}
+                    alt={k.nama}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/images/iconKoperasi.png";
+                    }}
+                  />
+                ) : (
+                  <Store className="w-7 h-7 text-slate-500" />
+                )}
+              </div>
+              <h4 className="font-bold text-slate-800">{k.nama}</h4>
+              <p className="text-xs text-slate-400 mb-2">{k.kota}</p>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold mb-3 ${
+                  (k.tipe || "") === "Perikanan"
+                    ? "bg-sky-100 text-sky-700"
+                    : "bg-emerald-100 text-emerald-700"
+                }`}
+              >
+                {k.tipe}
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs text-slate-500 mb-4">
+                <Users className="w-3.5 h-3.5" /> {k.jumlah_anggota} anggota
+              </span>
+              <button className="w-full py-2 rounded-lg border border-emerald-600 text-emerald-700 text-sm font-semibold hover:bg-emerald-600 hover:text-white transition-colors">
+                Lihat Detail
+              </button>
             </div>
-            <h4 className="font-bold text-slate-800">{k.name}</h4>
-            <p className="text-xs text-slate-400 mb-2">{k.location}</p>
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold mb-3 ${k.tagColor}`}
-            >
-              {k.tag}
-            </span>
-            <span className="inline-flex items-center gap-1 text-xs text-slate-500 mb-4">
-              <Users className="w-3.5 h-3.5" /> 150 anggota
-            </span>
-            <button className="w-full py-2 rounded-lg border border-emerald-600 text-emerald-700 text-sm font-semibold hover:bg-emerald-600 hover:text-white transition-colors">
-              Lihat Detail
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex justify-center mb-14">
         <button className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-[#029154] to-[#024D70] text-white font-semibold hover:opacity-90 transition-opacity">
@@ -84,8 +143,8 @@ export default function KoperasiSection() {
               Ingin Koperasi Anda Bergabung?
             </h3>
             <p className="text-sm text-[#006638] mb-4 max-w-xl">
-              Bersama JALA, bantu anggota menjangkau pasar yang lebih
-              luas melalui platform digital yang mudah, aman, dan terpercaya.
+              Bersama JALA, bantu anggota menjangkau pasar yang lebih luas melalui platform
+              digital yang mudah, aman, dan terpercaya.
             </p>
             <button className="px-5 py-2.5 rounded-lg bg-[#005FA4] text-white text-sm font-semibold hover:bg-emerald-900 transition-colors">
               Daftarkan Koperasi Anda
