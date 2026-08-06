@@ -17,9 +17,18 @@ return new class extends Migration
             $table->date('date');
             $table->decimal('price', 15, 2);
             
-            // Menggunakan foreignIdId agar otomatis bernilai BIGINT UNSIGNED
-            $table->foreignId('province_id')->nullable()->constrained('provinces')->nullOnDelete();
-            $table->foreignId('city_id')->nullable()->constrained('cities')->nullOnDelete();
+            $table->unsignedInteger('province_id')->nullable();
+            $table->unsignedInteger('city_id')->nullable();
+
+            $table->foreign('province_id')
+              ->references('id')
+              ->on('provinces')
+              ->nullOnDelete();
+
+            $table->foreign('city_id')
+                 ->references('id')
+                 ->on('cities')
+                 ->nullOnDelete();
             
             $table->timestamps();
             
