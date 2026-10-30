@@ -10,40 +10,42 @@ use Illuminate\Support\Facades\Http;
 class ShippingController extends Controller
 {
     private $apiKey;
+
     private $baseUrl;
 
     public function __construct()
     {
-        $this->apiKey = env('RAJAONGKIR_SHIPPING_KEY');
+        $this->apiKey = config('services.rajaongkir.shipping_key');
         // Base URL Komerce v1, TANPA trailing slash
-        $this->baseUrl = rtrim(env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1'), '/');
+        $this->baseUrl = rtrim(config('services.rajaongkir.base_url', 'https://rajaongkir.komerce.id/api/v1'), '/');
     }
 
     public function getProvinces()
     {
         try {
             $response = Http::withHeaders([
-                'key' => $this->apiKey
-            ])->get($this->baseUrl . '/destination/province');
+                'key' => $this->apiKey,
+            ])->get($this->baseUrl.'/destination/province');
 
             if ($response->successful()) {
                 $provinces = $response->json()['data'] ?? [];
+
                 return response()->json([
                     'success' => true,
-                    'data' => $provinces
+                    'data' => $provinces,
                 ]);
             }
 
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil data provinsi dari RajaOngkir',
-                'error' => $response->json() // aktifkan sementara buat debug
+                'error' => $response->json(), // aktifkan sementara buat debug
             ], 400);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan sistem: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -52,27 +54,28 @@ class ShippingController extends Controller
     {
         try {
             $response = Http::withHeaders([
-                'key' => $this->apiKey
-            ])->get($this->baseUrl . '/destination/city/' . $provinceId);
+                'key' => $this->apiKey,
+            ])->get($this->baseUrl.'/destination/city/'.$provinceId);
 
             if ($response->successful()) {
                 $cities = $response->json()['data'] ?? [];
+
                 return response()->json([
                     'success' => true,
-                    'data' => $cities
+                    'data' => $cities,
                 ]);
             }
 
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil data kota dari RajaOngkir',
-                'error' => $response->json()
+                'error' => $response->json(),
             ], 400);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan sistem: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -83,46 +86,48 @@ class ShippingController extends Controller
             'origin_city_id' => 'required|integer', // Menambahkan validasi untuk origin
             'destination_city_id' => 'required|integer',
             'weight' => 'required|integer', // Dalam gram
-            'courier' => 'required|string' // jne, pos, tiki, dst
+            'courier' => 'required|string', // jne, pos, tiki, dst
         ]);
 
         try {
             // Origin sekarang dinamis, diambil dari frontend. Fallback ke 153 (Jakarta Selatan) jika gagal
-            $originCityId = $request->input('origin_city_id', env('RAJAONGKIR_ORIGIN_CITY_ID', 153));
+            $originCityId = $request->input('origin_city_id', config('services.rajaongkir.origin_city_id', 153));
 
             // Endpoint baru: form-urlencoded, bukan JSON
             $response = Http::asForm()->withHeaders([
-                'key' => $this->apiKey
-            ])->post($this->baseUrl . '/calculate/domestic-cost', [
+                'key' => $this->apiKey,
+            ])->post($this->baseUrl.'/calculate/domestic-cost', [
                 'origin' => $originCityId,
                 'destination' => $request->destination_city_id,
                 'weight' => $request->weight,
                 'courier' => strtolower($request->courier),
-                'price' => 'lowest'
+                'price' => 'lowest',
             ]);
 
             if ($response->successful()) {
                 $costs = $response->json()['data'] ?? [];
+
                 return response()->json([
                     'success' => true,
-                    'data' => $costs
+                    'data' => $costs,
                 ]);
             }
 
             // Relay pesan error dari API (misal: kode kurir tidak valid)
             $apiMessage = $response->json()['meta']['message'] ?? null;
+
             return response()->json([
                 'success' => false,
                 'message' => $apiMessage
-                    ? 'RajaOngkir: ' . $apiMessage
+                    ? 'RajaOngkir: '.$apiMessage
                     : 'Gagal menghitung ongkos kirim dari RajaOngkir',
-                'error' => $response->json()
+                'error' => $response->json(),
             ], 400);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan sistem: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -138,7 +143,7 @@ class ShippingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $couriers
+            'data' => $couriers,
         ]);
     }
 
@@ -146,36 +151,37 @@ class ShippingController extends Controller
     {
         $request->validate([
             'waybill' => 'required|string',
-            'courier' => 'required|string'
+            'courier' => 'required|string',
         ]);
 
         try {
             // Endpoint baru: form-urlencoded
             $response = Http::asForm()->withHeaders([
-                'key' => $this->apiKey
-            ])->post($this->baseUrl . '/waybill', [
+                'key' => $this->apiKey,
+            ])->post($this->baseUrl.'/waybill', [
                 'waybill' => $request->waybill,
-                'courier' => strtolower($request->courier)
+                'courier' => strtolower($request->courier),
             ]);
 
             if ($response->successful()) {
                 $trackingData = $response->json()['data'] ?? [];
+
                 return response()->json([
                     'success' => true,
-                    'data' => $trackingData
+                    'data' => $trackingData,
                 ]);
             }
 
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal melacak resi dari RajaOngkir',
-                'error' => $response->json()
+                'error' => $response->json(),
             ], 400);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan sistem: '.$e->getMessage(),
             ], 500);
         }
     }

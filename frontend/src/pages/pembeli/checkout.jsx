@@ -95,7 +95,27 @@ export default function CheckoutPage() {
         });
 
       // Auto-fill alamat dari profil pembeli
-      setFullAddress("poltek");
+      api
+        .get("/user")
+        .then((res) => {
+          const u = res.data || {};
+          if (u.alamat) {
+            setFullAddress(u.alamat);
+          }
+          if (u.provinsi_id) {
+            setSelectedProvince(String(u.provinsi_id));
+            api
+              .get(`/shipping/cities/${u.provinsi_id}`)
+              .then((cityRes) => {
+                if (cityRes.data.success) {
+                  setCities(cityRes.data.data);
+                  if (u.kota_id) setSelectedCity(String(u.kota_id));
+                }
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
     });
   }, []);
 
@@ -276,19 +296,12 @@ export default function CheckoutPage() {
       if (res.data.success) {
         // Hapus items dari keranjang di frontend
         localStorage.removeItem("checkoutItems");
-        const orderIds = res.data.order_ids || [];
 
         // Panggil Midtrans Snap
         if (res.data.snap_token) {
            window.snap.pay(res.data.snap_token, {
               onSuccess: async function(){
-                 try {
-                    if (orderIds.length > 0) {
-                       await Promise.all(orderIds.map(id => api.put(`/orders/${id}`, { status: "Diproses" })));
-                    }
-                 } catch (e) {
-                    console.error("Gagal mengupdate status pesanan", e);
-                 }
+                 // Status pesanan diperbarui otomatis oleh webhook Midtrans di backend.
                  await swalSuccess("Pembayaran berhasil!", "Status pesanan Anda telah diperbarui.");
                  navigate("/pembeli/pesanan");
               },

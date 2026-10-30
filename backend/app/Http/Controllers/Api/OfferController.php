@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\BapanasPrice;
 use App\Models\Cart;
 use App\Models\Notification;
@@ -12,7 +11,9 @@ use App\Models\OfferHistory;
 use App\Models\Product;
 use App\Models\User;
 use App\Traits\KoperasiScope;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OfferController extends Controller
 {
@@ -38,9 +39,9 @@ class OfferController extends Controller
     {
         Notification::create([
             'user_id' => $userId,
-            'judul'   => $judul,
-            'pesan'   => $pesan,
-            'link'    => $link,
+            'judul' => $judul,
+            'pesan' => $pesan,
+            'link' => $link,
         ]);
     }
 
@@ -50,6 +51,38 @@ class OfferController extends Controller
      */
     private function handleOfferAccepted(Offer $offer, User $actor): void
     {
+        // Validasi stok mencukupi sebelum penawaran dianggap sah.
+        $product = $offer->product;
+        if ($product && (float) $product->stok < (float) $offer->jumlah_diminta) {
+            throw ValidationException::withMessages([
+                'status' => "Stok produk '{$product->nama_produk}' tidak mencukupi untuk penawaran ini.",
+            ]);
+        }
+
+        // Tolak otomatis seluruh penawaran lain yang masih menunggu untuk produk yang sama,
+        // agar satu produk tidak disepakati ke banyak pembeli sekaligus.
+        $otherOffers = Offer::where('product_id', $offer->product_id)
+            ->where('id', '!=', $offer->id)
+            ->whereIn('status', ['Menunggu', 'Counter'])
+            ->get();
+
+        foreach ($otherOffers as $other) {
+            $other->update(['status' => 'Ditolak']);
+            OfferHistory::create([
+                'offer_id' => $other->id,
+                'aktor_id' => $actor->id,
+                'aksi' => 'Ditolak otomatis',
+                'harga_terkait' => $other->harga_tawaran,
+                'komentar' => 'Produk sudah disepakati dengan pembeli lain.',
+            ]);
+            $this->createNotification(
+                $other->pembeli_id,
+                'Penawaran Ditolak',
+                "Penawaran {$other->kode_penawaran} ditolak karena produk sudah disepakati dengan pembeli lain.",
+                '/pembeli/penawaran',
+            );
+        }
+
         // Produk masuk keranjang pembeli (harga = harga kesepakatan)
         $cart = Cart::where('user_id', $offer->pembeli_id)
             ->where('product_id', $offer->product_id)
@@ -61,10 +94,10 @@ class OfferController extends Controller
             $cart->save();
         } else {
             Cart::create([
-                'user_id'    => $offer->pembeli_id,
+                'user_id' => $offer->pembeli_id,
                 'product_id' => $offer->product_id,
-                'kuantitas'  => $offer->jumlah_diminta,
-                'harga'      => $offer->harga_tawaran,
+                'kuantitas' => $offer->jumlah_diminta,
+                'harga' => $offer->harga_tawaran,
             ]);
         }
 
@@ -93,8 +126,8 @@ class OfferController extends Controller
             $this->createNotification(
                 $otherPartyId,
                 'Penawaran Disetujui',
-                "{$actorName} telah menyetujui penawaran {$offer->kode_penawaran}. " .
-                    "Produk otomatis masuk ke keranjang Anda, silakan lanjutkan ke checkout.",
+                "{$actorName} telah menyetujui penawaran {$offer->kode_penawaran}. ".
+                    'Produk otomatis masuk ke keranjang Anda, silakan lanjutkan ke checkout.',
                 '/pembeli/keranjang',
             );
         }
@@ -106,9 +139,10 @@ class OfferController extends Controller
      */
     private function resolveProductKategoriName(Product $product): ?string
     {
-        if (!empty($product->kategori)) {
+        if (! empty($product->kategori)) {
             return $product->kategori;
         }
+
         return $product->category->nama_kategori ?? null;
     }
 
@@ -131,7 +165,7 @@ class OfferController extends Controller
             }
 
             // Prioritas 2: dari nama kategori (mis. "Ikan", "Beras", "Sayur")
-            if (!$bapanas) {
+            if (! $bapanas) {
                 $kategoriName = $this->resolveProductKategoriName($offer->product);
                 if ($kategoriName) {
                     $bapanas = BapanasPrice::latestForCategory($kategoriName);
@@ -154,7 +188,7 @@ class OfferController extends Controller
     {
         $user = $request->user();
 
-        $query = Offer::with(['pembeli', 'petani', 'product.category', 'histories' => function($query) {
+        $query = Offer::with(['pembeli', 'petani', 'product.category', 'histories' => function ($query) {
             $query->orderBy('created_at', 'desc');
         }]);
 
@@ -177,7 +211,7 @@ class OfferController extends Controller
     {
         $user = $request->user();
 
-        $offers = Offer::with(['pembeli', 'petani', 'product.category', 'histories' => function($query) {
+        $offers = Offer::with(['pembeli', 'petani', 'product.category', 'histories' => function ($query) {
             $query->orderBy('created_at', 'asc');
         }])
             ->where('pembeli_id', $user->id)
@@ -195,10 +229,10 @@ class OfferController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id'      => 'required|exists:products,id',
-            'jumlah_diminta'  => 'required|numeric|min:0.1',
-            'harga_tawaran'   => 'required|numeric|min:1',
-            'pesan_pembeli'   => 'nullable|string|max:500',
+            'product_id' => 'required|exists:products,id',
+            'jumlah_diminta' => 'required|numeric|min:0.1',
+            'harga_tawaran' => 'required|numeric|min:1',
+            'pesan_pembeli' => 'nullable|string|max:500',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
@@ -207,40 +241,40 @@ class OfferController extends Controller
         // Pembeli tidak boleh menawar produk miliknya sendiri
         if ($product->user_id === $user->id) {
             return response()->json([
-                'message' => 'Tidak bisa menawar produk milik sendiri.'
+                'message' => 'Tidak bisa menawar produk milik sendiri.',
             ], 422);
         }
 
-        $kodePenawaran = 'PNW-' . strtoupper(uniqid());
+        $kodePenawaran = 'PNW-'.strtoupper(uniqid());
 
         $offer = Offer::create([
-            'kode_penawaran'  => $kodePenawaran,
-            'product_id'      => $product->id,
-            'pembeli_id'      => $user->id,
-            'petani_id'       => $product->user_id,
-            'jumlah_diminta'  => $validated['jumlah_diminta'],
-            'harga_tawaran'   => $validated['harga_tawaran'],
-            'pesan_pembeli'   => $validated['pesan_pembeli'] ?? null,
-            'status'          => 'Menunggu',
+            'kode_penawaran' => $kodePenawaran,
+            'product_id' => $product->id,
+            'pembeli_id' => $user->id,
+            'petani_id' => $product->user_id,
+            'jumlah_diminta' => $validated['jumlah_diminta'],
+            'harga_tawaran' => $validated['harga_tawaran'],
+            'pesan_pembeli' => $validated['pesan_pembeli'] ?? null,
+            'status' => 'Menunggu',
         ]);
 
         OfferHistory::create([
-            'offer_id'       => $offer->id,
-            'aktor_id'       => $user->id,
-            'aksi'           => 'Penawaran diajukan',
-            'harga_terkait'  => $validated['harga_tawaran'],
-            'komentar'       => $validated['pesan_pembeli'] ?? null,
+            'offer_id' => $offer->id,
+            'aktor_id' => $user->id,
+            'aksi' => 'Penawaran diajukan',
+            'harga_terkait' => $validated['harga_tawaran'],
+            'komentar' => $validated['pesan_pembeli'] ?? null,
         ]);
 
         return response()->json([
             'message' => 'Penawaran berhasil diajukan. Menunggu respon penjual.',
-            'offer'   => $offer->load(['product', 'pembeli']),
+            'offer' => $offer->load(['product', 'pembeli']),
         ], 201);
     }
 
     public function show(string $id)
     {
-        $offer = Offer::with(['pembeli', 'petani', 'product.category', 'histories' => function($query) {
+        $offer = Offer::with(['pembeli', 'petani', 'product.category', 'histories' => function ($query) {
             $query->orderBy('created_at', 'desc');
         }])->findOrFail($id);
 
@@ -256,28 +290,28 @@ class OfferController extends Controller
     public function update(Request $request, string $id)
     {
         $offer = Offer::findOrFail($id);
-        $user  = $request->user();
+        $user = $request->user();
 
         // Pembeli boleh update jika mereka adalah pemilik penawaran
-        $isBuyer  = $offer->pembeli_id === $user->id;
+        $isBuyer = $offer->pembeli_id === $user->id;
         $isSeller = $this->canManageOffer($user, $offer);
 
-        if (!$isBuyer && !$isSeller) {
+        if (! $isBuyer && ! $isSeller) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         // Pembeli hanya boleh merespon ketika status = Counter
-        if ($isBuyer && !$isSeller) {
+        if ($isBuyer && ! $isSeller) {
             if ($offer->status !== 'Counter') {
                 return response()->json(['message' => 'Anda hanya bisa merespon penawaran counter dari penjual.'], 422);
             }
         }
 
         $validated = $request->validate([
-            'status'        => 'required|string|in:Menunggu,Diterima,Ditolak,Counter',
+            'status' => 'required|string|in:Menunggu,Diterima,Ditolak,Counter',
             'harga_tawaran' => 'sometimes|numeric',
-            'aksi_label'    => 'required|string',
-            'komentar'      => 'nullable|string|max:1000',
+            'aksi_label' => 'required|string',
+            'komentar' => 'nullable|string|max:1000',
         ]);
 
         $isNewAcceptance = $validated['status'] === 'Diterima' && $offer->status !== 'Diterima';
@@ -290,11 +324,11 @@ class OfferController extends Controller
             $offer->update($updateData);
 
             OfferHistory::create([
-                'offer_id'      => $offer->id,
-                'aktor_id'      => $user->id,
-                'aksi'          => $validated['aksi_label'],
+                'offer_id' => $offer->id,
+                'aktor_id' => $user->id,
+                'aksi' => $validated['aksi_label'],
                 'harga_terkait' => $validated['harga_tawaran'] ?? null,
-                'komentar'      => $validated['komentar'] ?? null,
+                'komentar' => $validated['komentar'] ?? null,
             ]);
 
             if ($isNewAcceptance) {
@@ -307,7 +341,7 @@ class OfferController extends Controller
 
         return response()->json([
             'message' => 'Penawaran berhasil diperbarui',
-            'offer'   => $offer,
+            'offer' => $offer,
         ]);
     }
 

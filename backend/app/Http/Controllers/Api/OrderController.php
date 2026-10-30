@@ -3,30 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\Cart;
 use App\Models\Shipment;
+use App\Services\PaymentGateway;
 use App\Traits\KoperasiScope;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Midtrans\Config;
-use Midtrans\Snap;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Midtrans\Notification;
 
 class OrderController extends Controller
 {
     use KoperasiScope;
 
-    public function __construct()
-    {
-        Config::$serverKey = config('services.midtrans.server_key');
-        Config::$isProduction = config('services.midtrans.is_production');
-        Config::$isSanitized = config('services.midtrans.is_sanitized');
-        Config::$is3ds = config('services.midtrans.is_3ds');
-    }
+    public function __construct(private PaymentGateway $paymentGateway) {}
 
     /**
      * Listing order untuk halaman monitoring admin (semua order, semua role).
@@ -87,7 +81,7 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        
+
         $request->validate([
             'products' => 'required|array',
             'fullAddress' => 'required|string',
@@ -101,26 +95,59 @@ class OrderController extends Controller
             // Karena satu checkout bisa terdiri dari barang-barang milik beberapa Petani (Penjual),
             // kita harus mengelompokkan pesanan ini per Petani/Penjual (petani_id)
             $groupedProducts = [];
-            
+
             foreach ($request->products as $item) {
-                $product = Product::findOrFail($item['product_id']);
+                // Harga & stok WAJIB dari database, bukan dari client (anti-fraud).
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+
+                $qty = (float) $item['kuantitas'];
+                if ($qty <= 0) {
+                    throw ValidationException::withMessages([
+                        'products' => 'Jumlah beli tidak valid.',
+                    ]);
+                }
+                if ((float) $product->stok < $qty) {
+                    throw ValidationException::withMessages([
+                        'products' => "Stok produk '{$product->nama_produk}' tidak mencukupi.",
+                    ]);
+                }
+
+                // Harga dari kesepakatan (cart) bila ada, selain itu harga harapan milik produk.
+                $hargaSatuan = (float) $product->harga_harapan;
+                if (! empty($item['cart_id'])) {
+                    $cart = Cart::where('id', $item['cart_id'])
+                        ->where('user_id', $user->id)
+                        ->first();
+                    if ($cart && $cart->harga !== null) {
+                        $hargaSatuan = (float) $cart->harga;
+                    }
+                }
+
+                // Kurangi stok & tandai Habis bila sudah nol.
+                $product->stok = (float) $product->stok - $qty;
+                if ($product->stok <= 0) {
+                    $product->stok = 0;
+                    $product->status = 'Habis';
+                }
+                $product->save();
+
                 $petaniId = $product->user_id; // Pemilik barang
-                
-                if (!isset($groupedProducts[$petaniId])) {
+
+                if (! isset($groupedProducts[$petaniId])) {
                     $groupedProducts[$petaniId] = [
                         'items' => [],
-                        'total_harga' => 0
+                        'total_harga' => 0,
                     ];
                 }
-                
+
                 $groupedProducts[$petaniId]['items'][] = [
                     'product_id' => $product->id,
                     'nama_produk' => $product->nama_produk,
-                    'jumlah_beli' => $item['kuantitas'],
-                    'harga_satuan' => $item['harga']
+                    'jumlah_beli' => $qty,
+                    'harga_satuan' => $hargaSatuan,
                 ];
-                
-                $groupedProducts[$petaniId]['total_harga'] += ($item['kuantitas'] * $item['harga']);
+
+                $groupedProducts[$petaniId]['total_harga'] += ($qty * $hargaSatuan);
             }
 
             $createdOrders = []; // Simpan referensi order yang dibuat untuk Midtrans
@@ -132,7 +159,7 @@ class OrderController extends Controller
                 $shipping = $request->shippingDetails[$petaniId] ?? null;
 
                 $order = Order::create([
-                    'kode_pesanan' => 'TRX-' . strtoupper(Str::random(6)),
+                    'kode_pesanan' => 'TRX-'.strtoupper(Str::random(6)),
                     'pembeli_id' => $user->id,
                     'petani_id' => $petaniId,
                     'total_harga' => $group['total_harga'], // Harga barang saja
@@ -147,7 +174,7 @@ class OrderController extends Controller
                 ]);
 
                 // Simpan pilihan kurir & layanan yang dipilih pembeli
-                if (!empty($shipping['kurir']) || !empty($shipping['layanan'])) {
+                if (! empty($shipping['kurir']) || ! empty($shipping['layanan'])) {
                     Shipment::create([
                         'order_id' => $order->id,
                         'kurir' => $shipping['kurir'] ?? null,
@@ -166,26 +193,28 @@ class OrderController extends Controller
                         'subtotal' => $item['jumlah_beli'] * $item['harga_satuan'],
                     ]);
                 }
-                
+
                 $createdOrders[] = $order;
             }
 
             // Hapus dari keranjang (Carts)
             foreach ($request->products as $item) {
-                if(isset($item['cart_id'])) {
+                if (isset($item['cart_id'])) {
                     Cart::where('id', $item['cart_id'])->where('user_id', $user->id)->delete();
                 }
             }
 
             // --- PROSES MIDTRANS ---
-            // Kita gabungkan ID pesanan sebagai order_id untuk midtrans 
-            // Jika ada banyak pesanan, kita gabungkan kodenya jadi satu string panjang (TRX1-TRX2) 
-            // Namun sebaiknya kita buat 1 master transaction, atau dalam kasus ini karena mockup, 
+            // Kita gabungkan ID pesanan sebagai order_id untuk midtrans
+            // Jika ada banyak pesanan, kita gabungkan kodenya jadi satu string panjang (TRX1-TRX2)
+            // Namun sebaiknya kita buat 1 master transaction, atau dalam kasus ini karena mockup,
             // kita ambil kode_pesanan yang pertama saja sebagai referensi transaksi utama untuk Midtrans.
-            $primaryOrder = $createdOrders[0]; 
-            
-            // Hitung total seluruh belanjaan dari semua order
-            $grossAmount = collect($createdOrders)->sum('total_harga') + $request->ongkos_kirim; 
+            $primaryOrder = $createdOrders[0];
+
+            // Hitung total seluruh belanjaan dari semua order.
+            // Tiap order sudah menyimpan ongkos_kirim-nya sendiri, jadi cukup jumlahkan keduanya.
+            $grossAmount = collect($createdOrders)->sum('total_harga')
+                + collect($createdOrders)->sum('ongkos_kirim');
 
             // Tentukan Enabled Payments berdasarkan pilihan frontend
             $enabledPayments = match ($request->paymentMethod) {
@@ -196,43 +225,48 @@ class OrderController extends Controller
                 default => [],
             };
 
-            // Item Details untuk Midtrans
+            // Item Details untuk Midtrans (harga dari DB, bukan dari client)
             $itemDetails = [];
-            foreach ($request->products as $item) {
-                $itemDetails[] = [
-                    'id' => $item['product_id'],
-                    'price' => $item['harga'],
-                    'quantity' => $item['kuantitas'],
-                    'name' => Product::find($item['product_id'])->nama_produk ?? 'Produk',
-                ];
+            foreach ($groupedProducts as $group) {
+                foreach ($group['items'] as $item) {
+                    $itemDetails[] = [
+                        'id' => $item['product_id'],
+                        'price' => (int) round($item['harga_satuan']),
+                        'quantity' => (int) round($item['jumlah_beli']),
+                        'name' => $item['nama_produk'],
+                    ];
+                }
             }
-            if ($request->ongkos_kirim > 0) {
-                 $itemDetails[] = [
-                    'id' => 'ongkir',
-                    'price' => $request->ongkos_kirim,
-                    'quantity' => 1,
-                    'name' => 'Ongkos Kirim',
-                ];
+            // Ongkir per penjual, ditambahkan sebagai item terpisah
+            foreach ($createdOrders as $order) {
+                if ($order->ongkos_kirim > 0) {
+                    $itemDetails[] = [
+                        'id' => 'ongkir-'.$order->id,
+                        'price' => (int) round($order->ongkos_kirim),
+                        'quantity' => 1,
+                        'name' => 'Ongkos Kirim',
+                    ];
+                }
             }
 
             $params = [
                 'transaction_details' => [
-                    'order_id' => $primaryOrder->kode_pesanan . '-' . time(), // Tambah timestamp agar unik per request
+                    'order_id' => $primaryOrder->kode_pesanan.'-'.time(), // Tambah timestamp agar unik per request
                     'gross_amount' => $grossAmount,
                 ],
                 'customer_details' => [
                     'first_name' => $user->nama_lengkap ?? $user->name,
                     'email' => $user->email,
-                    'phone' => '081234567890', // Harusnya ambil dari profile
+                    'phone' => $user->no_hp ?? '081234567890',
                 ],
                 'item_details' => $itemDetails,
             ];
 
-            if (!empty($enabledPayments)) {
+            if (! empty($enabledPayments)) {
                 $params['enabled_payments'] = $enabledPayments;
             }
 
-            $snapToken = Snap::getSnapToken($params);
+            $snapToken = $this->paymentGateway->createSnapToken($params);
 
             // Simpan token ke database untuk referensi (opsional, update semua orders terkait)
             foreach ($createdOrders as $o) {
@@ -245,14 +279,23 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => 'Pesanan berhasil dibuat',
                 'snap_token' => $snapToken,
-                'order_ids' => collect($createdOrders)->pluck('id')->all()
+                'order_ids' => collect($createdOrders)->pluck('id')->all(),
             ], 201);
 
-        } catch (\Exception $e) {
+        } catch (ValidationException $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat memproses pesanan: ' . $e->getMessage()
+                'message' => 'Validasi pesanan gagal.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses pesanan: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -298,7 +341,16 @@ class OrderController extends Controller
             'layanan' => 'nullable|string',
         ]);
 
-        $order->status = $validated['status'];
+        $from = $order->status;
+        $to = $validated['status'];
+
+        // Validasi transisi status sesuai role (state machine).
+        $error = $this->authorizeStatusChange($isSeller || $isKoperasiManager, $isBuyer, $from, $to);
+        if ($error !== null) {
+            return response()->json(['message' => $error], 422);
+        }
+
+        $order->status = $to;
         $order->save();
 
         // Simpan nomor resi & logistik ke tabel shipments (bukan kolom catatan)
@@ -318,8 +370,59 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Status pesanan berhasil diperbarui',
-            'order' => $order->load(['shipment'])
+            'order' => $order->load(['shipment']),
         ]);
+    }
+
+    /**
+     * Validasi transisi status berdasarkan peran pelaku.
+     *
+     * Penjual/koperasi: Menunggu Pembayaran → Diproses → Dikirim → Selesai, serta pembatalan.
+     * Pembeli: hanya boleh membatalkan (Dibatalkan).
+     * Aturan tambahan: pembayaran hanya boleh "Diproses" setelah dibayar (dari webhook),
+     * jadi pembeli tidak boleh memindahkan status ke Diproses/Dikirim/Selesai.
+     *
+     * @return string|null Pesan error bila transisi tidak diizinkan, null jika boleh.
+     */
+    private function authorizeStatusChange(bool $isSeller, bool $isBuyer, string $from, string $to): ?string
+    {
+        if ($from === $to) {
+            return null;
+        }
+
+        $sellerTransitions = [
+            'Menunggu Pembayaran' => ['Diproses', 'Dibatalkan'],
+            'Diproses' => ['Dikirim', 'Dibatalkan'],
+            'Dikirim' => ['Selesai', 'Dibatalkan'],
+            'Selesai' => [],
+            'Dibatalkan' => [],
+        ];
+
+        $buyerTransitions = [
+            'Menunggu Pembayaran' => ['Dibatalkan'],
+            'Diproses' => [],
+            'Dikirim' => [],
+            'Selesai' => [],
+            'Dibatalkan' => [],
+        ];
+
+        if ($isSeller) {
+            if (! in_array($to, $sellerTransitions[$from] ?? [], true)) {
+                return "Penjual tidak dapat mengubah status dari {$from} ke {$to}.";
+            }
+
+            return null;
+        }
+
+        if ($isBuyer) {
+            if (! in_array($to, $buyerTransitions[$from] ?? [], true)) {
+                return 'Pembeli hanya dapat membatalkan pesanan yang belum diproses.';
+            }
+
+            return null;
+        }
+
+        return 'Anda tidak berhak mengubah status pesanan ini.';
     }
 
     /**
@@ -335,8 +438,8 @@ class OrderController extends Controller
      */
     public function paymentNotification(Request $request)
     {
-        $notif = new Notification();
-        
+        $notif = new Notification;
+
         $transactionStatus = $notif->transaction_status;
         $orderId = $notif->order_id;
         $fraudStatus = $notif->fraud_status;
@@ -345,36 +448,47 @@ class OrderController extends Controller
         // Contoh: TRX-ABCDEF-172233213 -> TRX-ABCDEF
         $parts = explode('-', $orderId);
         if (count($parts) >= 3) {
-             $originalKodePesanan = $parts[0] . '-' . $parts[1];
+            $originalKodePesanan = $parts[0].'-'.$parts[1];
         } else {
-             $originalKodePesanan = $orderId;
+            $originalKodePesanan = $orderId;
         }
 
         // Cari semua order yang terkait (karena 1 checkout bisa jadi beberapa order/petani)
         // Kita menggunakan primaryOrder sebagai referensi, artinya mereka punya payment_token yang sama
         $primaryOrder = Order::where('kode_pesanan', $originalKodePesanan)->first();
-        
-        if (!$primaryOrder) {
-             return response()->json(['message' => 'Order not found'], 404);
+
+        if (! $primaryOrder) {
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
-        $ordersToUpdate = Order::where('payment_token', $primaryOrder->payment_token)->get();
+        // Cari semua order yang terkait (karena 1 checkout bisa jadi beberapa order/petani).
+        // Utamakan lewat payment_token yang sama; jika token kosong (belum sempat tersimpan),
+        // fallback ke pencarian berdasarkan kode_pesanan agar tidak men-update order lain.
+        $ordersToUpdate = collect();
+
+        if (! empty($primaryOrder->payment_token)) {
+            $ordersToUpdate = Order::where('payment_token', $primaryOrder->payment_token)->get();
+        }
+
+        if ($ordersToUpdate->isEmpty()) {
+            $ordersToUpdate = collect([$primaryOrder]);
+        }
 
         $status = 'Menunggu Pembayaran';
 
-        if ($transactionStatus == 'capture'){
-            if ($fraudStatus == 'challenge'){
+        if ($transactionStatus == 'capture') {
+            if ($fraudStatus == 'challenge') {
                 $status = 'Menunggu Pembayaran';
-            } else if ($fraudStatus == 'accept'){
+            } elseif ($fraudStatus == 'accept') {
                 $status = 'Diproses';
             }
-        } else if ($transactionStatus == 'settlement'){
+        } elseif ($transactionStatus == 'settlement') {
             $status = 'Diproses';
-        } else if ($transactionStatus == 'cancel' ||
+        } elseif ($transactionStatus == 'cancel' ||
           $transactionStatus == 'deny' ||
-          $transactionStatus == 'expire'){
+          $transactionStatus == 'expire') {
             $status = 'Dibatalkan';
-        } else if ($transactionStatus == 'pending'){
+        } elseif ($transactionStatus == 'pending') {
             $status = 'Menunggu Pembayaran';
         }
 

@@ -73,13 +73,15 @@ class KoperasiController extends Controller
             $validated['foto_profil'] = $request->file('foto_profil')->store('profiles', 'public');
         }
 
-        // Auto-generate email unik & password default (anggota binaan dikelola koperasi)
-        $baseEmail = 'binaan-' . Str::slug($validated['nama_lengkap']);
-        $email = $baseEmail . '@tani.local';
+        // Auto-generate email unik & password acak (anggota binaan dikelola koperasi)
+        $baseEmail = 'binaan-'.Str::slug($validated['nama_lengkap']);
+        $email = $baseEmail.'@tani.local';
         $i = 1;
         while (User::where('email', $email)->exists()) {
-            $email = $baseEmail . '-' . ($i++) . '@tani.local';
+            $email = $baseEmail.'-'.($i++).'@tani.local';
         }
+
+        $plainPassword = Str::password(12);
 
         $binaan = User::create([
             'role' => $validated['role'],
@@ -91,14 +93,19 @@ class KoperasiController extends Controller
             'tanggal_lahir' => $validated['tanggal_lahir'] ?? now()->toDateString(),
             'kelamin' => $validated['kelamin'] ?? 'Laki-laki',
             'alamat' => $validated['alamat'] ?? '',
-            'password' => Hash::make('password'),
+            'password' => Hash::make($plainPassword),
             'koperasi_id' => $user->id,
             'foto_profil' => $validated['foto_profil'] ?? null,
         ]);
 
         return response()->json([
             'message' => 'Anggota binaan berhasil ditambahkan',
-            'binaan' => $binaan
+            'binaan' => $binaan,
+            // Kredensial awal; tampilkan sekali ke koperasi agar bisa diteruskan ke anggota.
+            'kredensial' => [
+                'email' => $email,
+                'password' => $plainPassword,
+            ],
         ], 201);
     }
 
@@ -122,7 +129,7 @@ class KoperasiController extends Controller
         return response()->json([
             'binaan' => $binaan,
             'products' => $products,
-            'orders' => $orders
+            'orders' => $orders,
         ]);
     }
 
@@ -158,7 +165,7 @@ class KoperasiController extends Controller
 
         return response()->json([
             'message' => 'Profil binaan berhasil diperbarui',
-            'binaan' => $binaan
+            'binaan' => $binaan,
         ]);
     }
 

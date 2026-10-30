@@ -43,4 +43,13 @@ return [
         'is_3ds' => env('MIDTRANS_IS_3DS', true),
     ],
 
+    'rajaongkir' => [
+        // Endpoint Komerce v1 (sesuai implementasi ShippingController/LogistikController)
+        'base_url' => env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1'),
+        'shipping_key' => env('RAJAONGKIR_SHIPPING_KEY'),
+        'origin_city_id' => env('RAJAONGKIR_ORIGIN_CITY_ID'),
+        'payment_url' => env('RAJAONGKIR_PAYMENT_URL'),
+        'payment_key' => env('RAJAONGKIR_PAYMENT_KEY'),
+    ],
+
 ];

@@ -1,21 +1,22 @@
 <?php
- 
+
 namespace App\Http\Controllers\Api;
- 
+
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\BapanasPrice;
 use App\Models\Category;
 use App\Models\Commodity;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Traits\KoperasiScope;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
- 
+
 class ProductController extends Controller
 {
     use KoperasiScope;
- 
+
     /**
      * Cek apakah user berhak mengelola produk (pemilik langsung,
      * atau Koperasi untuk produk anggota binaannya).
@@ -25,24 +26,24 @@ class ProductController extends Controller
         if ($product->user_id === $user->id) {
             return true;
         }
- 
+
         if ($user->role === 'koperasi' && in_array($product->user_id, $this->binaanIds($user))) {
             return true;
         }
- 
+
         return false;
     }
- 
+
     /**
      * Resolusi category_id dari input (bisa berupa category_id atau nama kategori).
      */
     private function resolveCategoryId(array $validated): ?int
     {
-        if (!empty($validated['category_id'])) {
+        if (! empty($validated['category_id'])) {
             return (int) $validated['category_id'];
         }
- 
-        if (!empty($validated['kategori'])) {
+
+        if (! empty($validated['kategori'])) {
             // 1. Exact match
             $category = Category::where('nama_kategori', $validated['kategori'])->first();
             if ($category) {
@@ -59,7 +60,7 @@ class ProductController extends Controller
                 }
             }
         }
- 
+
         return null;
     }
 
@@ -70,18 +71,20 @@ class ProductController extends Controller
      */
     private function resolveCommodity(array $validated): array
     {
-        $validated['commodity_id'] = !empty($validated['commodity_id'])
+        $validated['commodity_id'] = ! empty($validated['commodity_id'])
             ? (int) $validated['commodity_id']
             : null;
 
-        if (!$validated['commodity_id']) {
+        if (! $validated['commodity_id']) {
             unset($validated['commodity_id']);
+
             return $validated;
         }
 
         $commodity = Commodity::find($validated['commodity_id']);
-        if (!$commodity) {
+        if (! $commodity) {
             unset($validated['commodity_id']);
+
             return $validated;
         }
 
@@ -106,22 +109,22 @@ class ProductController extends Controller
         $bapanas = null;
 
         // Prioritas 1: dari komoditas terpilih (bapanas_match komoditas)
-        if ($product->commodity && !empty($product->commodity->bapanas_match)) {
+        if ($product->commodity && ! empty($product->commodity->bapanas_match)) {
             $bapanas = BapanasPrice::latestFor($product->commodity->bapanas_match);
         }
 
         // Prioritas 2: dari komoditas_acuan (string bebas / hasil auto-fill)
-        if (!$bapanas && !empty($product->komoditas_acuan)) {
+        if (! $bapanas && ! empty($product->komoditas_acuan)) {
             $bapanas = BapanasPrice::latestFor($product->komoditas_acuan);
         }
 
         // Prioritas 3: dari nama produk spesifik (mis. "Ikan Bandeng", "Ikan Tongkol")
-        if (!$bapanas && !empty($product->nama_produk)) {
+        if (! $bapanas && ! empty($product->nama_produk)) {
             $bapanas = BapanasPrice::latestForCategory($product->nama_produk);
         }
 
         // Prioritas 4: dari nama kategori (mis. "Ikan Air Laut", "Padi & Serealia")
-        if (!$bapanas) {
+        if (! $bapanas) {
             $kategoriName = null;
             if ($product->category) {
                 $kategoriName = $product->category->nama_kategori;
@@ -142,7 +145,7 @@ class ProductController extends Controller
 
         return $product;
     }
- 
+
     /**
      * Produk unggulan untuk halaman utama (public).
      * 8 produk aktif terlaris berdasarkan total terjual (order_items),
@@ -152,7 +155,7 @@ class ProductController extends Controller
     {
         $limit = (int) $request->input('limit', 8);
 
-        $topSold = \App\Models\OrderItem::query()
+        $topSold = OrderItem::query()
             ->whereIn('order_id', function ($q) {
                 $q->select('id')->from('orders')->where('status', 'Selesai');
             })
@@ -180,13 +183,42 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        // Katalog publik: kembalikan semua produk beserta data user (pemilik) yang aktif
-        $products = Product::with(['user', 'category', 'commodity'])->where('status', 'Aktif')->get()
+        // Katalog publik: produk aktif beserta data pemilik.
+        $query = Product::with(['user', 'category', 'commodity'])->where('status', 'Aktif');
+
+        // Filter opsional.
+        if ($search = $request->input('search')) {
+            $query->where('nama_produk', 'like', "%{$search}%");
+        }
+
+        if ($categoryId = $request->input('category_id')) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($minPrice = $request->input('min_price')) {
+            $query->where('harga_harapan', '>=', $minPrice);
+        }
+
+        if ($maxPrice = $request->input('max_price')) {
+            $query->where('harga_harapan', '<=', $maxPrice);
+        }
+
+        // Pagination opt-in (agar kompatibel dengan klien lama yang mengharapkan array).
+        if ($request->boolean('paginate')) {
+            $paginator = $query->orderBy('created_at', 'desc')
+                ->paginate((int) $request->input('per_page', 12));
+
+            $paginator->getCollection()->transform(fn ($product) => $this->attachHargaAcuan($product));
+
+            return response()->json($paginator);
+        }
+
+        $products = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($product) => $this->attachHargaAcuan($product));
- 
+
         return response()->json($products);
     }
- 
+
     /**
      * Listing produk untuk halaman monitoring admin (semua produk, semua status).
      */
@@ -218,7 +250,7 @@ class ProductController extends Controller
     public function myProducts(Request $request)
     {
         $user = $request->user();
- 
+
         // Untuk Koperasi, tampilkan juga produk anggota binaannya
         if ($user->role === 'koperasi') {
             $products = Product::with(['user', 'category', 'commodity'])
@@ -227,12 +259,12 @@ class ProductController extends Controller
         } else {
             $products = Product::with('commodity')->where('user_id', $user->id)->get();
         }
- 
+
         $products = $products->map(fn ($product) => $this->attachHargaAcuan($product));
- 
+
         return response()->json($products);
     }
- 
+
     /**
      * Store a newly created resource in storage.
      */
@@ -252,24 +284,24 @@ class ProductController extends Controller
             'gambar' => 'nullable|image|max:5120', // Maks 5MB
             'pemilik_id' => 'nullable|integer',
         ]);
- 
+
         if ($request->hasFile('gambar')) {
             $path = $request->file('gambar')->store('products', 'public');
             $validated['gambar'] = $path;
         }
- 
+
         $user = $request->user();
- 
+
         // Penentu pemilik produk (Koperasi boleh menunjuk anggota binaannya)
-        if ($user->role === 'koperasi' && !empty($validated['pemilik_id'])) {
-            if (!in_array((int) $validated['pemilik_id'], $this->binaanIds($user))) {
+        if ($user->role === 'koperasi' && ! empty($validated['pemilik_id'])) {
+            if (! in_array((int) $validated['pemilik_id'], $this->binaanIds($user))) {
                 return response()->json(['message' => 'Pemilik produk bukan anggota binaan Anda'], 422);
             }
             $validated['user_id'] = (int) $validated['pemilik_id'];
         } else {
             $validated['user_id'] = $user->id;
         }
- 
+
         $validated['category_id'] = $this->resolveCategoryId($validated);
         $validated = $this->resolveCommodity($validated);
         $validated['status'] = 'Aktif'; // Default status
@@ -280,40 +312,40 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Produk berhasil ditambahkan',
-            'product' => $this->attachHargaAcuan($product->load(['user', 'category', 'commodity']))
+            'product' => $this->attachHargaAcuan($product->load(['user', 'category', 'commodity'])),
         ], 201);
     }
- 
+
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
         $product = Product::with(['user', 'category'])->findOrFail($id);
- 
+
         // Publik bisa lihat produk aktif; pemilik/koperasi binaan bisa lihat semua
         $user = request()->user();
         $isPublicActive = $product->status === 'Aktif';
         if (! $isPublicActive && (! $user || ! $this->canManageProduct($user, $product))) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
- 
+
         $this->attachHargaAcuan($product);
- 
+
         return response()->json($product);
     }
- 
+
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
     {
         $product = Product::findOrFail($id);
- 
+
         if (! $this->canManageProduct($request->user(), $product)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
- 
+
         $validated = $request->validate([
             'nama_produk' => 'sometimes|required|string|max:255',
             'komoditas_acuan' => 'nullable|string',
@@ -327,7 +359,7 @@ class ProductController extends Controller
             'berat_gram' => 'nullable|integer',
             'gambar' => 'nullable|image|max:5120',
         ]);
- 
+
         if ($request->hasFile('gambar')) {
             // Hapus gambar lama jika ada
             if ($product->gambar && Storage::disk('public')->exists($product->gambar)) {
@@ -336,7 +368,7 @@ class ProductController extends Controller
             $path = $request->file('gambar')->store('products', 'public');
             $validated['gambar'] = $path;
         }
- 
+
         if ($request->filled('kategori') || $request->filled('category_id')) {
             $validated['category_id'] = $this->resolveCategoryId($validated);
         }
@@ -350,28 +382,28 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Produk berhasil diperbarui',
-            'product' => $this->attachHargaAcuan($product->load(['user', 'category', 'commodity']))
+            'product' => $this->attachHargaAcuan($product->load(['user', 'category', 'commodity'])),
         ]);
     }
- 
+
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
         $product = Product::findOrFail($id);
- 
+
         if (! $this->canManageProduct(request()->user(), $product)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
- 
+
         // Hapus gambar fisik
         if ($product->gambar && Storage::disk('public')->exists($product->gambar)) {
             Storage::disk('public')->delete($product->gambar);
         }
- 
+
         $product->delete();
- 
+
         return response()->json(['message' => 'Produk berhasil dihapus']);
     }
 }

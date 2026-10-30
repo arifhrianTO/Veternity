@@ -10,12 +10,13 @@ use Illuminate\Support\Facades\Http;
 class LogistikController extends Controller
 {
     private $apiKey;
+
     private $baseUrl;
 
     public function __construct()
     {
-        $this->apiKey = env('RAJAONGKIR_SHIPPING_KEY');
-        $this->baseUrl = rtrim(env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1'), '/');
+        $this->apiKey = config('services.rajaongkir.shipping_key');
+        $this->baseUrl = rtrim(config('services.rajaongkir.base_url', 'https://rajaongkir.komerce.id/api/v1'), '/');
     }
 
     /**
@@ -69,7 +70,7 @@ class LogistikController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Kurir berhasil ditambahkan.',
-            'data' => $courier
+            'data' => $courier,
         ], 201);
     }
 
@@ -95,7 +96,7 @@ class LogistikController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Kurir berhasil diperbarui.',
-            'data' => $courier
+            'data' => $courier,
         ]);
     }
 
@@ -109,7 +110,7 @@ class LogistikController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Kurir berhasil dihapus.'
+            'message' => 'Kurir berhasil dihapus.',
         ]);
     }
 
@@ -137,8 +138,8 @@ class LogistikController extends Controller
             }
 
             $response = Http::asForm()->withHeaders([
-                'key' => $this->apiKey
-            ])->post($this->baseUrl . '/calculate/domestic-cost', [
+                'key' => $this->apiKey,
+            ])->post($this->baseUrl.'/calculate/domestic-cost', [
                 'origin' => $request->origin_city_id,
                 'destination' => $request->destination_city_id,
                 'weight' => $request->weight,
@@ -173,18 +174,19 @@ class LogistikController extends Controller
 
             // Relay pesan error dari API (misal: kode kurir tidak valid)
             $apiMessage = $response->json()['meta']['message'] ?? null;
+
             return response()->json([
                 'success' => false,
                 'message' => $apiMessage
-                    ? 'RajaOngkir: ' . $apiMessage
+                    ? 'RajaOngkir: '.$apiMessage
                     : 'Gagal cek area dari RajaOngkir.',
-                'error' => $response->json()
+                'error' => $response->json(),
             ], 400);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan sistem: '.$e->getMessage(),
             ], 500);
         }
     }
