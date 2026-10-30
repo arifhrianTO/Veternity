@@ -4,6 +4,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import { ChevronRight, ChevronLeft, Edit3, Trash2, Eye, X, UploadCloud, Loader2 } from "lucide-react";
 import api from "../../config/axios"; // Import Axios Instance
+import { storageUrl } from "../../config/storage";
 
 export default function MitraProdukPage() {
   const location = useLocation();
@@ -84,6 +85,7 @@ export default function MitraProdukPage() {
       fetchProducts();
       fetchCategories();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Kategori & komoditas terpilih saat ini (untuk dropdown cascade)
@@ -117,7 +119,7 @@ export default function MitraProdukPage() {
       masa_layak: product.masa_layak,
       gambar: null // File direset, preview pakai path dari server
     });
-    setImagePreview(product.gambar ? `http://localhost:8000/storage/${product.gambar}` : null);
+    setImagePreview(product.gambar ? storageUrl(product.gambar) : null);
     setHargaAcuanPreview(product.harga_acuan || null);
     setIsEditModalOpen(true);
   };
@@ -316,7 +318,7 @@ export default function MitraProdukPage() {
                       <tr key={p.id} className="border-b border-black/[0.13] last:border-b-0 hover:bg-slate-50/50 transition">
                         <td className="py-4 px-2 text-[14px] font-semibold text-[#273B4A]">
                           <div className="flex items-center gap-3">
-                            <img src={p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/placeholder.png"} alt={p.category?.nama_kategori || p.nama_produk} className="w-[50px] h-[50px] object-cover rounded-[5px] border border-slate-200" />
+                            <img src={storageUrl(p.gambar, "/images/placeholder.png")} alt={p.category?.nama_kategori || p.nama_produk} className="w-[50px] h-[50px] object-cover rounded-[5px] border border-slate-200" />
                             <div>
                               <div>{p.category?.nama_kategori || "Tanpa kategori"}</div>
                               {p.commodity?.nama_komoditas && (
@@ -656,7 +658,7 @@ export default function MitraProdukPage() {
             <div className="p-6 flex flex-col sm:flex-row gap-6">
               {/* Image Section (Left) */}
               <div className="rounded-[12px] border border-slate-200 p-2 bg-slate-50 shrink-0 w-full sm:w-[250px] h-fit flex items-center justify-center">
-                 <img src={selectedProduct.gambar ? `http://localhost:8000/storage/${selectedProduct.gambar}` : "/images/placeholder.png"} alt={selectedProduct.category?.nama_kategori || selectedProduct.nama_produk} className="w-full h-[200px] object-cover rounded-[8px]" />
+                 <img src={storageUrl(selectedProduct.gambar, "/images/placeholder.png")} alt={selectedProduct.category?.nama_kategori || selectedProduct.nama_produk} className="w-full h-[200px] object-cover rounded-[8px]" />
               </div>
               
               {/* Details Section (Right) */}

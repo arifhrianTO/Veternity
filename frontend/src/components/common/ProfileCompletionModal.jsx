@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Loader2, Camera, AlertCircle } from "lucide-react";
 import api from "../../config/axios";
-import { REQUIRED_FIELDS_BY_ROLE } from "../layout/DashboardGuard";
+import { REQUIRED_FIELDS_BY_ROLE } from "../../config/profileRules";
+import { useUserContext } from "../../context/userContextBase";
 
 export default function ProfileCompletionModal({ user, onComplete }) {
+  const { refreshUser } = useUserContext();
   const requiredFields = REQUIRED_FIELDS_BY_ROLE[user?.role] || [];
 
   // Helper: cek apakah field wajib untuk role ini DAN belum diisi
@@ -85,6 +87,7 @@ export default function ProfileCompletionModal({ user, onComplete }) {
   useEffect(() => {
     const selectedProvId = provinsiId || user?.provinsi_id;
     if (!selectedProvId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCities([]);
       return;
     }
@@ -188,8 +191,8 @@ export default function ProfileCompletionModal({ user, onComplete }) {
       });
 
       if (response.data.status === "success") {
-        // Save the updated user object to localstorage
-        localStorage.setItem("user", JSON.stringify(response.data.data));
+        // Ambil data terbaru lalu sebarkan ke seluruh aplikasi via context.
+        await refreshUser();
         onComplete(response.data.data);
       } else {
         setErrorMsg(response.data.message || "Gagal memperbarui profil.");

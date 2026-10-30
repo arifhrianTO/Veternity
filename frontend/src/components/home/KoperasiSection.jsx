@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Search, ChevronDown, Store, Users, ArrowRight, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl } from "../../config/storage";
 
 const filters = ["Semua", "Pertanian", "Perikanan"];
 
 const logoUrl = (path) => {
   if (!path) return null;
-  if (path.startsWith("http")) return path;
-  return `http://localhost:8000/storage/${path}`;
+  return storageUrl(path);
 };
 
 export default function KoperasiSection() {

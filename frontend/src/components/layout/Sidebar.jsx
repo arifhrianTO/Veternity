@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom"; 
 import { 
   LayoutDashboard, 
   Users, 
@@ -7,6 +7,7 @@ import {
   ClipboardList
 } from "lucide-react";
 import { useUser } from "../../hooks/useUser";
+import { storageUrl } from "../../config/storage";
 
 const roleLabels = {
   admin: "Admin",
@@ -16,12 +17,6 @@ const roleLabels = {
   nelayan: "Nelayan",
   nelayan_binaan: "Nelayan (Binaan)",
   pembeli: "Pembeli",
-};
-
-const storageUrl = (path) => {
-  if (!path) return "/images/ikan1.png";
-  if (path.startsWith("http")) return path;
-  return `http://localhost:8000/storage/${path}`;
 };
 
 export default function Sidebar() {
@@ -97,20 +92,20 @@ export default function Sidebar() {
   };
 
   const profiles = {
-    Admin: { name: "Admin", roleDisplay: "Admin", avatar: "/images/ikan1.png" },
-    Koperasi: { name: "Koperasi Sejahtera", roleDisplay: "Koperasi", avatar: "/images/ikan1.png" },
-    Petani: { name: "Budi santoso", roleDisplay: "Petani", avatar: "/images/ikan1.png" },
-    Nelayan: { name: "Budi santoso", roleDisplay: "Nelayan", avatar: "/images/ikan1.png" },
-    Pembeli: { name: "PT Sejahtera", roleDisplay: "Pembeli", avatar: "/images/ikan1.png" },
+    Admin: { roleDisplay: "Admin" },
+    Koperasi: { roleDisplay: "Koperasi" },
+    Petani: { roleDisplay: "Petani" },
+    Nelayan: { roleDisplay: "Nelayan" },
+    Pembeli: { roleDisplay: "Pembeli" },
   };
 
   const navList = navigations[actor];
 
-  // Profil dari backend (fallback ke nilai lama)
+  // Profil dari backend (fallback ke label role)
   const profile = {
-    name: user?.nama_lengkap || profiles[actor]?.name,
+    name: user?.nama_lengkap || profiles[actor]?.roleDisplay || "Pengguna",
     roleDisplay: roleLabels[user?.role] || profiles[actor]?.roleDisplay,
-    avatar: storageUrl(user?.foto_profil),
+    avatar: storageUrl(user?.foto_profil, "/images/ikan1.png"),
   };
 
   return (

@@ -3,6 +3,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import StatCard from "../../components/common/StatCard";
 import api from "../../config/axios";
+import { useUser } from "../../hooks/useUser";
 import { Wheat, Fish, ShoppingBag, Wallet, Loader2 } from "lucide-react";
 import {
   AreaChart,
@@ -14,29 +15,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const avatarFallback = (e) => {
-  e.target.onerror = null;
-  e.target.src = "/images/user.png";
-};
-
 const productImageFallback = (e) => {
   e.target.onerror = null;
   e.target.src = "/images/beras.png";
 };
 
 export default function KoperasiDashboard() {
-  const [userName] = useState(() => {
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) {
-        const user = JSON.parse(raw);
-        return user.nama_lengkap || "Koperasi Sejahtera";
-      }
-    } catch {
-      // abaikan jika data user tidak valid
-    }
-    return "Koperasi Sejahtera";
-  });
+  const currentUser = useUser();
+  const userName = currentUser?.nama_lengkap || "Koperasi Sejahtera";
 
   const [stats, setStats] = useState({
     petaniBinaan: "0",

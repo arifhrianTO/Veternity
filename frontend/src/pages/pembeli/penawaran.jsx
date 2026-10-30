@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl } from "../../config/storage";
 import { swalSuccess, swalError } from "../../utils/swal";
 
 const tabItems = [
@@ -84,7 +85,7 @@ export default function PenawaranPembeliPage() {
         kode: offer.kode_penawaran,
         product: offer.product?.nama_produk ?? "Unknown",
         img: offer.product?.gambar
-          ? `http://localhost:8000/storage/${offer.product.gambar}`
+          ? storageUrl(offer.product.gambar, "/images/placeholder.png")
           : "/images/placeholder.png",
         satuan: offer.product?.satuan ?? "Kg",
         quantity: `${offer.jumlah_diminta} ${offer.product?.satuan ?? "Kg"}`,

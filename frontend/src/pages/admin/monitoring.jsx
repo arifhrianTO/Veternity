@@ -9,12 +9,9 @@ import {
   Loader2
 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl as storageUrlHelper } from "../../config/storage";
 
-const storageUrl = (path) => {
-  if (!path) return "/images/beras.png";
-  if (path.startsWith("http")) return path;
-  return `http://localhost:8000/storage/${path}`;
-};
+const storageUrl = (path) => storageUrlHelper(path, "/images/beras.png");
 
 const Pagination = ({ page, lastPage, total, setPage }) => {
   if (total === 0) return null;
@@ -89,6 +86,7 @@ export default function MonitoringPage() {
       const t = setTimeout(fetchProduk, 300);
       return () => clearTimeout(t);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, produkPage, searchProduk, filterKategori, filterStatusProduk]);
 
   // Fetch Penjualan
@@ -115,8 +113,11 @@ export default function MonitoringPage() {
 
   useEffect(() => {
     if (activeTab === "penjualan") {
+      // Fetch data dari server saat tab/halaman berubah.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchPenjualan();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, penjualanPage, subTabPenjualan]);
 
   // Helper badge warna status penjualan

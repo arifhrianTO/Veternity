@@ -1,11 +1,6 @@
 import { useUser } from "../../hooks/useUser";
+import { storageUrl } from "../../config/storage";
 import NotificationBell from "../common/NotificationBell";
-
-const storageUrl = (path) => {
-  if (!path) return "/images/user.png";
-  if (path.startsWith("http")) return path;
-  return `http://localhost:8000/storage/${path}`;
-};
 
 export default function PageHeader({ title, subtitle }) {
   const user = useUser();

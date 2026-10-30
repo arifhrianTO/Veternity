@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl } from "../../config/storage";
 
 const bgPalette = [
   "bg-emerald-50",
@@ -11,11 +12,7 @@ const bgPalette = [
   "bg-rose-50",
 ];
 
-const categoryImage = (path) => {
-  if (!path) return "/images/placeholder-category.png";
-  if (path.startsWith("http") || path.startsWith("/images")) return path;
-  return `http://localhost:8000/storage/${path}`;
-};
+const categoryImage = (path) => storageUrl(path, "/images/placeholder-category.png");
 
 export default function Categories() {
   const scrollRef = useRef(null);

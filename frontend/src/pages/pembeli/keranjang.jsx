@@ -4,6 +4,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import { Trash2, Check, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl } from "../../config/storage";
 import { swalWarning } from "../../utils/swal";
 
 export default function KeranjangPage() {
@@ -25,8 +26,8 @@ export default function KeranjangPage() {
         priceNum: Number(item.harga ?? item.product.harga_harapan),
         quantity: Number(item.kuantitas),
         unit: `/${item.product.satuan}`,
-        image: item.product.gambar ? `http://localhost:8000/storage/${item.product.gambar}` : "/images/beras.png",
-        koperasi: item.product.user?.name || "Koperasi",
+        image: storageUrl(item.product.gambar, "/images/beras.png"),
+        koperasi: item.product.user?.nama_lengkap || item.product.user?.name || "Koperasi",
         petani_id: item.product.user_id,
         originCityId: item.product.user_id === 1 ? 78 : 54, // Mock city ID
         stock: `${item.product.stok} ${item.product.satuan}`

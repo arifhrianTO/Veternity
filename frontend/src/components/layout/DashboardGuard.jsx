@@ -1,130 +1,59 @@
-import { useState, useEffect } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import api from "../../config/axios";
+import { useUserContext } from "../../context/userContextBase";
 import ProfileCompletionModal from "../common/ProfileCompletionModal";
-
-/**
- * Mapping field wajib per role.
- * Field yang tidak ada di sini = tidak wajib untuk role tersebut.
- */
-const REQUIRED_FIELDS_BY_ROLE = {
-  admin: ["foto_profil"],
-  koperasi: ["foto_profil", "nik", "rekening", "provinsi_id", "kota_id", "kode_pos"],
-  petani: ["foto_profil", "nik", "rekening", "provinsi_id", "kota_id", "kode_pos"],
-  nelayan: ["foto_profil", "nik", "rekening", "provinsi_id", "kota_id", "kode_pos"],
-  petani_binaan: ["foto_profil", "nik", "rekening", "provinsi_id", "kota_id", "kode_pos", "koperasi_id"],
-  nelayan_binaan: ["foto_profil", "nik", "rekening", "provinsi_id", "kota_id", "kode_pos", "koperasi_id"],
-  pembeli: ["foto_profil", "provinsi_id", "kota_id", "kode_pos"],
-};
-
-/**
- * Mapping role → home redirect path.
- * Dipakai saat user akses route yang bukan milik role-nya.
- */
-const ROLE_HOME = {
-  petani: "/petani/dashboard",
-  petani_binaan: "/petani/dashboard",
-  nelayan: "/nelayan/dashboard",
-  nelayan_binaan: "/nelayan/dashboard",
-  koperasi: "/koperasi/dashboard",
-  admin: "/admin/dashboard",
-  pembeli: "/pembeli/marketplace",
-};
+import { checkProfileComplete, ROLE_HOME } from "../../config/profileRules";
 
 export default function DashboardGuard({ allowedRoles }) {
-  const [user, setUser] = useState(() => {
-    // Coba ambil dari sessionStorage dulu supaya tidak loading setiap navigasi
-    try {
-      const cached = sessionStorage.getItem("guard_user");
-      return cached ? JSON.parse(cached) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [status, setStatus] = useState(() => {
-    // Kalau sudah ada cached user, langsung tentukan status tanpa loading
-    try {
-      const cached = sessionStorage.getItem("guard_user");
-      if (cached) return "__cached__"; // placeholder, akan di-resolve di useEffect sync
-    } catch {}
-    return "loading";
-  });
-  const location = useLocation();
+  const { user, setUser, refreshUser } = useUserContext();
+  const [status, setStatus] = useState("loading");
+  const [verified, setVerified] = useState(false);
 
-  const checkCompleteness = (userData) => {
-    if (!userData) return false;
-
-    const requiredFields = REQUIRED_FIELDS_BY_ROLE[userData.role] || [];
-
-    for (const field of requiredFields) {
-      if (!userData[field]) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  // Resolve status dari cached user (sync, tanpa fetch)
+  // Verifikasi awal: pastikan data user terbaru diambil dari server sekali.
   useEffect(() => {
-    if (status !== "__cached__" || !user) return;
+    let active = true;
+    const run = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        if (active) setStatus("unauthenticated");
+        return;
+      }
 
+      // Pakai cache dulu untuk render cepat, lalu verifikasi ke server.
+      if (!user) {
+        const fresh = await refreshUser();
+        if (!active) return;
+        if (!fresh) {
+          setStatus("unauthenticated");
+          return;
+        }
+      }
+      if (active) setVerified(true);
+    };
+    run();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Tentukan status setiap kali user / roles berubah.
+  useEffect(() => {
+    if (!verified || !user) return;
+    // Komputasi status dilakukan di effect karena bergantung hasil verifikasi.
     if (allowedRoles && !allowedRoles.includes(user.role)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus("unauthorized");
-    } else if (checkCompleteness(user)) {
+    } else if (checkProfileComplete(user)) {
       setStatus("complete");
     } else {
       setStatus("incomplete");
     }
-  }, [status, user, allowedRoles]);
-
-  // Fetch user dari API hanya sekali saat pertama kali (belum ada cache)
-  useEffect(() => {
-    // Kalau sudah ada user dari cache, skip fetch
-    if (user) return;
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setStatus("unauthenticated");
-      return;
-    }
-
-    let active = true;
-    const fetchUser = async () => {
-      try {
-        const response = await api.get("/user");
-        const userData = response.data;
-        
-        if (!active) return;
-
-        setUser(userData);
-        sessionStorage.setItem("guard_user", JSON.stringify(userData));
-
-        // Cek role dulu sebelum cek completeness
-        if (allowedRoles && !allowedRoles.includes(userData.role)) {
-          setStatus("unauthorized");
-          return;
-        }
-
-        if (checkCompleteness(userData)) {
-          setStatus("complete");
-        } else {
-          setStatus("incomplete");
-        }
-      } catch (err) {
-        console.error("Gagal verifikasi auth user", err);
-        if (active) setStatus("unauthenticated");
-      }
-    };
-
-    fetchUser();
-    return () => { active = false; };
-  }, [user]);
+  }, [verified, user, allowedRoles]);
 
   const handleProfileComplete = (updatedUser) => {
     setUser(updatedUser);
-    sessionStorage.setItem("guard_user", JSON.stringify(updatedUser));
     setStatus("complete");
   };
 
@@ -156,6 +85,3 @@ export default function DashboardGuard({ allowedRoles }) {
     </>
   );
 }
-
-// Export supaya bisa dipakai di ProfileCompletionModal
-export { REQUIRED_FIELDS_BY_ROLE };

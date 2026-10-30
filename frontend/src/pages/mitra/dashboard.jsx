@@ -7,9 +7,11 @@ import MitraOffers from "../../components/mitra/MitraOffers";
 import MitraOrders from "../../components/mitra/MitraOrders";
 import { Wheat, Briefcase, ShoppingBag, Clock } from "lucide-react";
 import api from "../../config/axios";
+import { useUser } from "../../hooks/useUser";
 
 export default function MitraDashboardPage() {
   const location = useLocation();
+  const user = useUser();
   const role = location.pathname.startsWith('/nelayan') ? 'nelayan' : 'petani';
   const RoleLabel = role === 'nelayan' ? 'Nelayan' : 'Petani';
 
@@ -35,7 +37,7 @@ export default function MitraDashboardPage() {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [role]);
 
   const dashboardMetrics = [
     { title: "Hasil Panen", value: stats.totalHasilPanen, subtitle: "Total bulan ini", icon: Wheat, accent: "from-green-600 to-green-500" },
@@ -59,7 +61,7 @@ export default function MitraDashboardPage() {
                 Halo, Selamat Datang
               </p>
               <h1 className="text-[28px] font-bold mt-1 mb-2 leading-tight">
-                Budi Santoso!
+                {user?.nama_lengkap || RoleLabel}!
               </h1>
               <p className="text-[14px] opacity-80 leading-relaxed">
                 Kelola hasil panen dan tingkatkan pendapatan anda bersama

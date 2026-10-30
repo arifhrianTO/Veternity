@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import { ArrowRight, Star, Store, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl } from "../../config/storage";
 
-const productImage = (path) => {
-  if (!path) return "/images/beras.png";
-  if (path.startsWith("http")) return path;
-  return `http://localhost:8000/storage/${path}`;
-};
+const productImage = (path) => storageUrl(path, "/images/beras.png");
 
 const formatRp = (val) => `Rp ${Number(val || 0).toLocaleString("id-ID")}`;
 

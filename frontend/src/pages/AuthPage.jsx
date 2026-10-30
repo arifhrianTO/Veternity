@@ -6,10 +6,23 @@ import ellipse181 from "../assets/Ellipse_181.png";
 import ellipse182 from "../assets/Ellipse_182.png";
 import ellipse179 from "../assets/Ellipse_179.png";
 import { swalSuccess, swalWarning } from "../utils/swal";
+import api from "../config/axios";
+import { useUserContext } from "../context/userContextBase";
+
+const ROLE_HOME = {
+  petani: "/petani/dashboard",
+  petani_binaan: "/petani/dashboard",
+  nelayan: "/nelayan/dashboard",
+  nelayan_binaan: "/nelayan/dashboard",
+  koperasi: "/koperasi/dashboard",
+  admin: "/admin/dashboard",
+  pembeli: "/pembeli/marketplace",
+};
 
 export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refreshUser } = useUserContext();
 
   // Mode Login vs Register diturunkan langsung dari pathname
   const isRegister = location.pathname === "/register";
@@ -44,9 +57,7 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      // Dynamic import of axios to avoid having to add it at the top level if not present
-      const axios = (await import('axios')).default;
-      const response = await axios.post("http://localhost:8000/api/login", {
+      const response = await api.post("/login", {
         identifier: loginEmailOrPhone,
         password: loginPassword,
       });
@@ -67,20 +78,11 @@ export default function AuthPage() {
       localStorage.setItem("token", access_token);
       localStorage.setItem("user", JSON.stringify(data));
 
+      // Muat ulang profil terpusat agar seluruh halaman langsung sinkron.
+      await refreshUser();
+
       // Redirect berdasarkan role
-      if (data.role === 'petani' || data.role === 'petani_binaan') {
-        navigate("/petani/dashboard");
-      } else if (data.role === 'nelayan' || data.role === 'nelayan_binaan') {
-        navigate("/nelayan/dashboard");
-      } else if (data.role === 'koperasi') {
-        navigate("/koperasi/dashboard");
-      } else if (data.role === 'admin') {
-        navigate("/admin/dashboard");
-      } else if (data.role === 'pembeli') {
-        navigate("/pembeli/marketplace");
-      } else {
-        navigate("/"); // fallback
-      }
+      navigate(ROLE_HOME[data.role] || "/");
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         setErrorMsg(error.response.data.message);
@@ -103,8 +105,7 @@ export default function AuthPage() {
     
     setLoading(true);
     try {
-      const axios = (await import('axios')).default;
-      await axios.post("http://localhost:8000/api/register", {
+      const response = await api.post("/register", {
         role: role,
         nama_lengkap: fullName,
         email: registerEmail,
@@ -114,9 +115,22 @@ export default function AuthPage() {
         alamat: address,
         password: registerPassword,
       });
-      
-      await swalSuccess("Registrasi berhasil!", "Silahkan masuk.");
-      navigate("/login");
+
+      const { data, access_token } = response.data || {};
+
+      if (access_token && data) {
+        // Auto-login: simpan kredensial lalu langsung masuk ke dashboard sesuai role.
+        sessionStorage.removeItem("current_user");
+        sessionStorage.removeItem("guard_user");
+        localStorage.setItem("token", access_token);
+        localStorage.setItem("user", JSON.stringify(data));
+        await refreshUser();
+        await swalSuccess("Registrasi berhasil!", "Selamat datang di JALA.");
+        navigate(ROLE_HOME[data.role] || "/");
+      } else {
+        await swalSuccess("Registrasi berhasil!", "Silahkan masuk.");
+        navigate("/login");
+      }
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         setErrorMsg(error.response.data.message + (error.response.data.errors ? " - " + JSON.stringify(error.response.data.errors) : ""));

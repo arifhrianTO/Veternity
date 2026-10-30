@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import api from "../../config/axios";
+import { storageUrl as storageUrlHelper } from "../../config/storage";
 import { ArrowLeft, Edit3, Trash2, X, Upload, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
 
-const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/user.png");
+const storageUrl = (path) => storageUrlHelper(path, "/images/user.png");
 
 export default function DetailMitraBinaan() {
   const location = useLocation();
@@ -66,7 +67,7 @@ export default function DetailMitraBinaan() {
       alamat: binaan.alamat,
       rekening: binaan.rekening,
     });
-    setPreviewImage(binaan.foto_profil ? `http://localhost:8000/storage/${binaan.foto_profil}` : null);
+    setPreviewImage(binaan.foto_profil ? storageUrl(binaan.foto_profil) : null);
     setIsEditProfilOpen(true);
   };
 

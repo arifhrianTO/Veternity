@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
+import { storageUrl as storageUrlHelper } from "../../config/storage";
 import { Search, Plus, Edit3, Trash2, ChevronLeft, ChevronRight, Eye, X, Upload, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
 
-const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/beras.png");
+const storageUrl = (path) => storageUrlHelper(path, "/images/beras.png");
 
 export default function KoperasiKelolaProduk() {
   const [search, setSearch] = useState("");

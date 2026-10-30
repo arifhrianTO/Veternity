@@ -69,6 +69,7 @@ export default function PenggunaPage() {
   useEffect(() => {
     const t = setTimeout(fetchUsers, 300);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search, selectedRoleFilter]);
 
   const openAddModal = () => {

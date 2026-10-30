@@ -15,13 +15,10 @@ import {
   Package,
 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl as storageUrlHelper } from "../../config/storage";
 import { swalSuccess, swalError } from "../../utils/swal";
 
-const storageUrl = (path) => {
-  if (!path) return "/images/placeholder-category.png";
-  if (path.startsWith("http") || path.startsWith("/images")) return path;
-  return `http://localhost:8000/storage/${path}`;
-};
+const storageUrl = (path) => storageUrlHelper(path, "/images/placeholder-category.png");
 
 const tipeBadge = (tipe) =>
   tipe === "perikanan" ? (

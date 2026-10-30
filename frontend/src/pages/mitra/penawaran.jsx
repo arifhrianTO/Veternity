@@ -3,6 +3,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import { ChevronRight, ChevronLeft, X, Phone, MessageSquare, Mail, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl } from "../../config/storage";
 
 const tabItems = [
   { key: "semua", label: "Semua" },
@@ -60,7 +61,7 @@ export default function MitraPenawaranPage() {
         offerId: offer.id, // id asli untuk keperluan API (PUT /offers/{id})
         id: offer.kode_penawaran, // dipakai sebagai key tampilan
         product: offer.product ? (offer.product.nama_produk || offer.product.category?.nama_kategori || 'Unknown') : 'Unknown',
-        img: offer.product && offer.product.gambar ? `http://localhost:8000/storage/${offer.product.gambar}` : '/images/placeholder.png',
+        img: offer.product && offer.product.gambar ? storageUrl(offer.product.gambar, "/images/placeholder.png") : '/images/placeholder.png',
         quantity: `${offer.jumlah_diminta} ${offer.product ? offer.product.satuan : 'Kg'}`,
         hargaHarapan: offer.product ? `Rp ${Number(offer.product.harga_harapan).toLocaleString('id-ID')} / ${offer.product.satuan}` : '-',
         basePrice: offer.harga_acuan

@@ -4,6 +4,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import OrderDetailModal from "../../components/pembeli/OrderDetailModal";
 import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
 import api from "../../config/axios";
+import { storageUrl } from "../../config/storage";
 import { swalSuccess, swalError, swalInfo } from "../../utils/swal";
 
 const tabItems = [
@@ -78,7 +79,7 @@ export default function PesananPembeliPage() {
           date: new Date(o.tanggal_pesanan).toLocaleDateString("id-ID"),
           status: o.status || "Diproses",
           image: o.items[0]?.product?.gambar
-            ? `http://localhost:8000/storage/${o.items[0].product.gambar}`
+            ? storageUrl(o.items[0].product.gambar, "/images/beras.png")
             : "/images/beras.png",
           tracking: {
             created: new Date(o.created_at).toLocaleString("id-ID", {

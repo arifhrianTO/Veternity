@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
+import { storageUrl } from "../../config/storage";
 import ProductDetailModal from "../../components/pembeli/ProductDetailModal";
 import { Star, Search } from "lucide-react";
 import { swalSuccess, swalError } from "../../utils/swal";
@@ -45,7 +46,7 @@ export default function MarketplacePage() {
           koperasi: p.user?.nama_lengkap || "Petani",
           sellerRole: p.user?.role ? sellerRoleLabels[p.user.role] || "Penjual" : "Penjual",
           petani_id: p.user_id,
-          image: p.gambar ? `http://localhost:8000/storage/${p.gambar}` : "/images/beras.png",
+          image: storageUrl(p.gambar, "/images/beras.png"),
           stock: `${p.stok}${p.satuan}`,
           harvestDate: new Date(p.tanggal_panen).toLocaleDateString(),
           shelfLife: `${p.masa_layak} hari`,

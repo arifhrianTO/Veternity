@@ -1,59 +1,34 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
-import { X, Upload, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
-
-const storageUrl = (path) => (path ? `http://localhost:8000/storage/${path}` : "/images/user.png");
+import { X, Upload, Loader2 } from "lucide-react";
+import { useUserContext } from "../../context/userContextBase";
+import { storageUrl } from "../../config/storage";
 
 export default function ProfilPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname;
 
+  const { user: profile, refreshUser } = useUserContext();
+
   let roleLabel = "Profil";
-  let CACHE_KEY = "user_profile";
-  
+
   if (path.startsWith("/admin")) {
     roleLabel = "Profil Admin";
-    CACHE_KEY = "admin_profile";
   } else if (path.startsWith("/koperasi")) {
     roleLabel = "Profil Koperasi";
-    CACHE_KEY = "koperasi_profile";
   } else if (path.startsWith("/petani")) {
     roleLabel = "Profil Petani";
-    CACHE_KEY = "petani_profile";
   } else if (path.startsWith("/nelayan")) {
     roleLabel = "Profil Nelayan";
-    CACHE_KEY = "nelayan_profile";
   } else if (path.startsWith("/pembeli")) {
     roleLabel = "Profil Pembeli";
-    CACHE_KEY = "pembeli_profile";
   }
 
-  const [profile, setProfile] = useState(() => {
-    // Coba cache spesifik role dulu
-    const cached = sessionStorage.getItem(CACHE_KEY);
-    if (cached) {
-      try {
-        return JSON.parse(cached);
-      } catch (error) {
-        console.error("Gagal parse cache profil:", error);
-      }
-    }
-    // Fallback ke cache dari DashboardGuard
-    const guardCached = sessionStorage.getItem("guard_user");
-    if (guardCached) {
-      try {
-        return JSON.parse(guardCached);
-      } catch (error) {
-        console.error("Gagal parse guard cache:", error);
-      }
-    }
-    return null;
-  });
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,27 +36,6 @@ export default function ProfilPage() {
   const [editForm, setEditForm] = useState({});
   const [passwordForm, setPasswordForm] = useState({ password_lama: "", password_baru: "" });
   const fileInputRef = useRef(null);
-
-  useEffect(() => {
-    if (profile) return;
-
-    let active = true;
-    api
-      .get("/user")
-      .then((response) => {
-        if (active) {
-          setProfile(response.data);
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify(response.data));
-        }
-      })
-      .catch((error) => {
-        console.error("Gagal mengambil profil", error);
-        if (active) setProfile(null);
-      });
-    return () => {
-      active = false;
-    };
-  }, [profile]);
 
   const handleOpenEdit = () => {
     if (!profile) return;
@@ -128,9 +82,8 @@ export default function ProfilPage() {
       await api.post("/user", payload, {
         headers: { "Content-Type": "multipart/form-data" }
       });
-      const response = await api.get("/user");
-      setProfile(response.data);
-      sessionStorage.setItem(CACHE_KEY, JSON.stringify(response.data));
+      // Ambil data terbaru dan sebarkan ke seluruh aplikasi (sidebar, header, dashboard).
+      await refreshUser();
       setIsEditOpen(false);
     } catch (error) {
       console.error("Gagal update profil:", error);
@@ -153,9 +106,8 @@ export default function ProfilPage() {
       
       // Auto logout and redirect
       localStorage.removeItem("token");
-      localStorage.removeItem("user");
       sessionStorage.removeItem("current_user");
-      sessionStorage.removeItem(CACHE_KEY);
+      sessionStorage.removeItem("guard_user");
       navigate("/login");
 
     } catch (error) {
