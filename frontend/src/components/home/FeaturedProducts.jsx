@@ -50,7 +50,7 @@ export default function FeaturedProducts() {
           {products.map((p, i) => (
             <div
               key={p.id ?? i}
-              className="rounded-2xl border border-slate-100 overflow-hidden shadow-xs hover:shadow-lg transition-shadow bg-white"
+              className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:border-emerald-500 hover:shadow-lg transition-all bg-white"
             >
               <div className="h-48 bg-slate-50 flex items-center justify-center overflow-hidden">
                 <img

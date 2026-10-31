@@ -88,7 +88,7 @@ export default function KoperasiSection() {
           {filteredList.map((k, i) => (
             <div
               key={k.id ?? i}
-              className="rounded-2xl border border-[#029154]/50 bg-[#00FF40]/[0.03] p-6 flex flex-col items-center text-center hover:shadow-sm transition-shadow"
+              className="rounded-2xl border border-emerald-600/40 bg-white p-6 flex flex-col items-center text-center shadow-sm hover:border-emerald-600 hover:shadow-md transition-all"
             >
               <div className="w-16 h-16 rounded-full bg-white border border-slate-100 flex items-center justify-center mb-3 overflow-hidden">
                 {logoUrl(k.logo) ? (

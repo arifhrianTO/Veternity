@@ -100,7 +100,7 @@ export default function Categories() {
             categories.map((c, i) => (
               <button
                 key={c.id}
-                className="snap-start shrink-0 border border-slate-100 rounded-2xl py-8 px-8 flex flex-col items-center gap-3 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all group bg-white"
+                className="snap-start shrink-0 border border-slate-200 rounded-2xl py-8 px-8 flex flex-col items-center gap-3 shadow-sm hover:border-emerald-500 hover:shadow-md transition-all group bg-white cursor-pointer"
               >
                 <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center ${bgPalette[i % bgPalette.length]}`}>
                   <img
