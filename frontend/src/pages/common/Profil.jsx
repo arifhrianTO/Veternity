@@ -16,6 +16,7 @@ export default function ProfilPage() {
   const { user: profile, refreshUser } = useUserContext();
 
   let roleLabel = "Profil";
+  const isPembeli = path.startsWith("/pembeli");
 
   if (path.startsWith("/admin")) {
     roleLabel = "Profil Admin";
@@ -139,14 +140,14 @@ export default function ProfilPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex w-full min-h-screen p-4 pl-[304px]">
-        <Sidebar />
+    <div className={isPembeli ? "font-[Montserrat] text-slate-900" : "min-h-screen bg-white font-[Montserrat] text-slate-900"}>
+      <div className={isPembeli ? "" : "flex w-full min-h-screen p-4 pl-[304px]"}>
+        {!isPembeli && <Sidebar />}
 
         {/* Outer Container Wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
+        <div className={`flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] relative ${isPembeli ? "p-6 sm:p-8" : "p-8"}`}>
           
-          <PageHeader title={roleLabel} />
+          <PageHeader title={roleLabel} simple={isPembeli} />
 
           {/* Inner Profile Card Container */}
           <div className="bg-white/50 border border-[#029154] shadow-[0_0_4px_rgba(0,0,0,0.25)] rounded-[20px] p-8 relative">

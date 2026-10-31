@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import {
   ChevronRight,
@@ -197,13 +196,10 @@ export default function PenawaranPembeliPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex w-full min-h-screen p-4 pl-[304px]">
-        <Sidebar />
-
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative flex flex-col justify-between">
+    <div className="font-[Montserrat] text-slate-900">
+      <div className="bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-6 sm:p-8 relative flex flex-col justify-between">
           <div>
-            <PageHeader title="Penawaran Saya" subtitle="Pantau status penawaran harga yang Anda ajukan ke penjual" />
+            <PageHeader title="Penawaran Saya" subtitle="Pantau status penawaran harga yang Anda ajukan ke penjual" simple />
 
             {/* Tabs */}
             <div className="mb-6 flex flex-wrap gap-2">
@@ -386,7 +382,6 @@ export default function PenawaranPembeliPage() {
             </div>
           </div>
         </div>
-      </div>
 
       {/* ======= MODAL DETAIL ======= */}
       {selectedOffer && (

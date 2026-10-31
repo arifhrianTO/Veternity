@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import AuthPage from "./pages/AuthPage";
 import DashboardGuard from "./components/layout/DashboardGuard";
+import PembeliLayout from "./components/layout/PembeliLayout";
 
 // Mitra (Petani & Nelayan)
 import MitraDashboardPage from "./pages/mitra/dashboard";
@@ -64,12 +65,16 @@ function App() {
       {/* Rute Pembeli — hanya role pembeli */}
       <Route element={<DashboardGuard allowedRoles={["pembeli"]} />}>
         <Route path="/pembeli" element={<Navigate to="/pembeli/marketplace" replace />} />
-        <Route path="/pembeli/marketplace" element={<MarketplacePage />} />
-        <Route path="/pembeli/keranjang" element={<KeranjangPage />} />
         <Route path="/pembeli/checkout" element={<CheckoutPage />} />
-        <Route path="/pembeli/pesanan" element={<PesananPembeliPage />} />
-        <Route path="/pembeli/penawaran" element={<PenawaranPembeliPage />} />
-        <Route path="/pembeli/profil" element={<ProfilPage />} />
+
+        {/* Halaman dengan top navbar pembeli (tanpa sidebar) */}
+        <Route element={<PembeliLayout />}>
+          <Route path="/pembeli/marketplace" element={<MarketplacePage />} />
+          <Route path="/pembeli/keranjang" element={<KeranjangPage />} />
+          <Route path="/pembeli/pesanan" element={<PesananPembeliPage />} />
+          <Route path="/pembeli/penawaran" element={<PenawaranPembeliPage />} />
+          <Route path="/pembeli/profil" element={<ProfilPage />} />
+        </Route>
       </Route>
 
       {/* Rute Admin — hanya role admin */}

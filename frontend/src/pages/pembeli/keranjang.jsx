@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import { Trash2, Check, Loader2 } from "lucide-react";
 import api from "../../config/axios";
@@ -113,13 +112,10 @@ export default function KeranjangPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex w-full min-h-screen p-4 pl-[304px]">
-        <Sidebar />
-
-        {/* Main content area - matches marketplace wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[16px] p-6 relative">
-          <PageHeader title="Keranjang" />
+    <div className="font-[Montserrat] text-slate-900">
+      {/* Main content area - matches marketplace wrapper */}
+      <div className="bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[16px] p-6 relative">
+          <PageHeader title="Keranjang" simple />
 
           {isLoading ? (
             <div className="flex justify-center items-center py-20 text-[#006638]">
@@ -269,7 +265,6 @@ export default function KeranjangPage() {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }

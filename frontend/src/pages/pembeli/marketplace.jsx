@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import api from "../../config/axios";
 import { storageUrl } from "../../config/storage";
@@ -72,6 +71,7 @@ export default function MarketplacePage() {
           kuantitas: qty
        });
        if(res.data.success) {
+          window.dispatchEvent(new Event("cart:updated"));
           swalSuccess("Ditambahkan ke keranjang", `${product.name} (${qty} kg) telah ditambahkan ke keranjang.`);
        }
     } catch (error) {
@@ -117,14 +117,11 @@ export default function MarketplacePage() {
   });
 
   return (
-    <div className="min-h-screen bg-white font-['Montserrat'] text-slate-900">
-      <div className="flex w-full min-h-screen p-4 pl-[304px]">
-        <Sidebar />
-
-        {/* Rectangle 4166 / Wrapper utama */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
+    <div className="font-['Montserrat'] text-slate-900">
+      {/* Rectangle 4166 / Wrapper utama */}
+      <div className="bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-6 sm:p-8 relative">
           
-          <PageHeader title="Katalog Produk" />
+          <PageHeader title="Katalog Produk" simple />
 
           {/* Group 36 & Filter Controls */}
           <div className="flex items-center justify-between gap-4 mb-8">
@@ -194,19 +191,20 @@ export default function MarketplacePage() {
                Memuat Produk...
              </div>
           ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredProducts.map((p, idx) => (
               <div
                 key={idx}
-                className="w-full max-w-[308px] h-fit bg-white rounded-[20px] shadow-[0px_0px_5px_rgba(0,0,0,0.25)] flex flex-col justify-between overflow-hidden mx-auto transition-transform hover:scale-[1.01]"
+                onClick={() => setSelectedProduct(p)}
+                className="group w-full h-full bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.12)] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div>
                   {/* Image container */}
-                  <div className="h-[170px] w-full bg-slate-50 relative overflow-hidden border-b border-slate-100">
+                  <div className="aspect-[4/3] w-full bg-slate-50 relative overflow-hidden border-b border-slate-100">
                     <img
                       src={p.image}
                       alt={p.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
                         e.target.src = "/images/beras.png";
                       }}
@@ -214,49 +212,53 @@ export default function MarketplacePage() {
                   </div>
 
                   {/* Body Content */}
-                  <div className="p-4 relative">
-                    <h4 className="font-bold text-[18px] leading-[22px] text-[#273B4A] line-clamp-1">{p.name}</h4>
+                  <div className="p-3">
+                    <h4 className="font-semibold text-[14px] leading-[18px] text-[#273B4A] line-clamp-2 min-h-[36px]">{p.name}</h4>
 
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#006638]/10 text-[#006638] border border-[#006638]/20">
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#006638]/10 text-[#006638] border border-[#006638]/20">
                         {p.kategori}
                       </span>
                       {p.komoditas && p.komoditas !== "-" && (
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
                           {p.komoditas}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-[14px] leading-[18px] text-[rgba(0,0,0,0.43)] font-medium mt-1">
+                    <p className="text-[12px] leading-[16px] text-[rgba(0,0,0,0.43)] font-medium mt-1 line-clamp-1">
                       {p.location}
                     </p>
 
-                    <div className="flex items-center justify-between mt-[18px]">
-                      <span className="font-bold text-[18px] leading-[20px] text-[#00A75C]">
-                        {p.price} <span className="font-medium text-sm text-slate-400">{p.unit}</span>
+                    <div className="flex items-center justify-between gap-2 mt-2">
+                      <span className="font-bold text-[16px] leading-[20px] text-[#00A75C]">
+                        {p.price} <span className="font-medium text-[12px] text-slate-400">{p.unit}</span>
                       </span>
 
-                      <div className="flex items-center gap-1">
-                        <Star className="w-[18px] h-[18px] fill-amber-400 text-amber-400" />
-                        <span className="text-[14px] text-[rgba(0,0,0,0.43)] font-medium">{p.rating}</span>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <Star className="w-[14px] h-[14px] fill-amber-400 text-amber-400" />
+                        <span className="text-[12px] text-[rgba(0,0,0,0.43)] font-medium">{p.rating}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 mt-[14px]">
-                      <img src="/images/iconKoperasi.png" alt="koperasi icon" className="w-[20px] h-[20px] object-contain shrink-0 opacity-80" />
-                      <span className="text-[14px] text-[rgba(0,0,0,0.43)] font-medium">
-                        {p.koperasi} <span className="text-[12px]">• {p.sellerRole}</span>
+                    <div className="flex items-center gap-1.5 mt-2 min-w-0">
+                      <img src="/images/iconKoperasi.png" alt="koperasi icon" className="w-[16px] h-[16px] object-contain shrink-0 opacity-80" />
+                      <span className="text-[12px] text-[rgba(0,0,0,0.43)] font-medium truncate">
+                        {p.koperasi} <span className="text-[11px]">• {p.sellerRole}</span>
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Button Action */}
-                <div className="p-4 pt-4 mt-auto">
+                <div className="px-3 pb-3 pt-1 mt-auto">
                   <button
-                    onClick={() => setSelectedProduct(p)}
-                    className="w-full h-[45px] bg-[#006638] hover:bg-[#00522c] text-white rounded-[10px] text-[16px] font-bold transition flex items-center justify-center"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedProduct(p);
+                    }}
+                    className="w-full h-[36px] bg-[#006638] hover:bg-[#00522c] text-white rounded-lg text-[13px] font-bold transition flex items-center justify-center"
                   >
                     Lihat Detail
                   </button>
@@ -266,7 +268,6 @@ export default function MarketplacePage() {
           </div>
           )}
 
-        </div>
       </div>
 
       {/* Product Detail Popup Modal */}

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
 import OrderDetailModal from "../../components/pembeli/OrderDetailModal";
 import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
@@ -150,13 +149,10 @@ export default function PesananPembeliPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-[Montserrat] text-slate-900">
-      <div className="flex w-full min-h-screen p-4 pl-[304px]">
-        <Sidebar />
-
-        {/* Main content - consistent wrapper */}
-        <div className="flex-1 bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-8 relative">
-          <PageHeader title="Pesanan Saya" />
+    <div className="font-[Montserrat] text-slate-900">
+      {/* Main content - consistent wrapper */}
+      <div className="bg-[rgba(222,236,225,0.19)] border border-[rgba(0,154,38,0.19)] rounded-[20px] p-6 sm:p-8 relative">
+          <PageHeader title="Pesanan Saya" simple />
 
           {/* Tab bar - Rectangle 4189 */}
           <div className="bg-white shadow-[0_0_5px_rgba(0,0,0,0.25)] rounded-[10px] p-2 flex gap-1 mb-6 w-fit">
@@ -368,7 +364,6 @@ export default function PesananPembeliPage() {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Order Detail Popup */}
       {selectedOrder && (
