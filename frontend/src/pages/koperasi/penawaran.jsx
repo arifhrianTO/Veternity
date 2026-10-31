@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import api from "../../config/axios";
 import { storageUrl as storageUrlHelper } from "../../config/storage";
 import { X, MapPin, Phone, MessageCircle, Mail, Check, XCircle, Send, Loader2 } from "lucide-react";
@@ -10,6 +11,8 @@ const storageUrl = (path) => storageUrlHelper(path, "/images/beras.png");
 
 export default function PenawaranPage() {
   const [activeTab, setActiveTab] = useState("Semua");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const [selectedItem, setSelectedItem] = useState(null);
   const [showCounter, setShowCounter] = useState(false);
   const [counterPrice, setCounterPrice] = useState("");
@@ -104,6 +107,9 @@ export default function PenawaranPage() {
       ? mappedOffers
       : mappedOffers.filter((item) => item.status === activeTab);
 
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
+  const currentData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const handleOpenModal = (item) => {
     setSelectedItem(item);
     setShowCounter(false);
@@ -170,7 +176,7 @@ export default function PenawaranPage() {
                 {["Semua", "Menunggu", "Diterima", "Ditolak"].map((tab) => (
                   <button
                     key={tab}
-                    onClick={() => setActiveTab(tab)}
+                    onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
                     className={`relative text-[16px] font-semibold pb-1 transition ${
                       activeTab === tab
                         ? "text-[#005941]"
@@ -208,11 +214,11 @@ export default function PenawaranPage() {
                 ) : filteredData.length === 0 ? (
                   <div className="text-center py-10 text-slate-500 font-medium">Belum ada penawaran.</div>
                 ) : (
-                  filteredData.map((item, index) => (
+                  currentData.map((item, index) => (
                     <div
                       key={item.id}
                       className={`grid grid-cols-12 items-center text-center p-2 hover:bg-slate-50 transition ${
-                        index !== filteredData.length - 1 ? "border-b border-black/10" : ""
+                        index !== currentData.length - 1 ? "border-b border-black/10" : ""
                       }`}
                     >
                       {/* Produk */}
@@ -270,6 +276,15 @@ export default function PenawaranPage() {
                   ))
                 )}
               </div>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredData.length}
+                itemsPerPage={itemsPerPage}
+                itemLabel="penawaran"
+                onPageChange={(p) => setCurrentPage(p)}
+              />
           </div>
         </div>
       </div>

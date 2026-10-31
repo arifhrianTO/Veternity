@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import api from "../../config/axios";
-import { Search, Plus, Eye, ChevronLeft, ChevronRight, X, Upload, Loader2 } from "lucide-react";
+import { Search, Plus, Eye, X, Upload, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
 
 export default function MitraBinaanPage() {
@@ -206,46 +207,16 @@ export default function MitraBinaanPage() {
             </div>
 
             {/* Pagination & Info */}
-            {list.length > itemsPerPage && (
-              <div className="flex flex-wrap items-center justify-between border-t border-slate-100 pt-4 mt-6 gap-4">
-                <span className="text-[15px] sm:text-[16px] font-semibold text-black/50">
-                  Menampilkan {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, list.length)} dari {list.length} {LABEL.toLowerCase()}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="p-1 text-black/40 hover:text-black transition disabled:opacity-30"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-9 h-9 rounded-[5px] font-semibold text-[16px] flex items-center justify-center transition ${
-                        currentPage === i + 1
-                          ? "bg-[#006638] text-white"
-                          : "bg-white border border-[#006638] text-[#006638] hover:bg-emerald-50"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="p-1 text-black/40 hover:text-black transition disabled:opacity-30"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
-            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={list.length}
+              itemsPerPage={itemsPerPage}
+              itemLabel={LABEL.toLowerCase()}
+              onPageChange={(p) => setCurrentPage(p)}
+              className="border-t border-slate-100 pt-4"
+            />
           </div>
-
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import api from "../../config/axios";
 import { swalSuccess, swalError } from "../../utils/swal";
 
@@ -10,8 +11,6 @@ import {
   ChevronDown,
   Edit3,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   X,
   Loader2
 } from "lucide-react";
@@ -250,20 +249,14 @@ export default function PenggunaPage() {
               </table>
             </div>
 
-            {total > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 text-sm text-black/50 font-semibold">
-                <div>Total {total} pengguna</div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-2 text-black/40 hover:text-black transition disabled:opacity-30">
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button className="w-9 h-9 rounded-md bg-[#006638] text-white font-semibold flex items-center justify-center">{page}</button>
-                  <button onClick={() => setPage(p => Math.min(lastPage, p + 1))} disabled={page === lastPage} className="p-2 text-black/40 hover:text-black transition disabled:opacity-30">
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            )}
+            <Pagination
+              currentPage={page}
+              totalPages={lastPage}
+              totalItems={total}
+              itemsPerPage={5}
+              itemLabel="pengguna"
+              onPageChange={(p) => setPage(p)}
+            />
           </div>
         </div>
       </div>

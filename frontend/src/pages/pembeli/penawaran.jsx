@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import {
-  ChevronRight,
-  ChevronLeft,
   X,
   Loader2,
   TrendingUp,
@@ -345,42 +344,14 @@ export default function PenawaranPembeliPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-6 px-2">
-            <span className="text-[15px] font-semibold text-black/[0.51]">
-              Menampilkan {filteredOffers.length > 0 ? startIndex + 1 : 0}-
-              {Math.min(startIndex + currentOffers.length, filteredOffers.length)} dari{" "}
-              {filteredOffers.length} penawaran
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
-              >
-                <ChevronLeft className="w-5 h-5 text-black/[0.43]" />
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setPage(i + 1)}
-                  className={`w-[36px] h-[36px] rounded-[5px] text-[15px] font-semibold flex items-center justify-center transition ${
-                    page === i + 1
-                      ? "bg-[#006638] text-white"
-                      : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/5"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
-              >
-                <ChevronRight className="w-5 h-5 text-black/[0.43]" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={filteredOffers.length}
+            itemsPerPage={itemsPerPage}
+            itemLabel="penawaran"
+            onPageChange={(p) => setPage(p)}
+          />
         </div>
 
       {/* ======= MODAL DETAIL ======= */}

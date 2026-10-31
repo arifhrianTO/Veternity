@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
-import { ChevronRight, ChevronLeft, Edit3, Trash2, Eye, X, UploadCloud, Loader2 } from "lucide-react";
+import Pagination from "../../components/common/Pagination";
+import { Edit3, Trash2, Eye, X, UploadCloud, Loader2 } from "lucide-react";
 import api from "../../config/axios"; // Import Axios Instance
 import { storageUrl } from "../../config/storage";
 
@@ -368,43 +369,14 @@ export default function MitraProdukPage() {
           </div>
 
           {/* Bottom Pagination Info & Controls */}
-          <div className="flex items-center justify-between mt-6 px-2">
-            <span className="text-[16px] font-semibold text-black/[0.51]">
-              Menampilkan {products.length === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + itemsPerPage, products.length)} dari {products.length} produk
-            </span>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
-              >
-                <ChevronLeft className="w-5 h-5 text-black/[0.43]" />
-              </button>
-
-              {Array.from({ length: totalPages }, (_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setPage(index + 1)}
-                  className={`w-[36px] h-[36px] rounded-[5px] text-[16px] font-semibold flex items-center justify-center transition ${
-                    page === index + 1
-                      ? "bg-[#006638] text-white"
-                      : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/5"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
-              >
-                <ChevronRight className="w-5 h-5 text-black/[0.43]" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={safeProducts.length}
+            itemsPerPage={itemsPerPage}
+            itemLabel="produk"
+            onPageChange={(p) => setPage(p)}
+          />
 
         </div>
       </div>

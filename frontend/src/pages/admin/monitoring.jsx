@@ -1,37 +1,16 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import {
   Search,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Loader2
 } from "lucide-react";
 import api from "../../config/axios";
 import { storageUrl as storageUrlHelper } from "../../config/storage";
 
 const storageUrl = (path) => storageUrlHelper(path, "/images/beras.png");
-
-const Pagination = ({ page, lastPage, total, setPage }) => {
-  if (total === 0) return null;
-  return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 text-sm text-black/50 font-semibold">
-      <div>Total {total} data</div>
-      <div className="flex items-center gap-2">
-        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-2 text-black/40 hover:text-black transition disabled:opacity-30">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <button className="w-9 h-9 rounded-md bg-[#006638] text-white font-semibold flex items-center justify-center">
-          {page}
-        </button>
-        <button onClick={() => setPage(p => Math.min(lastPage, p + 1))} disabled={page === lastPage} className="p-2 text-black/40 hover:text-black transition disabled:opacity-30">
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
-    </div>
-  );
-};
 
 export default function MonitoringPage() {
   const [activeTab, setActiveTab] = useState("produk"); // 'produk' | 'penjualan'
@@ -305,7 +284,14 @@ export default function MonitoringPage() {
                     </tbody>
                   </table>
                 </div>
-                <Pagination page={produkPage} lastPage={produkLastPage} total={produkTotal} setPage={setProdukPage} />
+                <Pagination
+                  currentPage={produkPage}
+                  totalPages={produkLastPage}
+                  totalItems={produkTotal}
+                  itemsPerPage={5}
+                  itemLabel="produk"
+                  onPageChange={(p) => setProdukPage(p)}
+                />
               </div>
             </>
           )}
@@ -408,7 +394,14 @@ export default function MonitoringPage() {
                     </tbody>
                   </table>
                 </div>
-                <Pagination page={penjualanPage} lastPage={penjualanLastPage} total={penjualanTotal} setPage={setPenjualanPage} />
+                <Pagination
+                  currentPage={penjualanPage}
+                  totalPages={penjualanLastPage}
+                  totalItems={penjualanTotal}
+                  itemsPerPage={5}
+                  itemLabel="transaksi"
+                  onPageChange={(p) => setPenjualanPage(p)}
+                />
               </div>
             </>
           )}

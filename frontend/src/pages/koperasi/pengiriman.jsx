@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import api from "../../config/axios";
-import { Search, ChevronDown, ChevronLeft, ChevronRight, Pencil, X, Loader2 } from "lucide-react";
+import { Search, ChevronDown, Pencil, X, Loader2 } from "lucide-react";
 import { swalError } from "../../utils/swal";
 
 const STATUS_OPTIONS = ["Menunggu Pembayaran", "Diproses", "Dikirim", "Selesai", "Dibatalkan"];
@@ -190,46 +191,15 @@ export default function PengirimanPage() {
             </div>
 
             {/* Table Footer / Pagination */}
-            {filteredData.length > itemsPerPage && (
-              <div className="flex items-center justify-between pt-3 border-t border-black/10 mt-2 shrink-0">
-                <span className="text-[14px] sm:text-[15px] font-semibold text-black/50">
-                  Menampilkan {(currentPage - 1) * itemsPerPage + 1}-
-                  {Math.min(currentPage * itemsPerPage, filteredData.length)} dari {filteredData.length} pengiriman
-                </span>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="p-1 transition text-black/40 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-8 h-8 rounded-[5px] text-[15px] font-semibold flex items-center justify-center transition ${
-                        currentPage === i + 1
-                          ? "bg-[#006638] text-white"
-                          : "bg-white border border-[#006638] text-[#006638] hover:bg-slate-50"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="p-1 transition text-black/40 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredData.length}
+              itemsPerPage={itemsPerPage}
+              itemLabel="pengiriman"
+              onPageChange={(p) => setCurrentPage(p)}
+              className="pt-3 border-t border-slate-100"
+            />
           </div>
         </div>
       </div>

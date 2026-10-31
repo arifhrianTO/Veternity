@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
-import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import Pagination from "../../components/common/Pagination";
+import { Loader2 } from "lucide-react";
 import api from "../../config/axios";
 import { swalSuccess, swalError } from "../../utils/swal";
 
@@ -226,44 +227,14 @@ export default function MitraPesananPage() {
           </div>
 
           {/* Bottom Pagination Info & Controls */}
-          <div className="flex items-center justify-between mt-6 px-2">
-            <span className="text-[16px] font-semibold text-black/[0.51]">
-              Menampilkan {Math.min(startIndex + 1, filteredOrders.length)}-
-              {Math.min(startIndex + currentOrders.length, filteredOrders.length)} dari {filteredOrders.length} pesanan
-            </span>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
-              >
-                <ChevronLeft className="w-5 h-5 text-black/[0.43]" />
-              </button>
-
-              {Array.from({ length: totalPages }, (_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setPage(index + 1)}
-                  className={`w-[36px] h-[36px] rounded-[5px] text-[16px] font-semibold flex items-center justify-center transition ${
-                    page === index + 1
-                      ? "bg-[#006638] text-white"
-                      : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/5"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
-              >
-                <ChevronRight className="w-5 h-5 text-black/[0.43]" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={filteredOrders.length}
+            itemsPerPage={itemsPerPage}
+            itemLabel="pesanan"
+            onPageChange={(p) => setPage(p)}
+          />
 
         </div>
       </div>

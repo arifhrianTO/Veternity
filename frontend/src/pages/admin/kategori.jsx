@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import {
   Search,
   Plus,
@@ -11,7 +12,6 @@ import {
   Loader2,
   ChevronDown,
   ChevronRight,
-  ChevronLeft,
   Package,
 } from "lucide-react";
 import api from "../../config/axios";
@@ -494,44 +494,15 @@ export default function KategoriPage() {
               </div>
 
               {/* Pagination Footer */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-black/10 gap-3">
-                  <div className="text-sm text-black/50 font-semibold">
-                    Menampilkan {(page - 1) * itemsPerPage + 1}-
-                    {Math.min(page * itemsPerPage, filteredCategories.length)} dari{" "}
-                    {filteredCategories.length} kategori
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                      disabled={page === 1}
-                      className="p-1.5 text-black/40 hover:text-black transition disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    {[...Array(totalPages)].map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setPage(i + 1)}
-                        className={`w-8 h-8 rounded-[5px] font-semibold text-[15px] flex items-center justify-center transition ${
-                          page === i + 1
-                            ? "bg-[#006638] text-white"
-                            : "bg-white border border-[#006638] text-[#006638] hover:bg-slate-50"
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                      disabled={page === totalPages}
-                      className="p-1.5 text-black/40 hover:text-black transition disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={filteredCategories.length}
+                itemsPerPage={itemsPerPage}
+                itemLabel="kategori"
+                onPageChange={(p) => setPage(p)}
+                className="pt-4 border-t border-slate-100"
+              />
               </>
             )}
           </div>

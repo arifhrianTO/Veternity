@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import api from "../../config/axios";
 import { storageUrl } from "../../config/storage";
 import ProductDetailModal from "../../components/pembeli/ProductDetailModal";
@@ -23,6 +24,8 @@ export default function MarketplacePage() {
   const [selectedPrice, setSelectedPrice] = useState("Semua");
   const [selectedSort, setSelectedSort] = useState("Terbaru");
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,6 +119,9 @@ export default function MarketplacePage() {
     return matchesSearch && matchesCategory && matchesLocation;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
+  const pagedProducts = filteredProducts.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
   return (
     <div className="font-['Montserrat'] text-slate-900">
       {/* Rectangle 4166 / Wrapper utama */}
@@ -132,7 +138,7 @@ export default function MarketplacePage() {
                 type="text"
                 placeholder="Cari Produk..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                 className="w-full text-sm outline-none bg-transparent placeholder-[#006638] text-[#006638] font-medium"
               />
             </div>
@@ -142,7 +148,7 @@ export default function MarketplacePage() {
               {/* Filter Terbaru */}
               <select
                 value={selectedSort}
-                onChange={(e) => setSelectedSort(e.target.value)}
+                onChange={(e) => { setSelectedSort(e.target.value); setPage(1); }}
                 className="h-[42px] w-[153px] px-3 bg-white border border-[#024D70] rounded-[5px] text-sm text-[#00378A] font-medium outline-none cursor-pointer"
               >
                 <option value="Terbaru">Terbaru</option>
@@ -152,7 +158,7 @@ export default function MarketplacePage() {
               {/* Filter Kategori */}
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
                 className="h-[42px] w-[153px] px-3 bg-white border border-[#024D70] rounded-[5px] text-sm text-[#00378A] font-medium outline-none cursor-pointer"
               >
                 {categoryOptions.map((cat) => (
@@ -163,7 +169,7 @@ export default function MarketplacePage() {
               {/* Filter Harga */}
               <select
                 value={selectedPrice}
-                onChange={(e) => setSelectedPrice(e.target.value)}
+                onChange={(e) => { setSelectedPrice(e.target.value); setPage(1); }}
                 className="h-[42px] w-[153px] px-3 bg-white border border-[#024D70] rounded-[5px] text-sm text-[#00378A] font-medium outline-none cursor-pointer"
               >
                 <option value="Semua">Harga</option>
@@ -174,7 +180,7 @@ export default function MarketplacePage() {
               {/* Filter Wilayah */}
               <select
                 value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
+                onChange={(e) => { setSelectedLocation(e.target.value); setPage(1); }}
                 className="h-[42px] w-[153px] px-3 bg-white border border-[#024D70] rounded-[5px] text-sm text-[#00378A] font-medium outline-none cursor-pointer"
               >
                 <option value="Semua">Wilayah</option>
@@ -191,81 +197,93 @@ export default function MarketplacePage() {
                Memuat Produk...
              </div>
           ) : (
-<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {filteredProducts.map((p, idx) => (
-              <div
-                key={idx}
-                onClick={() => setSelectedProduct(p)}
-                className="group w-full h-full bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.12)] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div>
-                  {/* Image container */}
-                  <div className="aspect-[4/3] w-full bg-slate-50 relative overflow-hidden border-b border-slate-100">
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        e.target.src = "/images/beras.png";
-                      }}
-                    />
-                  </div>
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {pagedProducts.map((p, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedProduct(p)}
+                    className="group w-full h-full bg-white rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.12)] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div>
+                      {/* Image container */}
+                      <div className="aspect-[4/3] w-full bg-slate-50 relative overflow-hidden border-b border-slate-100">
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => {
+                            e.target.src = "/images/beras.png";
+                          }}
+                        />
+                      </div>
 
-                  {/* Body Content */}
-                  <div className="p-3">
-                    <h4 className="font-semibold text-[14px] leading-[18px] text-[#273B4A] line-clamp-2 min-h-[36px]">{p.name}</h4>
+                      {/* Body Content */}
+                      <div className="p-3">
+                        <h4 className="font-semibold text-[14px] leading-[18px] text-[#273B4A] line-clamp-2 min-h-[36px]">{p.name}</h4>
 
-                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#006638]/10 text-[#006638] border border-[#006638]/20">
-                        {p.kategori}
-                      </span>
-                      {p.komoditas && p.komoditas !== "-" && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                          {p.komoditas}
-                        </span>
-                      )}
-                    </div>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#006638]/10 text-[#006638] border border-[#006638]/20">
+                            {p.kategori}
+                          </span>
+                          {p.komoditas && p.komoditas !== "-" && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                              {p.komoditas}
+                            </span>
+                          )}
+                        </div>
 
-                    <p className="text-[12px] leading-[16px] text-[rgba(0,0,0,0.43)] font-medium mt-1 line-clamp-1">
-                      {p.location}
-                    </p>
+                        <p className="text-[12px] leading-[16px] text-[rgba(0,0,0,0.43)] font-medium mt-1 line-clamp-1">
+                          {p.location}
+                        </p>
 
-                    <div className="flex items-center justify-between gap-2 mt-2">
-                      <span className="font-bold text-[16px] leading-[20px] text-[#00A75C]">
-                        {p.price} <span className="font-medium text-[12px] text-slate-400">{p.unit}</span>
-                      </span>
+                        <div className="flex items-center justify-between gap-2 mt-2">
+                          <span className="font-bold text-[16px] leading-[20px] text-[#00A75C]">
+                            {p.price} <span className="font-medium text-[12px] text-slate-400">{p.unit}</span>
+                          </span>
 
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        <Star className="w-[14px] h-[14px] fill-amber-400 text-amber-400" />
-                        <span className="text-[12px] text-[rgba(0,0,0,0.43)] font-medium">{p.rating}</span>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            <Star className="w-[14px] h-[14px] fill-amber-400 text-amber-400" />
+                            <span className="text-[12px] text-[rgba(0,0,0,0.43)] font-medium">{p.rating}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 mt-2 min-w-0">
+                          <img src="/images/iconKoperasi.png" alt="koperasi icon" className="w-[16px] h-[16px] object-contain shrink-0 opacity-80" />
+                          <span className="text-[12px] text-[rgba(0,0,0,0.43)] font-medium truncate">
+                            {p.koperasi} <span className="text-[11px]">• {p.sellerRole}</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 mt-2 min-w-0">
-                      <img src="/images/iconKoperasi.png" alt="koperasi icon" className="w-[16px] h-[16px] object-contain shrink-0 opacity-80" />
-                      <span className="text-[12px] text-[rgba(0,0,0,0.43)] font-medium truncate">
-                        {p.koperasi} <span className="text-[11px]">• {p.sellerRole}</span>
-                      </span>
+                    {/* Button Action */}
+                    <div className="px-3 pb-3 pt-1 mt-auto">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedProduct(p);
+                        }}
+                        className="w-full h-[36px] bg-[#006638] hover:bg-[#00522c] text-white rounded-lg text-[13px] font-bold transition flex items-center justify-center"
+                      >
+                        Lihat Detail
+                      </button>
                     </div>
                   </div>
-                </div>
-
-                {/* Button Action */}
-                <div className="px-3 pb-3 pt-1 mt-auto">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedProduct(p);
-                    }}
-                    className="w-full h-[36px] bg-[#006638] hover:bg-[#00522c] text-white rounded-lg text-[13px] font-bold transition flex items-center justify-center"
-                  >
-                    Lihat Detail
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={filteredProducts.length}
+                itemsPerPage={itemsPerPage}
+                itemLabel="produk"
+                onPageChange={(p) => setPage(p)}
+                className="mt-8 pt-4 border-t border-slate-200/60"
+              />
+            </>
           )}
 
       </div>

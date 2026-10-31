@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import OrderDetailModal from "../../components/pembeli/OrderDetailModal";
-import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import api from "../../config/axios";
 import { storageUrl } from "../../config/storage";
 import { swalSuccess, swalError, swalInfo, cleanupSnapOverlay } from "../../utils/swal";
@@ -325,53 +326,14 @@ export default function PesananPembeliPage() {
           </div>
 
           {/* Bottom: pagination info + page buttons */}
-          <div className="flex items-center justify-between mt-6 px-2">
-            <span className="text-[14px] font-semibold text-black/[0.51]">
-              Menampilkan {Math.min(startIndex + 1, filteredOrders.length)}-
-              {Math.min(
-                startIndex + currentOrders.length,
-                filteredOrders.length,
-              )}{" "}
-              dari {filteredOrders.length} produk
-            </span>
-
-            <div className="flex items-center gap-2">
-              {/* Prev arrow */}
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
-              >
-                <ChevronLeft className="w-5 h-5 text-black/[0.43]" />
-              </button>
-
-              {/* Page numbers */}
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-[32px] h-[32px] rounded-[5px] text-[14px] font-bold flex items-center justify-center transition ${
-                    currentPage === i + 1
-                      ? "bg-[#006638] text-white"
-                      : "bg-white border border-[#006638] text-[#006638] hover:bg-[#006638]/5"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-
-              {/* Next arrow */}
-              <button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(p + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="w-8 h-8 flex items-center justify-center disabled:opacity-30"
-              >
-                <ChevronRight className="w-5 h-5 text-black/[0.43]" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredOrders.length}
+            itemsPerPage={itemsPerPage}
+            itemLabel="pesanan"
+            onPageChange={(p) => setCurrentPage(p)}
+          />
         </div>
 
       {/* Order Detail Popup */}

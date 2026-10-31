@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import PageHeader from "../../components/layout/PageHeader";
+import Pagination from "../../components/common/Pagination";
 import {
   Search,
   Plus,
@@ -9,8 +10,6 @@ import {
   X,
   Loader2,
   MapPin,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import api from "../../config/axios";
 import { swalSuccess, swalError, swalWarning } from "../../utils/swal";
@@ -95,16 +94,6 @@ export default function LogistikPage() {
   const goToPage = (page) => {
     if (page < 1 || page > lastPage || page === currentPage) return;
     fetchLogistics(search, page);
-  };
-
-  // Daftar nomor halaman (maks 5 tombol)
-  const pageNumbers = () => {
-    const pages = [];
-    let start = Math.max(1, currentPage - 2);
-    let end = Math.min(lastPage, start + 4);
-    start = Math.max(1, end - 4);
-    for (let i = start; i <= end; i++) pages.push(i);
-    return pages;
   };
 
   // Ambil provinsi untuk panel cek area
@@ -539,43 +528,14 @@ export default function LogistikPage() {
               </div>
 
               {/* Pagination */}
-              {totalItems > 0 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 text-sm text-black/50 font-semibold">
-                  <div>
-                    Menampilkan {totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1}-
-                    {Math.min(currentPage * perPage, totalItems)} dari {totalItems} data
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => goToPage(currentPage - 1)}
-                      disabled={currentPage <= 1}
-                      className="p-2 text-black/40 hover:text-black transition disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    {pageNumbers().map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => goToPage(p)}
-                        className={`w-9 h-9 rounded-md font-semibold flex items-center justify-center transition ${
-                          p === currentPage
-                            ? "bg-[#006638] text-white"
-                            : "bg-white border border-[#006638] text-[#006638] hover:bg-slate-50"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => goToPage(currentPage + 1)}
-                      disabled={currentPage >= lastPage}
-                      className="p-2 text-black/40 hover:text-black transition disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={lastPage}
+                totalItems={totalItems}
+                itemsPerPage={perPage}
+                itemLabel="kurir/logistik"
+                onPageChange={(p) => goToPage(p)}
+              />
               </>
             )}
           </div>
