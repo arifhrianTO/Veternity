@@ -14,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Midtrans\Notification;
 
 class OrderController extends Controller
 {
@@ -218,7 +217,7 @@ class OrderController extends Controller
 
             // Tentukan Enabled Payments berdasarkan pilihan frontend
             $enabledPayments = match ($request->paymentMethod) {
-                'Transfer Bank' => ['bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'permata_va'],
+                'Transfer Bank' => ['bca_va', 'bni_va', 'bri_va', 'echannel', 'permata_va'],
                 'qris' => ['qris', 'gopay', 'shopeepay'],
                 'ewallet' => ['gopay', 'shopeepay'],
                 'retail' => ['indomaret', 'alfamart'],
@@ -434,69 +433,130 @@ class OrderController extends Controller
     }
 
     /**
+     * Konfirmasi pembayaran dari frontend (Snap onSuccess).
+     * Status diverifikasi langsung ke Midtrans (server-side), bukan dipercaya dari client.
+     */
+    public function confirmPayment(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'transaction_id' => 'required|string',
+        ]);
+
+        $order = Order::findOrFail($id);
+        $user = $request->user();
+
+        if ($order->pembeli_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $transaction = $this->paymentGateway->getTransactionStatus($validated['transaction_id']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memverifikasi pembayaran: '.$e->getMessage(),
+            ], 502);
+        }
+
+        $status = $this->mapPaymentStatus(
+            $transaction->transaction_status ?? null,
+            $transaction->fraud_status ?? null,
+        );
+
+        $this->applyStatusToCheckout($order, $status);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status pembayaran diperbarui.',
+            'status' => $status,
+        ]);
+    }
+
+    /**
      * Handle Midtrans Payment Notification (Webhook)
      */
     public function paymentNotification(Request $request)
     {
-        $notif = new Notification;
+        $payload = $request->all();
 
-        $transactionStatus = $notif->transaction_status;
-        $orderId = $notif->order_id;
-        $fraudStatus = $notif->fraud_status;
+        // Verifikasi signature Midtrans untuk mencegah notifikasi palsu.
+        $serverKey = config('services.midtrans.server_key');
+        $expectedSignature = hash('sha512',
+            ($payload['order_id'] ?? '').
+            ($payload['status_code'] ?? '').
+            ($payload['gross_amount'] ?? '').
+            $serverKey
+        );
 
-        // Ekstrak kode_pesanan asli (hilangkan timestamp setelah strip "-")
-        // Contoh: TRX-ABCDEF-172233213 -> TRX-ABCDEF
-        $parts = explode('-', $orderId);
-        if (count($parts) >= 3) {
-            $originalKodePesanan = $parts[0].'-'.$parts[1];
-        } else {
-            $originalKodePesanan = $orderId;
+        if (! hash_equals($expectedSignature, (string) ($payload['signature_key'] ?? ''))) {
+            return response()->json(['message' => 'Invalid signature'], 403);
         }
 
-        // Cari semua order yang terkait (karena 1 checkout bisa jadi beberapa order/petani)
-        // Kita menggunakan primaryOrder sebagai referensi, artinya mereka punya payment_token yang sama
-        $primaryOrder = Order::where('kode_pesanan', $originalKodePesanan)->first();
+        try {
+            $orderId = (string) ($payload['order_id'] ?? '');
+            $transactionStatus = $payload['transaction_status'] ?? null;
+            $fraudStatus = $payload['fraud_status'] ?? null;
 
-        if (! $primaryOrder) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        // Cari semua order yang terkait (karena 1 checkout bisa jadi beberapa order/petani).
-        // Utamakan lewat payment_token yang sama; jika token kosong (belum sempat tersimpan),
-        // fallback ke pencarian berdasarkan kode_pesanan agar tidak men-update order lain.
-        $ordersToUpdate = collect();
-
-        if (! empty($primaryOrder->payment_token)) {
-            $ordersToUpdate = Order::where('payment_token', $primaryOrder->payment_token)->get();
-        }
-
-        if ($ordersToUpdate->isEmpty()) {
-            $ordersToUpdate = collect([$primaryOrder]);
-        }
-
-        $status = 'Menunggu Pembayaran';
-
-        if ($transactionStatus == 'capture') {
-            if ($fraudStatus == 'challenge') {
-                $status = 'Menunggu Pembayaran';
-            } elseif ($fraudStatus == 'accept') {
-                $status = 'Diproses';
+            // Ekstrak kode_pesanan asli (hilangkan timestamp setelah strip "-")
+            // Contoh: TRX-ABCDEF-172233213 -> TRX-ABCDEF
+            $parts = explode('-', $orderId);
+            if (count($parts) >= 3) {
+                $originalKodePesanan = $parts[0].'-'.$parts[1];
+            } else {
+                $originalKodePesanan = $orderId;
             }
-        } elseif ($transactionStatus == 'settlement') {
-            $status = 'Diproses';
-        } elseif ($transactionStatus == 'cancel' ||
-          $transactionStatus == 'deny' ||
-          $transactionStatus == 'expire') {
-            $status = 'Dibatalkan';
-        } elseif ($transactionStatus == 'pending') {
-            $status = 'Menunggu Pembayaran';
+
+            $primaryOrder = Order::where('kode_pesanan', $originalKodePesanan)->first();
+
+            if (! $primaryOrder) {
+                return response()->json(['message' => 'Order not found'], 404);
+            }
+
+            $status = $this->mapPaymentStatus($transactionStatus, $fraudStatus);
+            $this->applyStatusToCheckout($primaryOrder, $status);
+
+            return response()->json(['message' => 'Notification handled']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Notification error: '.$e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Map status transaksi Midtrans ke status pesanan aplikasi.
+     */
+    private function mapPaymentStatus(?string $transactionStatus, ?string $fraudStatus): string
+    {
+        if ($transactionStatus === 'capture') {
+            return $fraudStatus === 'accept' ? 'Diproses' : 'Menunggu Pembayaran';
         }
 
-        foreach ($ordersToUpdate as $order) {
-            $order->status = $status;
-            $order->save();
+        return match ($transactionStatus) {
+            'settlement' => 'Diproses',
+            'cancel', 'deny', 'expire' => 'Dibatalkan',
+            'pending' => 'Menunggu Pembayaran',
+            default => 'Menunggu Pembayaran',
+        };
+    }
+
+    /**
+     * Terapkan status ke seluruh order dalam satu checkout.
+     * Grouping via payment_token (disimpan saat store); fallback ke order tunggal.
+     */
+    private function applyStatusToCheckout(Order $order, string $status): void
+    {
+        $orders = collect();
+
+        if (! empty($order->payment_token)) {
+            $orders = Order::where('payment_token', $order->payment_token)->get();
         }
 
-        return response()->json(['message' => 'Notification handled']);
+        if ($orders->isEmpty()) {
+            $orders = collect([$order]);
+        }
+
+        foreach ($orders as $o) {
+            $o->status = $status;
+            $o->save();
+        }
     }
 }

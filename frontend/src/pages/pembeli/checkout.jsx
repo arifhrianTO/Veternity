@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Landmark, QrCode, Wallet, Store } from "lucide-react";
 import api from "../../config/axios"; // Menggunakan axios instance yang sudah ada auth token
-import { swalSuccess, swalError, swalWarning, swalInfo } from "../../utils/swal";
+import { swalSuccess, swalError, swalWarning, swalInfo, cleanupSnapOverlay } from "../../utils/swal";
 
 export default function CheckoutPage() {
   const [checkoutItems, setCheckoutItems] = useState([]);
@@ -300,20 +300,31 @@ export default function CheckoutPage() {
         // Panggil Midtrans Snap
         if (res.data.snap_token) {
            window.snap.pay(res.data.snap_token, {
-              onSuccess: async function(){
-                 // Status pesanan diperbarui otomatis oleh webhook Midtrans di backend.
+              onSuccess: async function(result){
+                 // Verifikasi pembayaran di server (server-side) lalu perbarui status.
+                 try {
+                    await api.post(`/orders/${res.data.order_ids[0]}/confirm-payment`, {
+                       transaction_id: result?.transaction_id,
+                    });
+                 } catch (e) {
+                    console.error("Gagal konfirmasi pembayaran", e);
+                 }
+                 cleanupSnapOverlay();
                  await swalSuccess("Pembayaran berhasil!", "Status pesanan Anda telah diperbarui.");
                  navigate("/pembeli/pesanan");
               },
               onPending: async function(){
+                 cleanupSnapOverlay();
                  await swalInfo("Menunggu pembayaran...", "Pesanan Anda sedang menunggu pembayaran.");
                  navigate("/pembeli/pesanan");
               },
               onError: async function(){
+                 cleanupSnapOverlay();
                  await swalError("Pembayaran gagal!", "Silakan coba lagi atau gunakan metode lain.");
                  navigate("/pembeli/pesanan");
               },
               onClose: async function(){
+                 cleanupSnapOverlay();
                  await swalInfo("Pembayaran ditutup", "Anda dapat melanjutkan pembayaran nanti di halaman Pesanan.");
                  navigate("/pembeli/pesanan");
               }

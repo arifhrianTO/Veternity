@@ -1,5 +1,14 @@
 import Swal from "sweetalert2";
 
+/**
+ * Hapus overlay Midtrans Snap yang mungkin masih tertinggal di DOM,
+ * agar SweetAlert tidak tertutup olehnya.
+ */
+export function cleanupSnapOverlay() {
+  document.getElementById("snap-midtrans")?.remove();
+  document.querySelector(".snap-midtrans")?.remove();
+}
+
 const base = {
   confirmButtonColor: "#006638",
   cancelButtonColor: "#64748b",

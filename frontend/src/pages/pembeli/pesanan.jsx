@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PageHeader from "../../components/layout/PageHeader";
 import OrderDetailModal from "../../components/pembeli/OrderDetailModal";
 import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
 import api from "../../config/axios";
 import { storageUrl } from "../../config/storage";
-import { swalSuccess, swalError, swalInfo } from "../../utils/swal";
+import { swalSuccess, swalError, swalInfo, cleanupSnapOverlay } from "../../utils/swal";
 
 const tabItems = [
   { key: "semua", label: "Semua" },
@@ -56,71 +56,74 @@ export default function PesananPembeliPage() {
   const [isLoading, setIsLoading] = useState(true);
   const itemsPerPage = 4;
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setIsLoading(true);
-        const res = await api.get("/orders");
+  const fetchOrders = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setIsLoading(true);
+      const res = await api.get("/orders");
 
-        const formattedOrders = res.data.map((o) => ({
-          id: o.id, // Primary key id di database
-          kode_pesanan: o.kode_pesanan,
-          products: o.items.map((i) => ({
-            name: i.nama_produk,
-            quantity: i.jumlah_beli,
-            price: `Rp ${Number(i.harga_satuan).toLocaleString("id-ID")}`,
-          })),
-          productCount: o.items.reduce(
-            (acc, curr) => acc + curr.jumlah_beli,
-            0,
-          ),
-          total: `Rp ${Number(o.total_harga).toLocaleString("id-ID")}`,
-          date: new Date(o.tanggal_pesanan).toLocaleDateString("id-ID"),
-          status: o.status || "Diproses",
-          image: o.items[0]?.product?.gambar
-            ? storageUrl(o.items[0].product.gambar, "/images/beras.png")
-            : "/images/beras.png",
-          tracking: {
-            created: new Date(o.created_at).toLocaleString("id-ID", {
-              day: "numeric",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            processed:
-              o.status !== "Menunggu Pembayaran"
-                ? new Date(o.updated_at).toLocaleString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : null,
-            shipped: null,
-            completed: o.status === "Selesai" ? "Selesai" : null,
-            currentStep:
-              o.status === "Selesai"
-                ? 4
-                : o.status === "Dikirim"
-                  ? 3
-                  : o.status === "Diproses"
-                    ? 2
-                    : 1,
-            resi: o.catatan ? o.catatan.replace("Resi: ", "") : null, // Asumsi resi ditaruh di catatan (sementara)
-            courier: "jne", // Default
-          },
-          snap_token: o.payment_token // Ambil token dari backend
-        }));
-        setAllOrders(formattedOrders);
-      } catch (error) {
-        console.error("Gagal mengambil data pesanan", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrders();
+      const formattedOrders = res.data.map((o) => ({
+        id: o.id, // Primary key id di database
+        kode_pesanan: o.kode_pesanan,
+        products: o.items.map((i) => ({
+          name: i.nama_produk,
+          quantity: i.jumlah_beli,
+          price: `Rp ${Number(i.harga_satuan).toLocaleString("id-ID")}`,
+        })),
+        productCount: o.items.reduce(
+          (acc, curr) => acc + curr.jumlah_beli,
+          0,
+        ),
+        total: `Rp ${Number(o.total_harga).toLocaleString("id-ID")}`,
+        date: new Date(o.tanggal_pesanan).toLocaleDateString("id-ID"),
+        status: o.status || "Diproses",
+        image: o.items[0]?.product?.gambar
+          ? storageUrl(o.items[0].product.gambar, "/images/beras.png")
+          : "/images/beras.png",
+        tracking: {
+          created: new Date(o.created_at).toLocaleString("id-ID", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          processed:
+            o.status !== "Menunggu Pembayaran"
+              ? new Date(o.updated_at).toLocaleString("id-ID", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : null,
+          shipped: null,
+          completed: o.status === "Selesai" ? "Selesai" : null,
+          currentStep:
+            o.status === "Selesai"
+              ? 4
+              : o.status === "Dikirim"
+                ? 3
+                : o.status === "Diproses"
+                  ? 2
+                  : 1,
+          resi: o.shipment?.nomor_resi || null,
+          courier: o.shipment?.kurir || "jne",
+        },
+        snap_token: o.payment_token // Ambil token dari backend
+      }));
+      setAllOrders(formattedOrders);
+    } catch (error) {
+      console.error("Gagal mengambil data pesanan", error);
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchOrders());
+    // Polling ringan agar status dari webhook Midtrans ikut ter-update tanpa reload.
+    const interval = setInterval(() => fetchOrders(true), 15000);
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
 
   const filteredOrders = allOrders.filter((order) => {
     if (activeTab === "semua") return true;
@@ -268,22 +271,28 @@ export default function PesananPembeliPage() {
                               <button 
                                 onClick={() => {
                                   window.snap.pay(order.snap_token, {
-                                    onSuccess: async function() {
+                                    onSuccess: async function(result) {
                                       try {
-                                        await api.put(`/orders/${order.id}`, { status: "Diproses" });
+                                        await api.post(`/orders/${order.id}/confirm-payment`, {
+                                          transaction_id: result?.transaction_id,
+                                        });
                                       } catch (e) {
-                                        console.error("Gagal mengupdate status pesanan", e);
+                                        console.error("Gagal mengonfirmasi pembayaran", e);
                                       }
+                                      cleanupSnapOverlay();
                                       await swalSuccess("Pembayaran berhasil!", "Status pesanan Anda telah diperbarui.");
-                                      window.location.reload();
+                                      fetchOrders();
                                     },
                                     onPending: async function() {
+                                      cleanupSnapOverlay();
                                       await swalInfo("Menunggu pembayaran...", "Pesanan Anda sedang menunggu pembayaran.");
                                     },
                                     onError: async function() {
+                                      cleanupSnapOverlay();
                                       await swalError("Pembayaran gagal!", "Silakan coba lagi atau gunakan metode lain.");
                                     },
                                     onClose: async function() {
+                                      cleanupSnapOverlay();
                                       await swalInfo("Pembayaran ditutup", "Anda dapat melanjutkan pembayaran nanti.");
                                     }
                                   });

@@ -121,6 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:petani,petani_binaan,nelayan,nelayan_binaan,koperasi,pembeli')->group(function () {
         Route::get('/my-offers', [OfferController::class, 'myOffers']);
         Route::apiResource('orders', OrderController::class);
+        Route::post('/orders/{id}/confirm-payment', [OrderController::class, 'confirmPayment']);
         Route::apiResource('offers', OfferController::class);
     });
 });

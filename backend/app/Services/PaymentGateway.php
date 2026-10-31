@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Midtrans\Config;
 use Midtrans\Snap;
+use Midtrans\Transaction;
 
 class PaymentGateway
 {
@@ -23,5 +24,14 @@ class PaymentGateway
     public function createSnapToken(array $params): string
     {
         return Snap::getSnapToken($params);
+    }
+
+    /**
+     * Ambil status transaksi langsung dari Midtrans (verifikasi server-side).
+     * Menerima Midtrans order_id atau transaction_id.
+     */
+    public function getTransactionStatus(string $id): object
+    {
+        return Transaction::status($id);
     }
 }

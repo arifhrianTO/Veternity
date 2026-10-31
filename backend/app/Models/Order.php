@@ -17,7 +17,10 @@ class Order extends Model
         'provinsi_id',
         'kota_id',
         'total_berat_gram',
-        'ongkos_kirim'
+        'ongkos_kirim',
+        'payment_type',
+        'payment_token',
+        'payment_url'
     ];
 
     public function penjual() // Mengganti nama alias relasi agar lebih umum (bisa petani/koperasi)
