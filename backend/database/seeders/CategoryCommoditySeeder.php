@@ -87,7 +87,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Kacang-kacangan',
             'tipe' => 'pertanian',
-            'gambar' => '/images/kacang.jpg',
+            'gambar' => '/images/kacang.png',
             'commodities' => [
                 ['nama' => 'Kedelai', 'bapanas' => 'Kedelai Biji Kering'],
                 ['nama' => 'Kacang Tanah', 'bapanas' => null],
@@ -98,7 +98,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Peternakan',
             'tipe' => 'pertanian',
-            'gambar' => '/images/peternakan.jpg',
+            'gambar' => '/images/peternakan.png',
             'commodities' => [
                 ['nama' => 'Daging Sapi', 'bapanas' => 'Daging Sapi Murni'],
                 ['nama' => 'Daging Ayam', 'bapanas' => 'Daging Ayam Ras'],
@@ -111,7 +111,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Bahan Pokok & Olahan',
             'tipe' => 'pertanian',
-            'gambar' => '/images/bahan_pokok.jpg',
+            'gambar' => '/images/bahan_pokok.png',
             'commodities' => [
                 ['nama' => 'Gula Pasir', 'bapanas' => 'Gula Pasir Lokal/Curah'],
                 ['nama' => 'Minyak Goreng Curah', 'bapanas' => 'Minyak Goreng Curah'],
@@ -125,7 +125,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Ikan Air Laut',
             'tipe' => 'perikanan',
-            'gambar' => '/images/ikan_laut.jpg',
+            'gambar' => '/images/ikan_laut.png',
             'commodities' => [
                 ['nama' => 'Ikan Kembung', 'bapanas' => 'Ikan Kembung'],
                 ['nama' => 'Ikan Tongkol', 'bapanas' => 'Ikan Tongkol'],
@@ -158,7 +158,7 @@ class CategoryCommoditySeeder extends Seeder
         [
             'nama_kategori' => 'Udang & Krustasea',
             'tipe' => 'perikanan',
-            'gambar' => '/images/udang.jpg',
+            'gambar' => '/images/udang.png',
             'commodities' => [
                 ['nama' => 'Udang Vaname', 'bapanas' => null],
                 ['nama' => 'Udang Windu', 'bapanas' => null],
