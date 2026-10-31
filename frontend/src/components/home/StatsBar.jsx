@@ -26,7 +26,7 @@ export default function StatsBar() {
   }, []);
 
   return (
-    <section className="relative z-20 max-w-7xl mx-auto px-6 -mt-10 mb-16">
+    <section className="relative z-20 max-w-7xl mx-auto px-6 mt-10 md:mt-14 mb-16">
       <div className="rounded-2xl border border-slate-100 shadow-sm bg-white px-6 py-6 flex flex-wrap justify-between gap-6">
         {statConfig.map((s) => {
           const Icon = s.icon;
